@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>algos.vanilla_detector package &mdash; mlalgos 0.0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="mlalgos 0.0.1 documentation" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> mlalgos
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">API Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">mlalgos</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>algos.vanilla_detector package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/algos.vanilla_detector.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="algos-vanilla-detector-package">
+<h1>algos.vanilla_detector package<a class="headerlink" href="#algos-vanilla-detector-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-algos.vanilla_detector.vanilla_detector">
+<span id="algos-vanilla-detector-vanilla-detector-module"></span><h2>algos.vanilla_detector.vanilla_detector module<a class="headerlink" href="#module-algos.vanilla_detector.vanilla_detector" title="Permalink to this headline">¶</a></h2>
+<p>Authors: Kostas Stamatiou, Carsten Tusk
+Contact: <a class="reference external" href="mailto:kostas&#46;stamatiou&#37;&#52;&#48;digitalglobe&#46;com">kostas<span>&#46;</span>stamatiou<span>&#64;</span>digitalglobe<span>&#46;</span>com</a>
+Name: Vanilla detector
+General info: sliding window, heavily based on Carsten&#8217;s demo_machine</p>
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.computeFeatureVectors">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">computeFeatureVectors</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.computeFeatureVectors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.detect">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">detect</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em>, <em>modelFile</em>, <em>outputfile</em>, <em>win</em>, <em>step</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.detect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deploy classifier using sliding window over AOI.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.extract_aoi_data">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_data</code><span class="sig-paren">(</span><em>polygonFile</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts pixels for each polygon in polygonFile and returns them as masked numpy arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>polygonFile</strong> (<em>str</em>) &#8211; the name of the input GeoJSON file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body">Feature object and corresponding raster object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.extract_aoi_data_tifs">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_data_tifs</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_data_tifs" title="Permalink to this definition">¶</a></dt>
+<dd><p>THIS DOES NOT WORK AT THE MOMENT
+Extracts pixels for each polygon in polygonFile and returns them as tiffs.
+polygonFile is a GeoJSON which follows the specification in the README of the repo.
+imagery_type is the type of imagery used by the classifier</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.extract_aoi_tif">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_tif</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_tif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts pixels for the one and only polygon in polygonFile and returns this as a tiff.
+polygonFile is a GeoJSON which follows the specification in the README of the repo.
+imagery_type is the type of imagery used by the classifier</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.main">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">main</code><span class="sig-paren">(</span><em>job_json</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.main" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Runs the vanilla detector pipeline.</dt>
+<dd><ul class="first simple">
+<li>Computes feature_vector for each geometry in train_file and trains
+standard random forest classifier;
+train_file must contain at least two classes: &#8220;object of interest&#8221;
+and &#8220;clutter&#8221;.</li>
+<li>Scans AOI in target_file using sliding window, classifies each tile
+and generates output_file containing all tiles with class
+other than &#8220;clutter&#8221;, and a classifier.pickle file.</li>
+</ul>
+<p class="last">train_file, target_file and all images should be in the
+project directory.</p>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>job_json</strong> (<em>str</em>) &#8211; A filename ending in .json.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.sliding_window_detector">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">sliding_window_detector</code><span class="sig-paren">(</span><em>rasterFile</em>, <em>classifier</em>, <em>winX</em>, <em>winY</em>, <em>stepX</em>, <em>stepY</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.sliding_window_detector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply classifier over rasterFile using window (winX, winY) with step (stepX, stepY)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.tfRasterToProj">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">tfRasterToProj</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>geoTransform</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.tfRasterToProj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts coordinates from raster pixel to projected coordinate system</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.train_model">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">train_model</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em>, <em>classifierFile</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.train_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute feature vector for each polygon in polygonFile,
+train random forest classifier and output classifier params in pickle file.
+imagery_type is the type of imagery used by the classifier</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.writeResults">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">writeResults</code><span class="sig-paren">(</span><em>features</em>, <em>outputfile</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.writeResults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-algos.vanilla_detector">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-algos.vanilla_detector" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Kostas Stamatiou.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
