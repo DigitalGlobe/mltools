@@ -1,0 +1,3 @@
+*.pyc
+tools/*.pyc
+algos/*.pyc
