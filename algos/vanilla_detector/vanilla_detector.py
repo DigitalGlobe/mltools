@@ -15,16 +15,16 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier 
 
 
-def extract_aoi_data(polygonFile, imagery_type):
-    """
-    Extracts pixels for each polygon in polygonFile and returns them as masked numpy arrays.
-    polygonFile is a GeoJSON which follows the specification in the README of the repo.
-    imagery_type is the type of imagery used by the classifier
+def extract_aoi_data(polygonFile):
+    """Extracts pixels for each polygon in polygonFile and returns them as masked numpy arrays.
+    
+       Args:
+           polygonFile (str): the name of the input GeoJSON file.
+    
+       Yields:
+           Feature object and corresponding raster object. 
     """
     
-    # get directory where imagery is stored
-    images_dir = os.getenv("IMAGES_DIR")
-
     # use ogr module to load features
     shp = ogr.Open(polygonFile)
     lyr = shp.GetLayer()
@@ -567,7 +567,6 @@ def main(job_json):
     train_file = job["train_file"]
     target_file = job["target_file"]
     output_file = job["output_file"]
-    imagery_type = job["machine"]["params"]["imagery_type"]
     window_size = job["machine"]["params"]["window_size"]
     step_size = job["machine"]["params"]["step_size"]
 

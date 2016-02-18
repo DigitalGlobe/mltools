@@ -25,9 +25,13 @@ The input of a MLA is one or more of the following:
 + a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 + a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
-The output of a MLApp is one or more of the following:
+The output of a MLA is one or more of the following:
 
 + one or more processed images
 + an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
+
+The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:
+
+https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing
 
 Imagery in the format required by a MLApp (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). You need GBDX credentials to use gbdxtools.
