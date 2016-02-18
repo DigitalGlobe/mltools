@@ -13,6 +13,9 @@ pip install mlalgos
 MLAs are implemented using standard ML packages such as scikit-learn and tensorflow. 
 MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
 
+The purpose of this repository is to enable fast prototyping of object detection and classification solutions employing
+one of the existing algorithms or by constructing new ones based on the provided modular tools.
+
 The input of a MLA is one or more of the following:
 
 + one or more images;
