@@ -2,7 +2,7 @@
 
 A collection of (un)supervised Machine Learning (ML) Algorithms (MLA) and ML Tools for object detection and classification on satellite imagery.
 
-Full documentation is hosted here: 
+Full documentation is hosted here: http://mlalgos.readthedocs.org/en/latest/
 
 Installation will be easy:
 
