@@ -4,7 +4,7 @@ A collection of (un)supervised Machine Learning (ML) Algorithms (MLA) and ML Too
 
 Full documentation is hosted here: 
 
-Installation is easy:
+Installation will be easy:
 
 ~~~
 pip install mlalgos
