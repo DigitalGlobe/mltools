@@ -1,5 +1,15 @@
-algos module
---------------------
+algos package
+=============
+
+Subpackages
+-----------
+
+.. toctree::
+
+    algos.demo_machine
+
+Module contents
+---------------
 
 .. automodule:: algos
     :members:

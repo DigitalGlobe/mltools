@@ -40,8 +40,4 @@ Imagery in the format required by a MLApp (e.g., pansharpened, multi-spectral or
 .. toctree::
    :maxdepth: 2
 
-   algos
-   tools
-
-
-
+   modules

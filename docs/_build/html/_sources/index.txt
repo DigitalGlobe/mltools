@@ -9,7 +9,7 @@ mlalgos
 A collection of (un)supervised Machine Learning (ML) Algorithms (MLA) and ML Tools for object detection 
 and classification on satellite imagery.
 
-Installation is easy::
+Installation will be easy::
 
 	pip install mlalgos
 
@@ -40,8 +40,4 @@ Imagery in the format required by a MLApp (e.g., pansharpened, multi-spectral or
 .. toctree::
    :maxdepth: 2
 
-   algos
-   tools
-
-
-
+   modules
