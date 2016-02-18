@@ -1,0 +1,10 @@
+API Documentation
+=================
+
+algos.demo_machine module
+--------------------------------
+
+.. automodule:: algos.demo_machine
+    :members:
+    :undoc-members:
+    :show-inheritance:
