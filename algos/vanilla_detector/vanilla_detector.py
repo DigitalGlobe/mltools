@@ -1,8 +1,7 @@
 """
 Authors: Kostas Stamatiou, Carsten Tusk
-Contact: kostas.stamatiou@digitalglobe.com
+Contact: kostas.stamatiou@digitalglobe.com, ctusk@digitalglobe.com
 Name: Vanilla detector 
-General info: sliding window, heavily based on Carsten's demo_machine
 """
 
 import json
@@ -15,49 +14,48 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier 
 
 
-def extract_aoi_data(polygonFile):
-    """Extracts pixels for each polygon in polygonFile and returns them as masked numpy arrays.
+def extract_aoi_data(polygon_file):
+    """Extracts pixels for each polygon in polygon_file and 
+       returns them as masked numpy arrays.
     
        Args:
-           polygonFile (str): the name of the input GeoJSON file.
+           polygon_file (str): the name of the input GeoJSON file. 
+           The input GeoJSON file must be a collection of Polygons or 
+           Multipolygons. Each feature must have an image_name property which
+           is a string indicating the name of the georeferenced image
+           corresponding to the feature. 
     
        Yields:
            Feature object and corresponding raster object. 
     """
     
     # use ogr module to load features
-    shp = ogr.Open(polygonFile)
+    shp = ogr.Open(polygon_file)
     lyr = shp.GetLayer()
-    featList = np.arange(lyr.GetFeatureCount())
-    sourceSR = lyr.GetSpatialRef()
+    feat_list = np.arange(lyr.GetFeatureCount())
+    source_SR = lyr.GetSpatialRef()
     
     # get all image catalog ids
-    image_catalog_ids = [lyr.GetFeature(FID).GetFieldAsString('cat_id') for FID in featList]
-    # get unique image catalog ids and counts
-    unique_image_catalog_ids, counts = np.unique(image_catalog_ids, return_counts = True)
-    no_unique_images = len(unique_image_catalog_ids)
-    imageList = range(0, no_unique_images)
+    image_names = [lyr.GetFeature(FID).GetFieldAsString('image_name') 
+                         for FID in feat_list]
+
+    # get unique images and counts
+    unique_image_names, counts = np.unique(image_names, return_counts = True)
+    no_unique_images = len(unique_image_names)
+    image_list = range(0, no_unique_images)
     # sort feature list by catalog id    
-    featListSorted = np.argsort(image_catalog_ids)
-    # counts_cumsum[i]:counts_cumsum[i+1] are the feature indices corresponding to image i
+    feat_sorted = np.argsort(image_names)
+    # counts_cumsum[i]:counts_cumsum[i+1] are the feature indices in image i
     counts_cumsum = np.hstack([0, np.cumsum(counts)])
     
-    for IID in imageList:
+    for IID in image_list:
 
         # get image path
-        image_catalog_id = unique_image_catalog_ids[IID]
-        rasterFilePath = os.path.join(images_dir, image_catalog_id, imagery_type) 
+        rasterFile = unique_image_names[IID] 
         
-        # pick first entry in path --- there should be one image file in there anyway
-        rasterFile = os.listdir(rasterFilePath)[0]
-        # get full path
-        rasterFile = os.path.join(rasterFilePath, rasterFile)
-
         # Get raster geo-reference info
         raster = gdal.Open(rasterFile)
         nbands = raster.RasterCount
-        # this doesn't work: datatype =  raster.GetDataTypeName() FIX IT!!!
-        datatype = gdal.GDT_Byte
         transform = raster.GetGeoTransform()
         xOrigin = transform[0]
         yOrigin = transform[3]
@@ -67,14 +65,14 @@ def extract_aoi_data(polygonFile):
         targetSR = osr.SpatialReference()
         targetSR.ImportFromWkt(raster.GetProjectionRef())
 
-        featListThisImage = featListSorted[counts_cumsum[IID]:counts_cumsum[IID+1]]
+        feat_this_image = feat_sorted[counts_cumsum[IID]:counts_cumsum[IID+1]]
 
-        for FID in featListThisImage:
+        for FID in feat_this_image:
         
             # this feature
             feat = lyr.GetFeature(FID)
              
-            coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
+            coordTrans = osr.CoordinateTransformation(source_SR, targetSR)
 
             # Reproject vector geometry to same projection as raster
             geom = feat.GetGeometryRef()
@@ -103,7 +101,7 @@ def extract_aoi_data(polygonFile):
                         pointsY.append(lat)
                         
             else:
-                sys.exit("ERROR: Geometry needs to be either Polygon or Multipolygon")
+                sys.exit("ERROR: Geometry needs to be Polygon or Multipolygon")
         
             xmin = min(pointsX)
             xmax = max(pointsX)
@@ -117,12 +115,10 @@ def extract_aoi_data(polygonFile):
             ycount = int((ymax - ymin)/pixelWidth)+1
         
             # Create memory target raster
-            # datatype =  raster.GetDataTypeName() ??? then target_ds = gdal.GetDriverByName('MEM').Create('', xcount, ycount, 1, datatype)
-            target_ds = gdal.GetDriverByName('MEM').Create('', xcount, ycount, 1, datatype)
-            target_ds.SetGeoTransform((
-                xmin, pixelWidth, 0,
-                ymax, 0, pixelHeight,
-            ))
+            target_ds = gdal.GetDriverByName('MEM').Create('', xcount, ycount, 
+                                                           1, gdal.GDT_Byte)
+            target_ds.SetGeoTransform( (xmin, pixelWidth, 0,
+                                        ymax, 0, pixelHeight,))
                
             # Create target raster projection 
             target_ds.SetProjection(targetSR.ExportToWkt())
@@ -140,276 +136,40 @@ def extract_aoi_data(polygonFile):
             datamask = datamask.transpose(2,0,1)
             
             # Mask zone of raster
-            zoneraster = np.ma.masked_array(dataraster,  np.logical_not(datamask))
+            zoneraster = np.ma.masked_array(dataraster, np.logical_not(datamask))
         
             yield ( feat, zoneraster )
 
 
-def extract_aoi_data_tifs(polygonFile, imagery_type):
-    """
-    THIS DOES NOT WORK AT THE MOMENT
-    Extracts pixels for each polygon in polygonFile and returns them as tiffs.
-    polygonFile is a GeoJSON which follows the specification in the README of the repo.
-    imagery_type is the type of imagery used by the classifier
-    """
+def simple_feature_extractor(data):
+    """Computes a feature vector from a data vector consisting of the mean, std 
+       and variance.
 
-    # get directory where imagery is stored
-    images_dir = os.getenv("IMAGES_DIR")
+       Args:
+           data (numpy array): data vector
 
-    # use ogr module to load features
-    shp = ogr.Open(polygonFile)
-    lyr = shp.GetLayer()
-    featList = np.arange(lyr.GetFeatureCount())
-    sourceSR = lyr.GetSpatialRef()
-    
-    # get all image catalog ids
-    image_catalog_ids = [lyr.GetFeature(FID).GetFieldAsString('cat_id') for FID in featList]
-    # get unique image catalog ids and counts
-    unique_image_catalog_ids, counts = np.unique(image_catalog_ids, return_counts = True)
-    no_unique_images = len(unique_image_catalog_ids)
-    imageList = range(0, no_unique_images)
-    # sort feature list by catalog id    
-    featListSorted = np.argsort(image_catalog_ids)
-    # counts_cumsum[i]:counts_cumsum[i+1] are the feature indices corresponding to image i
-    counts_cumsum = np.hstack([0, np.cumsum(counts)])
-    
-    aoi_section_counter = 1
-
-    for IID in imageList:
-
-        # get image path
-        image_catalog_id = unique_image_catalog_ids[IID]
-        rasterFilePath = os.path.join(images_dir, image_catalog_id, imagery_type) 
-        
-        # pick first entry in path --- there should be one image file in there anyway
-        rasterFile = os.listdir(rasterFilePath)[0]
-        # get full path
-        rasterFile = os.path.join(rasterFilePath, rasterFile)
-
-        # Get raster geo-reference info
-        raster = gdal.Open(rasterFile)
-        nbands = raster.RasterCount
-        # this doesn't work: datatype =  raster.GetDataTypeName() FIX IT!!!
-        datatype = gdal.GDT_Byte
-        transform = raster.GetGeoTransform()
-        xOrigin = transform[0]
-        yOrigin = transform[3]
-        pixelWidth = transform[1]
-        pixelHeight = transform[5]
-        targetSR = osr.SpatialReference()
-        targetSR.ImportFromWkt(raster.GetProjectionRef())
-
-        featListThisImage = featListSorted[counts_cumsum[IID]:counts_cumsum[IID+1]]
-
-        for FID in featListThisImage:
-        
-            # this feature
-            feat = lyr.GetFeature(FID)
-             
-            coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
-
-            # Reproject vector geometry to same projection as raster
-            geom = feat.GetGeometryRef()
-            geom.Transform(coordTrans)
-     
-            # Get extent of feat
-            if (geom.GetGeometryName() == 'MULTIPOLYGON'):
-                count = 0
-                pointsX = []; pointsY = []
-                for polygon in geom:
-                    geomInner = geom.GetGeometryRef(count)
-                    ring = geomInner.GetGeometryRef(0)
-                    numpoints = ring.GetPointCount()
-                    for p in range(numpoints):
-                            lon, lat, z = ring.GetPoint(p)
-                            pointsX.append(lon)
-                            pointsY.append(lat)
-                    count += 1
-            elif (geom.GetGeometryName() == 'POLYGON'):
-                ring = geom.GetGeometryRef(0)
-                numpoints = ring.GetPointCount()
-                pointsX = []; pointsY = []
-                for p in range(numpoints):
-                        lon, lat, z = ring.GetPoint(p)
-                        pointsX.append(lon)
-                        pointsY.append(lat)
-                        
-            else:
-                sys.exit("ERROR: Geometry needs to be either Polygon or Multipolygon")
-        
-            xmin = min(pointsX)
-            xmax = max(pointsX)
-            ymin = min(pointsY)
-            ymax = max(pointsY)
-        
-            # Specify offset and rows and columns to read
-            xoff = int((xmin - xOrigin)/pixelWidth)
-            yoff = int((yOrigin - ymax)/pixelWidth)
-            xcount = int((xmax - xmin)/pixelWidth)+1
-            ycount = int((ymax - ymin)/pixelWidth)+1
-        
-            # Create memory target raster
-            tif_name = 'aoi_section_' + str(aoi_section_counter) + '.tif'
-            
-            # Create target dataset
-            target_ds = gdal.GetDriverByName('GTiff').Create(tif_name, xcount, ycount, nbands, datatype)
-            
-            # Set the correct geo transform
-            target_ds.SetGeoTransform((
-                xmin, pixelWidth, 0,
-                ymax, 0, pixelHeight,
-            ))
-               
-            # Set projection 
-            target_ds.SetProjection(targetSR.ExportToWkt())
-
-            # Get data from original raster
-            dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.float)  
-
-            # Write to destination raster
-            if len(dataraster.shape)>2:
-                for k in xrange(0,nbands):
-                    band = target_ds.GetRasterBand(k+1)
-                    band.WriteArray( dataraster[k,:,:] )
-            else:
-                band = target_ds.GetRasterBand(1)
-                band.WriteArray(dataraster)
-            
-            yield tif_name
-
-
-def extract_aoi_tif(polygonFile, imagery_type):
-    """
-    Extracts pixels for the one and only polygon in polygonFile and returns this as a tiff.
-    polygonFile is a GeoJSON which follows the specification in the README of the repo.
-    imagery_type is the type of imagery used by the classifier
+       Yields:    
+           The feature vector [ mean(data), std(data), var(data) ]
     """
 
-    # get directory where imagery is stored
-    images_dir = os.getenv("IMAGES_DIR")
-
-    # use ogr module to load features
-    shp = ogr.Open(polygonFile)
-    lyr = shp.GetLayer()
-    featList = np.arange(lyr.GetFeatureCount())
-    sourceSR = lyr.GetSpatialRef()
-        
-    # get image path
-    image_catalog_id = lyr.GetFeature(0).GetFieldAsString('cat_id')
-    rasterFilePath = os.path.join(images_dir, image_catalog_id, imagery_type) 
-    
-    # pick first entry in path --- there should be one image file in there anyway
-    rasterFile = os.listdir(rasterFilePath)[0]
-    # get full path
-    rasterFile = os.path.join(rasterFilePath, rasterFile)
-
-    # Get raster geo-reference info
-    raster = gdal.Open(rasterFile)
-    nbands = raster.RasterCount
-    # this doesn't work: datatype =  raster.GetDataTypeName() FIX IT!!!
-    datatype = gdal.GDT_Byte
-    transform = raster.GetGeoTransform()
-    xOrigin = transform[0]
-    yOrigin = transform[3]
-    pixelWidth = transform[1]
-    pixelHeight = transform[5]
-    targetSR = osr.SpatialReference()
-    targetSR.ImportFromWkt(raster.GetProjectionRef())
-
-    # this feature
-    feat = lyr.GetFeature(0)
-     
-    coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
-
-    # Reproject vector geometry to same projection as raster
-    geom = feat.GetGeometryRef()
-    geom.Transform(coordTrans)
-
-    # Get extent of feat
-    if (geom.GetGeometryName() == 'MULTIPOLYGON'):
-        count = 0
-        pointsX = []; pointsY = []
-        for polygon in geom:
-            geomInner = geom.GetGeometryRef(count)
-            ring = geomInner.GetGeometryRef(0)
-            numpoints = ring.GetPointCount()
-            for p in range(numpoints):
-                    lon, lat, z = ring.GetPoint(p)
-                    pointsX.append(lon)
-                    pointsY.append(lat)
-            count += 1
-    elif (geom.GetGeometryName() == 'POLYGON'):
-        ring = geom.GetGeometryRef(0)
-        numpoints = ring.GetPointCount()
-        pointsX = []; pointsY = []
-        for p in range(numpoints):
-                lon, lat, z = ring.GetPoint(p)
-                pointsX.append(lon)
-                pointsY.append(lat)
-                
-    else:
-        sys.exit("ERROR: Geometry needs to be either Polygon or Multipolygon")
-
-    xmin = min(pointsX)
-    xmax = max(pointsX)
-    ymin = min(pointsY)
-    ymax = max(pointsY)
-
-    # Specify offset and rows and columns to read
-    xoff = int((xmin - xOrigin)/pixelWidth)
-    yoff = int((yOrigin - ymax)/pixelWidth)
-    xcount = int((xmax - xmin)/pixelWidth)+1
-    ycount = int((ymax - ymin)/pixelWidth)+1
-
-    # Create memory target raster
-    tif_name = 'aoi_section.tif'
-    
-    # Create target dataset
-    target_ds = gdal.GetDriverByName('GTiff').Create(tif_name, xcount, ycount, nbands, datatype)
-    
-    # Set the correct geo transform
-    target_ds.SetGeoTransform((
-        xmin, pixelWidth, 0,
-        ymax, 0, pixelHeight,
-    ))
-       
-    # Set projection 
-    target_ds.SetProjection(targetSR.ExportToWkt())
-
-    # Get data from original raster
-    dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.float)  
-
-    # Write to destination raster
-    if len(dataraster.shape)>2:
-        for k in xrange(0,nbands):
-            band = target_ds.GetRasterBand(k+1)
-            band.WriteArray( dataraster[k,:,:] )
-    else:
-        band = target_ds.GetRasterBand(1)
-        band.WriteArray(dataraster)
-           
-    return tif_name
+    yield [np.mean(data), np.std(data), np.var(data)]       
 
 
-def computeFeatureVectors(data):
-    # This should be a lot more sophisticated!
-    # Consider data normalization ( depending on classifier used )
-    # Consider generating a feature vector per pixel or histograms for example
-    # Consider computing additional features, e.g. band ratios etc.
-    yield [ np.mean(data), np.std(data), np.var(data) ]
+def train_model(polygon_file, classifier_file):
+    """Compute feature vector for each polygon in polygon_file, 
+       train random forest classifier and 
+       output classifier params in pickle file.
 
-
-def train_model(polygonFile, imagery_type, classifierFile):
-    """
-    Compute feature vector for each polygon in polygonFile, 
-    train random forest classifier and output classifier params in pickle file.
-    imagery_type is the type of imagery used by the classifier    
+       Args:
+           polygon_file (str): the name of the input GeoJSON file. 
+           classifier_file (str): the name of the classifier parameter file
+                                  with .pickle extension.   
     """          
     features = []
     labels = []
-    for (feat, data) in extract_aoi_data(polygonFile, imagery_type):        
+    for (feat, data) in extract_aoi_data(polygon_file, imagery_type):        
         label = feat.GetFieldAsString('class_name')
-        for featureVector in computeFeatureVectors(data):
+        for featureVector in simple_feature_extractor(data):
             features.append(featureVector)
             labels.append(label)
             print label, featureVector
@@ -417,12 +177,12 @@ def train_model(polygonFile, imagery_type, classifierFile):
     # train classifier
     X = np.array( features )
     y = np.array( labels )
-    # Using a simple random forest with default parameters for this demonstration
+    # Using a simple random forest with default parameters
     classifier = RandomForestClassifier()
     # train
     classifier.fit( X, y )
     # store model
-    with open(classifierFile,"w") as fh:
+    with open(classifier_file,"w") as fh:
         pickle.dump( classifier, fh )
 
 
@@ -435,7 +195,11 @@ def tfRasterToProj(x,y, geoTransform):
 
 def sliding_window_detector(rasterFile, classifier, winX, winY, stepX, stepY):
     """
-    Apply classifier over rasterFile using window (winX, winY) with step (stepX, stepY)
+    Apply classifier over rasterFile using window (winX, winY) 
+    with step (stepX, stepY).
+
+    Args:
+        rasterfile (str): 
     """
     raster = gdal.Open(rasterFile)
     nbands = raster.RasterCount
@@ -485,7 +249,7 @@ def sliding_window_detector(rasterFile, classifier, winX, winY, stepX, stepY):
     return features
 
 
-def detect(polygonFile, imagery_type, modelFile, outputfile, win, step):
+def detect(polygon_file, imagery_type, modelFile, outputfile, win, step):
     """
     Deploy classifier using sliding window over AOI.
     """
@@ -495,7 +259,7 @@ def detect(polygonFile, imagery_type, modelFile, outputfile, win, step):
         classifier = pickle.load(fh)    
     
     # apply sliding window detector on AOI     
-    this_tif = extract_aoi_tif(polygonFile, imagery_type)    
+    this_tif = extract_aoi_tif(polygon_file, imagery_type)    
     results = sliding_window_detector(this_tif, classifier, win, win, step, step)  
     
     # remove file if it already exists

@@ -1,0 +1,10 @@
+*.tif
+*.geojson
+*.pickle
+*.cpg
+*.dbf
+*.prj
+*.qpg
+*.shp
+*.shx
+*.pyc
