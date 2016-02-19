@@ -1,5 +1,5 @@
-API Documentation
-=================
+mltools
+=======
 
 .. toctree::
    :maxdepth: 4

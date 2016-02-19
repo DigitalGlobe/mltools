@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# mlalgos documentation build configuration file, created by
-# sphinx-quickstart on Thu Feb 18 14:41:14 2016.
+# mltools documentation build configuration file, created by
+# sphinx-quickstart on Fri Feb 19 09:36:11 2016.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -13,14 +13,14 @@
 # serve to show the default.
 
 import sys
-import os
 
+import os
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if not on_rtd:  # only import and set the theme if we're building docs locally
-		import sphinx_rtd_theme
-		html_theme = 'sphinx_rtd_theme'
-		html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    	import sphinx_rtd_theme
+    	html_theme = 'sphinx_rtd_theme'
+    	html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'mlalgos'
+project = u'mltools'
 copyright = u'2016, Kostas Stamatiou'
 author = u'Kostas Stamatiou'
 
@@ -209,7 +209,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'mlalgosdoc'
+htmlhelp_basename = 'mltoolsdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -231,7 +231,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'mlalgos.tex', u'mlalgos Documentation',
+    (master_doc, 'mltools.tex', u'mltools Documentation',
      u'Kostas Stamatiou', 'manual'),
 ]
 
@@ -261,7 +261,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'mlalgos', u'mlalgos Documentation',
+    (master_doc, 'mltools', u'mltools Documentation',
      [author], 1)
 ]
 
@@ -275,8 +275,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'mlalgos', u'mlalgos Documentation',
-     author, 'mlalgos', 'One line description of project.',
+    (master_doc, 'mltools', u'mltools Documentation',
+     author, 'mltools', 'One line description of project.',
      'Miscellaneous'),
 ]
 

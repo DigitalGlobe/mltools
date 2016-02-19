@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>mlalgos &mdash; mlalgos 0.0.1 documentation</title>
+  <title>mltools &mdash; mltools 0.0.1 documentation</title>
   
 
   
@@ -30,8 +30,8 @@
   
 
   
-    <link rel="top" title="mlalgos 0.0.1 documentation" href="#"/>
-        <link rel="next" title="API Documentation" href="modules.html"/> 
+    <link rel="top" title="mltools 0.0.1 documentation" href="#"/>
+        <link rel="next" title="mltools" href="modules.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -49,7 +49,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> mlalgos
+            <a href="#" class="icon icon-home"> mltools
           
 
           
@@ -81,7 +81,7 @@
             
             
                 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">mltools</a></li>
 </ul>
 
             
@@ -95,7 +95,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">mlalgos</a>
+        <a href="#">mltools</a>
       </nav>
 
 
@@ -112,7 +112,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="#">Docs</a> &raquo;</li>
       
-    <li>mlalgos</li>
+    <li>mltools</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -126,21 +126,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="mlalgos">
-<h1>mlalgos<a class="headerlink" href="#mlalgos" title="Permalink to this headline">¶</a></h1>
-<p>A collection of (un)supervised Machine Learning (ML) Algorithms (MLA) and ML Tools for object detection
-and classification on satellite imagery.</p>
+  <div class="section" id="mltools">
+<h1>mltools<a class="headerlink" href="#mltools" title="Permalink to this headline">¶</a></h1>
+<p>(Disclaimer: work in progress...)</p>
+<p>A collection of (un)supervised Machine Learning (ML) Tools for object detection and classification on satellite imagery.</p>
+<p>Full documentation is hosted here: <a class="reference external" href="http://mltools.readthedocs.org/en/latest/">http://mltools.readthedocs.org/en/latest/</a></p>
 <p>Installation will be easy:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>pip install mlalgos
-</pre></div>
-</div>
-<p>Then:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mlalgos</span>
-</pre></div>
-</div>
-<p>MLAs are implemented using standard ML packages such as scikit-learn and tensorflow.
+<p>pip install mltools</p>
+<p>ML Algorithms (MLAs) are implemented using standard ML libraries such as scikit-learn and tensorflow.
 MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.</p>
-<p>The purpose of mlalgos is to enable fast prototyping of object detection and classification solutions employing
+<p>The purpose of this repository is to enable fast prototyping of object detection and classification solutions employing
 one of the existing algorithms or by constructing new ones based on the provided modular tools.</p>
 <p>The input of a MLA is one or more of the following:</p>
 <ul class="simple">
@@ -149,15 +144,17 @@ one of the existing algorithms or by constructing new ones based on the provided
 <li>a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;</li>
 <li>a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier;</li>
 </ul>
-<p>The output of a MLApp is one or more of the following:</p>
+<p>The output of a MLA is one or more of the following:</p>
 <ul class="simple">
 <li>one or more processed images</li>
 <li>an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;</li>
 </ul>
-<p>Imagery in the format required by a MLApp (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (<a class="reference external" href="https://github.com/kostasthebarbarian/gbdxtools">https://github.com/kostasthebarbarian/gbdxtools</a>). You need GBDX credentials to use gbdxtools.</p>
+<p>The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:</p>
+<p><a class="reference external" href="https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing">https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing</a></p>
+<p>Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (<a class="reference external" href="https://github.com/kostasthebarbarian/gbdxtools">https://github.com/kostasthebarbarian/gbdxtools</a>). You need GBDX credentials to use gbdxtools.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">API Documentation</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">mltools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="algos.html">algos package</a></li>
 </ul>
 </li>
@@ -172,7 +169,7 @@ one of the existing algorithms or by constructing new ones based on the provided
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="modules.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="modules.html" class="btn btn-neutral float-right" title="mltools" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
     </div>

@@ -1,26 +1,26 @@
-.. mlalgos documentation master file, created by
-   sphinx-quickstart on Thu Feb 18 14:41:14 2016.
+.. mltools documentation master file, created by
+   sphinx-quickstart on Fri Feb 19 09:36:11 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-mlalgos
+mltools
 =======
 
-A collection of (un)supervised Machine Learning (ML) Algorithms (MLA) and ML Tools for object detection 
-and classification on satellite imagery.
+(Disclaimer: work in progress...)
+
+A collection of (un)supervised Machine Learning (ML) Tools for object detection and classification on satellite imagery.
+
+Full documentation is hosted here: http://mltools.readthedocs.org/en/latest/
 
 Installation will be easy::
 
-	pip install mlalgos
+pip install mltools
 
-Then::
 
-	import mlalgos
-
-MLAs are implemented using standard ML packages such as scikit-learn and tensorflow. 
+ML Algorithms (MLAs) are implemented using standard ML libraries such as scikit-learn and tensorflow. 
 MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
 
-The purpose of mlalgos is to enable fast prototyping of object detection and classification solutions employing
+The purpose of this repository is to enable fast prototyping of object detection and classification solutions employing
 one of the existing algorithms or by constructing new ones based on the provided modular tools.
 
 The input of a MLA is one or more of the following:
@@ -30,12 +30,16 @@ The input of a MLA is one or more of the following:
 + a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 + a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
-The output of a MLApp is one or more of the following:
+The output of a MLA is one or more of the following:
 
 + one or more processed images
 + an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
-Imagery in the format required by a MLApp (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). You need GBDX credentials to use gbdxtools.
+The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:
+
+https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing
+
+Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). You need GBDX credentials to use gbdxtools.
 
 .. toctree::
    :maxdepth: 2

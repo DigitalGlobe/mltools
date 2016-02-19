@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>algos.vanilla_detector package &mdash; mlalgos 0.0.1 documentation</title>
+  <title>algos.vanilla_detector package &mdash; mltools 0.0.1 documentation</title>
   
 
   
@@ -30,7 +30,9 @@
   
 
   
-    <link rel="top" title="mlalgos 0.0.1 documentation" href="index.html"/> 
+    <link rel="top" title="mltools 0.0.1 documentation" href="index.html"/>
+        <link rel="up" title="algos package" href="algos.html"/>
+        <link rel="prev" title="algos.vanilla_classifier package" href="algos.vanilla_classifier.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -48,7 +50,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> mlalgos
+            <a href="index.html" class="icon icon-home"> mltools
           
 
           
@@ -79,8 +81,20 @@
           
             
             
-                <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules.html">API Documentation</a></li>
+                <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">mltools</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="algos.html">algos package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="algos.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="algos.demo_machine.html">algos.demo_machine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="algos.vanilla_classifier.html">algos.vanilla_classifier package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="">algos.vanilla_detector package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="algos.html#module-algos">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -94,7 +108,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">mlalgos</a>
+        <a href="index.html">mltools</a>
       </nav>
 
 
@@ -110,6 +124,10 @@
 <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="modules.html">mltools</a> &raquo;</li>
+      
+          <li><a href="algos.html">algos package</a> &raquo;</li>
       
     <li>algos.vanilla_detector package</li>
       <li class="wy-breadcrumbs-aside">
@@ -133,51 +151,37 @@
 <div class="section" id="module-algos.vanilla_detector.vanilla_detector">
 <span id="algos-vanilla-detector-vanilla-detector-module"></span><h2>algos.vanilla_detector.vanilla_detector module<a class="headerlink" href="#module-algos.vanilla_detector.vanilla_detector" title="Permalink to this headline">¶</a></h2>
 <p>Authors: Kostas Stamatiou, Carsten Tusk
-Contact: <a class="reference external" href="mailto:kostas&#46;stamatiou&#37;&#52;&#48;digitalglobe&#46;com">kostas<span>&#46;</span>stamatiou<span>&#64;</span>digitalglobe<span>&#46;</span>com</a>
-Name: Vanilla detector
-General info: sliding window, heavily based on Carsten&#8217;s demo_machine</p>
-<dl class="function">
-<dt id="algos.vanilla_detector.vanilla_detector.computeFeatureVectors">
-<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">computeFeatureVectors</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.computeFeatureVectors" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+Contact: <a class="reference external" href="mailto:kostas&#46;stamatiou&#37;&#52;&#48;digitalglobe&#46;com">kostas<span>&#46;</span>stamatiou<span>&#64;</span>digitalglobe<span>&#46;</span>com</a>, <a class="reference external" href="mailto:ctusk&#37;&#52;&#48;digitalglobe&#46;com">ctusk<span>&#64;</span>digitalglobe<span>&#46;</span>com</a>
+Name: Vanilla detector</p>
 <dl class="function">
 <dt id="algos.vanilla_detector.vanilla_detector.detect">
-<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">detect</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em>, <em>modelFile</em>, <em>outputfile</em>, <em>win</em>, <em>step</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.detect" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">detect</code><span class="sig-paren">(</span><em>polygon_file</em>, <em>imagery_type</em>, <em>modelFile</em>, <em>outputfile</em>, <em>win</em>, <em>step</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.detect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deploy classifier using sliding window over AOI.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="algos.vanilla_detector.vanilla_detector.extract_aoi_data">
-<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_data</code><span class="sig-paren">(</span><em>polygonFile</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extracts pixels for each polygon in polygonFile and returns them as masked numpy arrays.</p>
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_data</code><span class="sig-paren">(</span><em>polygon_file</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts pixels for each polygon in polygon_file and
+returns them as masked numpy arrays.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>polygonFile</strong> (<em>str</em>) &#8211; the name of the input GeoJSON file.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>polygon_file</strong> (<em>str</em>) &#8211; the name of the input GeoJSON file.</li>
+<li><strong>input GeoJSON file must be a collection of Polygons or</strong> (<em>The</em>) &#8211; </li>
+<li><strong>Each feature must have an image_name property which</strong> (<em>Multipolygons.</em>) &#8211; </li>
+<li><strong>a string indicating the name of the georeferenced image</strong> (<em>is</em>) &#8211; </li>
+<li><strong>to the feature.</strong> (<em>corresponding</em>) &#8211; </li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body">Feature object and corresponding raster object.</td>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body"><p class="first last">Feature object and corresponding raster object.</p>
+</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="algos.vanilla_detector.vanilla_detector.extract_aoi_data_tifs">
-<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_data_tifs</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_data_tifs" title="Permalink to this definition">¶</a></dt>
-<dd><p>THIS DOES NOT WORK AT THE MOMENT
-Extracts pixels for each polygon in polygonFile and returns them as tiffs.
-polygonFile is a GeoJSON which follows the specification in the README of the repo.
-imagery_type is the type of imagery used by the classifier</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="algos.vanilla_detector.vanilla_detector.extract_aoi_tif">
-<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">extract_aoi_tif</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.extract_aoi_tif" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extracts pixels for the one and only polygon in polygonFile and returns this as a tiff.
-polygonFile is a GeoJSON which follows the specification in the README of the repo.
-imagery_type is the type of imagery used by the classifier</p>
 </dd></dl>
 
 <dl class="function">
@@ -209,9 +213,35 @@ project directory.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="algos.vanilla_detector.vanilla_detector.simple_feature_extractor">
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">simple_feature_extractor</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.simple_feature_extractor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a feature vector from a data vector consisting of the mean, std
+and variance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>numpy array</em>) &#8211; data vector</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Yields:</th><td class="field-body">The feature vector [ mean(data), std(data), var(data) ]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="algos.vanilla_detector.vanilla_detector.sliding_window_detector">
 <code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">sliding_window_detector</code><span class="sig-paren">(</span><em>rasterFile</em>, <em>classifier</em>, <em>winX</em>, <em>winY</em>, <em>stepX</em>, <em>stepY</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.sliding_window_detector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply classifier over rasterFile using window (winX, winY) with step (stepX, stepY)</p>
+<dd><p>Apply classifier over rasterFile using window (winX, winY)
+with step (stepX, stepY).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rasterfile</strong> (<em>str</em>) &#8211; </td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -222,10 +252,23 @@ project directory.</p>
 
 <dl class="function">
 <dt id="algos.vanilla_detector.vanilla_detector.train_model">
-<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">train_model</code><span class="sig-paren">(</span><em>polygonFile</em>, <em>imagery_type</em>, <em>classifierFile</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.train_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute feature vector for each polygon in polygonFile,
-train random forest classifier and output classifier params in pickle file.
-imagery_type is the type of imagery used by the classifier</p>
+<code class="descclassname">algos.vanilla_detector.vanilla_detector.</code><code class="descname">train_model</code><span class="sig-paren">(</span><em>polygon_file</em>, <em>classifier_file</em><span class="sig-paren">)</span><a class="headerlink" href="#algos.vanilla_detector.vanilla_detector.train_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute feature vector for each polygon in polygon_file,
+train random forest classifier and
+output classifier params in pickle file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>polygon_file</strong> (<em>str</em>) &#8211; the name of the input GeoJSON file.</li>
+<li><strong>classifier_file</strong> (<em>str</em>) &#8211; the name of the classifier parameter file
+with .pickle extension.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -243,6 +286,13 @@ imagery_type is the type of imagery used by the classifier</p>
            </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="algos.vanilla_classifier.html" class="btn btn-neutral" title="algos.vanilla_classifier package" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
