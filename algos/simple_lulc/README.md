@@ -1,6 +1,6 @@
 ## Simple Land Use Land Cover Classifier
 
-This is a simple, supervised Land Use Land Cover (LULC) Classifier.
+This is a simple, supervised Land Use Land Cover (LULC) classifier.
 It segments an entire image in tiles and classifies each tile based on a given set of classes.
 Training data consists of a set of labeled geometries which have been selected from the same image.  
 
@@ -11,7 +11,7 @@ Training data consists of a set of labeled geometries which have been selected f
 
 ~~~json
 {"params":{"window_size":100, "step_size":100},
-"image_file": "aoi.tif"
+"image_file": "aoi.tif",
 "train_file": "train.geojson",
 "output_file": "output.geojson"}
 ~~~ 
@@ -38,12 +38,7 @@ train.geojson must contain at least two classes.
 
 ### Requirements
 
-python
-numpy
-scipy
-scikit-learn
-gdal
-reportlab
+python, numpy, scipy, scikit-learn, gdal, reportlab
 
 
 ### Comments

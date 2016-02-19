@@ -1,4 +1,10 @@
-*.pyc
 *.tif
 *.geojson
-*.json
+*.pickle
+*.cpg
+*.dbf
+*.prj
+*.qpg
+*.shp
+*.shx
+*.pyc
