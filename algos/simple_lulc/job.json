@@ -1,0 +1,4 @@
+{"params":{"window_size":100, "step_size":100},
+"image_file": "hkharbor.tif",
+"train_file": "train.geojson",
+"output_file": "output.geojson"}

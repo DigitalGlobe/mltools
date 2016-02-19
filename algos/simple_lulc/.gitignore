@@ -1,5 +1,6 @@
 *.tif
 *.geojson
+*.json
 *.pickle
 *.cpg
 *.dbf
@@ -8,3 +9,4 @@
 *.shp
 *.shx
 *.pyc
+*.qgs
