@@ -2,7 +2,7 @@
 
 (Disclaimer: work in progress...)
 
-A collection of (un)supervised Machine Learning (ML) Tools for object detection and classification on satellite imagery.
+A collection of Machine Learning (ML) Tools for object detection and classification on satellite imagery.
 
 Full documentation is hosted here: http://mltools.readthedocs.org/en/latest/
 
@@ -12,8 +12,7 @@ Installation will be easy:
 pip install mltools
 ~~~
 
-ML Algorithms (MLAs) are implemented using standard ML libraries such as scikit-learn and tensorflow. 
-MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
+ML Algorithms (MLAs) (either supervised or unsupervised) are implemented using standard ML libraries such as scikit-learn and tensorflow. MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
 
 The purpose of this repository is to enable fast prototyping of object detection and classification solutions employing
 one of the existing algorithms or by constructing new ones based on the provided modular tools.
