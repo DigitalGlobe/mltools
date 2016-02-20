@@ -13,9 +13,9 @@ Input
 .. highlights::
 
    {"params":{"window_size":100, "step_size":100},
-    "image_file": "aoi.tif",
-    "train_file": "train.geojson",
-    "output_file": "output.geojson"}
+   "image_file": "aoi.tif",
+   "train_file": "train.geojson",
+   "output_file": "output.geojson"}
 
 window_size is the tile size in pixels. step_size is the stride of the window in pixels. train_file is the name 
 of the geojson file containing labeled geometries belonging to the image.
