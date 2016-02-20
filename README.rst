@@ -9,7 +9,7 @@ Full documentation is hosted here: http://mltools.readthedocs.org/en/latest/
 
 Installation will be easy:
 
-.. highlights:
+.. highlights::
 
    pip install mltools
 
