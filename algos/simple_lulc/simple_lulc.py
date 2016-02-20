@@ -1,9 +1,11 @@
 '''
 Simple LULC.
 
-This code is meant to illustrate the general workflow of a classification engine.
+This code is meant to illustrate the general workflow of 
+a classification engine.
 
-Please keep in mind that writing an actually well performing classification engine is beyond the scope of this demo.
+Please keep in mind that writing an actually well performing classification 
+engine is beyond the scope of this demo.
 Things are kept very very simple for illustrative purposes.
 
 @authors:    Carsten Tusk, Kostas Stamatiou
@@ -13,25 +15,34 @@ Things are kept very very simple for illustrative purposes.
 
 import sys
 import os
-import pickle
 import gdal, ogr, osr
 import numpy as np
+import json
 
 from sklearn.ensemble import RandomForestClassifier 
-from reportlab.lib.testutils import outputfile
 
 __version__ = 0.1
 __date__ = '2016-02-19'
 __updated__ = '2016-02-19'
 
 
-def extract_aoi_data(polygonFile, rasterFile):
-    """ Generator. Extracts pixels for each polygon in polygonFile from rasterFile and returns them as masked numpy arrays"""
+def extract_pixels(polygon_file, raster_file):
+    """Extracts pixels for each polygon in polygon_file from raster_file.
+
+       Args:
+           polygon_file (str): Filename. Collection of geometries in 
+                               geojson or shp format.
+           raster_file (str): Image filename.
+       
+       Yields:
+           Feature object and corresponding masked numpy array.
+    """
+
     # Open data
-    raster = gdal.Open(rasterFile)
+    raster = gdal.Open(raster_file)
     nbands = raster.RasterCount
     
-    shp = ogr.Open(polygonFile)
+    shp = ogr.Open(polygon_file)
     lyr = shp.GetLayer()
     featList = range(lyr.GetFeatureCount())
 
@@ -45,10 +56,10 @@ def extract_aoi_data(polygonFile, rasterFile):
     sourceSR = lyr.GetSpatialRef()
     targetSR = osr.SpatialReference()
     targetSR.ImportFromWkt(raster.GetProjectionRef())
-    coordTrans = osr.CoordinateTransformation(sourceSR,targetSR)
-    featList = range(lyr.GetFeatureCount())
-
+    coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
+    
     for FID in featList:
+
         feat = lyr.GetFeature(FID)
     
         # Reproject vector geometry to same projection as raster
@@ -79,7 +90,7 @@ def extract_aoi_data(polygonFile, rasterFile):
                     pointsY.append(lat)
     
         else:
-            sys.exit("ERROR: Geometry needs to be either Polygon or Multipolygon")
+            sys.exit("ERROR: Geometry needs to be Polygon or Multipolygon")
     
         xmin = min(pointsX)
         xmax = max(pointsX)
@@ -93,7 +104,8 @@ def extract_aoi_data(polygonFile, rasterFile):
         ycount = int((ymax - ymin)/pixelWidth)+1
     
         # Create memory target raster
-        target_ds = gdal.GetDriverByName('MEM').Create('', xcount, ycount, 1, gdal.GDT_Byte)
+        target_ds = gdal.GetDriverByName('MEM').Create('', 
+                    xcount, ycount, 1, gdal.GDT_Byte)
         target_ds.SetGeoTransform((
             xmin, pixelWidth, 0,
             ymax, 0, pixelHeight,
@@ -108,7 +120,8 @@ def extract_aoi_data(polygonFile, rasterFile):
         gdal.RasterizeLayer(target_ds, [1], lyr, burn_values=[1])    
     
         # Read raster as arrays    
-        dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount).astype(np.float)
+        dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount)
+        dataraster = dataraster.astype(np.float)
     
         datamask = target_ds.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
     
@@ -117,21 +130,100 @@ def extract_aoi_data(polygonFile, rasterFile):
         datamask = datamask.transpose(2,0,1)
         
         # Mask zone of raster
-        zoneraster = np.ma.masked_array(dataraster,  np.logical_not(datamask))
+        zoneraster = np.ma.masked_array(dataraster, np.logical_not(datamask))
     
-        yield ( feat, zoneraster )
+        yield (feat, zoneraster)
 
 
-def tfRasterToProj(x,y, geoTransform):
-    """Converts coordinates from raster pixel to projected coordinate system"""    
+def simple_feature_extractor(data):
+    """Simple feature extractor.
+
+       Args:
+           data (numpy array): Pixel data vector.
+
+       Yields:
+           A vector with the mean, std and variance of data.
+    """
+
+    yield [ np.mean(data), np.std(data), np.var(data) ]
+
+
+def tf_raster_to_proj(x,y, geoTransform):
+    """Converts coordinates from raster pixel to projected coordinate system.
+
+       Args:
+           x (float): x coordinate.
+           y (float): y coordinate.
+           geoTransform (float tuple): Geotransform of gdal.Dataset.
+
+       Returns:
+           New x coordinate (float) and y coordinate (float).
+    """    
     dfGeoX = geoTransform[0] + geoTransform[1] * x + geoTransform[2] * y;
     dfGeoY = geoTransform[3] + geoTransform[4] * x + geoTransform[5] * y;    
     return dfGeoX, dfGeoY
 
 
-def sliding_window_detector(rasterFile, classifier, winX, winY, stepX, stepY):
+def train_model(polygon_file, raster_file, classifier):
+    """Train classifier and output classifier parameters.
+
+       Args:
+           polygon_file (str): Filename. Collection of geometries in 
+                               geojson or shp format.
+           raster_file (str): Image filename.
+           classifier (object): instance of one of many supervised classifier
+                                classes supported by scikit-learn
+       
+       Returns:
+           Trained classifier (object).                                             
+    """
+    # compute feature vectors for each polygon
+    features = []
+    labels = []
+    for (feat,data) in extract_pixels(polygon_file, raster_file):        
+        label = feat.GetFieldAsString('class_name')
+        for featureVector in simple_feature_extractor(data):
+            features.append(featureVector)
+            labels.append( label )
+            print label, featureVector
+            
+    # train classifier
+    X, y = np.array(features), np.array(labels)
+    # train
+    classifier.fit( X, y )
+    # # store model
+    # with open(classifier_file,"w") as fh:
+    #     pickle.dump( classifier, fh )
+    return classifier
+
+    print 'Done!'    
+
+
+def sliding_window_classifier(raster_file, classifier, 
+                              winX, winY, stepX, stepY):
+    """Applies classifier on raster_file.
+
+       Args: 
+           raster_file (str): Image filename.
+           classifier (object): instance of one of many supervised classifier
+                                classes supported by scikit-learn
+           winX (int): window x size in pixels.
+           winY (int): window y size in pixels.
+           stepX (int): step x size in pixels.
+           stepY (int): step y size in pixels.
+
+       Returns:
+           Feature list. Each feature is a dictionary with 
+           a class_name key and a geometry key.    
+    """
+    
+    # in case classifier is in pickle format
+    # # get classifier parameters
+    # with open(modelfile,"r") as fh:
+    #     classifier = pickle.load(fh)
+
     # Open data
-    raster = gdal.Open(rasterFile)
+    raster = gdal.Open(raster_file)
     nbands = raster.RasterCount
     w = raster.RasterXSize
     h = raster.RasterYSize
@@ -153,24 +245,32 @@ def sliding_window_detector(rasterFile, classifier, winX, winY, stepX, stepY):
         while w-x0 >= winX:
             # Create geometry
             ring = ogr.Geometry(ogr.wkbLinearRing)
-            xc,yc = tfRasterToProj(x0,y0,geoTransform); ring.AddPoint( xc,yc )
-            xc,yc = tfRasterToProj(x0+winX,y0,geoTransform); ring.AddPoint( xc,yc )
-            xc,yc = tfRasterToProj(x0+winX,y0+winY,geoTransform); ring.AddPoint( xc,yc )
-            xc,yc = tfRasterToProj(x0,y0+winY,geoTransform); ring.AddPoint( xc,yc )            
-            xc,yc = tfRasterToProj(x0,y0,geoTransform); ring.AddPoint( xc,yc )
+            xc,yc = tf_raster_to_proj(x0,y0,geoTransform)
+            ring.AddPoint( xc,yc )
+            xc,yc = tf_raster_to_proj(x0+winX,y0,geoTransform)
+            ring.AddPoint( xc,yc )
+            xc,yc = tf_raster_to_proj(x0+winX,y0+winY,geoTransform)
+            ring.AddPoint( xc,yc )
+            xc,yc = tf_raster_to_proj(x0,y0+winY,geoTransform)
+            ring.AddPoint( xc,yc )            
+            xc,yc = tf_raster_to_proj(x0,y0,geoTransform)
+            ring.AddPoint( xc,yc )
             poly = ogr.Geometry(ogr.wkbPolygon)
             poly.AddGeometry(ring)
+
             # Transform to target SRS
             poly.Transform(coordTrans)
 
             # Read data            
             data = raster.ReadAsArray(x0, y0, winX, winY).astype(np.float)
-            # Classify data. Now this depends on if there is one or many feature vectors being computed
-            # handle those cases accordingly, maybe a majority decision, maybe count labels, etc
-            for featureVector in computeFeatureVectors(data):
+            # Classify data. Now this depends on if there is one or many 
+            # feature vectors being computed
+            # handle those cases accordingly, maybe a majority decision, 
+            # maybe count labels, etc
+            for featureVector in simple_feature_extractor(data):
                 labels = classifier.predict(featureVector)
                         
-            features.append({"Class":labels[0], "geom": poly})
+            features.append({"class_name":labels[0], "geometry": poly})
             
             x0 += stepX
         y0 += stepY
@@ -178,12 +278,20 @@ def sliding_window_detector(rasterFile, classifier, winX, winY, stepX, stepY):
     return features
 
 
-def writeResults(features, outputfile):
+def write_results(features, output_file):
+    """Writes feature list to geojson file.
+
+       Args:
+           features (list): Feature list. Each feature is a dictionary with 
+                            a class_name key and a geometry key.
+           output_file (str): Output filename (extension .geojson)
+    """
+
     # set up the driver
     driver = ogr.GetDriverByName("GeoJSON")
     
     # create the data source
-    data_source = driver.CreateDataSource(outputfile)
+    data_source = driver.CreateDataSource(output_file)
     
     # create the spatial reference, WGS84
     srs = osr.SpatialReference()
@@ -193,71 +301,71 @@ def writeResults(features, outputfile):
     layer = data_source.CreateLayer("results", srs, ogr.wkbPolygon)
     
     # Add the fields we're interested in
-    field_name = ogr.FieldDefn("Class", ogr.OFTString)
+    field_name = ogr.FieldDefn("class_name", ogr.OFTString)
     field_name.SetWidth(24)
     layer.CreateField(field_name)
-    #layer.CreateField(ogr.FieldDefn("Score", ogr.OFTReal))
+    #layer.CreateField(ogr.FieldDefn("score", ogr.OFTReal))
     
     # Process the text file and add the attributes and features to the shapefile
     for f in features:
-      # create the feature
-      feature = ogr.Feature(layer.GetLayerDefn())
-      # Set the attributes using the values from the delimited text file
-      feature.SetField("Class", f['Class'])
-      #feature.SetField("Score", f['Score'])
-    
-      # Set the feature geometry using the point
-      feature.SetGeometry(f['geom'])
-      # Create the feature in the layer (shapefile)
-      layer.CreateFeature(feature)
-      # Destroy the feature to free resources
-      feature.Destroy()
+        # create the feature
+        feature = ogr.Feature(layer.GetLayerDefn())
+        # Set the attributes using the values from the delimited text file
+        feature.SetField("class_name", f['class_name'])
+        #feature.SetField("score", f['score'])
+
+        # Set the feature geometry using the point
+        feature.SetGeometry(f['geometry'])
+
+        # Create the feature in the layer (shapefile)
+        layer.CreateFeature(feature)
+
+        # Destroy the feature to free resources
+        feature.Destroy()
     
     # Destroy the data source to free resources
     data_source.Destroy()            
-
-
-def computeFeatureVectors(data):
-    # This should be a lot more sophisticated!
-    # Consider data normalization ( depending on classifier used )
-    # Consider generating a feature vector per pixel or histograms for example
-    # Consider computing additional features, e.g. band ratios etc.
-    yield [ np.average(data),np.mean(data),np.std(data),np.var(data) ]
-
-
-def train_model(polygonFile,rasterFile, outputfile):
-    # compute feature vectors for each polygon
-    features = []
-    labels = []
-    for (feat,data) in extract_aoi_data(polygonFile, rasterFile):        
-        label = feat.GetFieldAsString('rclass')
-        for featureVector in computeFeatureVectors(data):
-            features.append(featureVector)
-            labels.append( label )
-            print label, featureVector
-            
-    # train classifier
-    X = np.array( features )
-    y = np.array( labels )
-    # Using a simple random forest with default parameters for this demonstration
-    classifier = RandomForestClassifier()
-    # train
-    classifier.fit( X, y )
-    # store model
-    with open(outputfile,"w") as fh:
-        pickle.dump( classifier, fh )
-
     
-def apply_model(rasterFile, modelfile, outputfile):
-    with open(modelfile,"r") as fh:
-        classifier = pickle.load(fh)
-    results = sliding_window_detector(rasterFile,classifier,50,50,50,50)
-    if os.path.exists(outputfile):
-        os.remove(outputfile)
-    writeResults(results, outputfile)
-
   
+def main(job_file):
+    """Runs the simple_lulc workflow.
 
-def main(job_json):
+       Args:
+           job_file (str): Job filename (.json, see README of this repo) 
+    """    
+   
+    # get job parameters
+    job = json.load(open(job_file, 'r'))
+    window_size = job["params"]["window_size"]
+    step_size = job["params"]["step_size"]
+    image_file = job["image_file"]
+    train_file = job["train_file"]
+    output_file = job["output_file"]
+
+    # Using a simple random forest with default parameters 
+    # for this demonstration
+    classifier = RandomForestClassifier()
+        
+    print "Train model"
+    trained_classifier = train_model(train_file, image_file, classifier)
+    
+    print "Apply model"
+    results = sliding_window_classifier(image_file, trained_classifier,
+                                        window_size, window_size, 
+                                        step_size, step_size)
+
+    print "Write results"    
+    
+    # if file exists, remove 
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    write_results(results, output_file)
+
+    print "Done!"
+   
+
+
+
 
 
