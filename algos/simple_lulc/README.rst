@@ -10,7 +10,7 @@ Input
 
 - job.json
 
-.. highlights::
+.. code-block:: javascript
 
    {"params":{"window_size":100, "step_size":100},
    "image_file": "aoi.tif",
