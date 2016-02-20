@@ -1,4 +1,5 @@
-# mltools
+mltools
+=======
 
 (Disclaimer: work in progress...)
 
@@ -8,9 +9,9 @@ Full documentation is hosted here: http://mltools.readthedocs.org/en/latest/
 
 Installation will be easy:
 
-~~~
-pip install mltools
-~~~
+.. highlights:
+
+   pip install mltools
 
 ML Algorithms (MLAs) (either supervised or unsupervised) are implemented using standard ML libraries such as scikit-learn and tensorflow. MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
 
@@ -19,15 +20,15 @@ one of the existing algorithms or by constructing new ones based on the provided
 
 The input of a MLA is one or more of the following:
 
-+ one or more images;
-+ a job.json specifying the parameters of the MLA;
-+ a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
-+ a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier;
+- one or more images;
+- a job.json specifying the parameters of the MLA;
+- a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
+- a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
 The output of a MLA is one or more of the following:
 
-+ one or more processed images
-+ an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
+- one or more processed images
+- an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
 The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:
 
