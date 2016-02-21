@@ -10,6 +10,7 @@
 *.shx
 *.pyc
 *.qgs
+*.qgs~
 *.qpj
 *.aux
 *.xml
