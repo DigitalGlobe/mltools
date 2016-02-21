@@ -11,3 +11,5 @@
 *.pyc
 *.qgs
 *.qpj
+*.aux
+*.xml
