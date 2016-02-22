@@ -34,6 +34,9 @@ of the geojson file containing labeled geometries belonging to the image.
 
 train.geojson must contain at least two classes. 
 
+Output
+-----
+
 - output.geojson: contains a collection of all classified tiles. 
 
 
