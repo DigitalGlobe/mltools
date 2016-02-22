@@ -52,7 +52,7 @@ train.geojson must contain at least two classes.
 Output
 -----
 
-- output.geojson: contains a collection of all classified objects in target.geojson. 
+- output.geojson: Contains all objects in target.geojson, classified. 
 
 
 Requirements
