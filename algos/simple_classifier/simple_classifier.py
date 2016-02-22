@@ -1,12 +1,5 @@
 '''
-Simple LULC.
-
-This code is meant to illustrate the general workflow of 
-a classification engine.
-
-Please keep in mind that writing an actually well performing classification 
-engine is beyond the scope of this demo.
-Things are kept very very simple for illustrative purposes.
+Simple classifier.
 
 @authors:    Carsten Tusk, Kostas Stamatiou
 @copyright:  2016 DigitalGlobe Inc. All rights reserved.
@@ -22,20 +15,22 @@ import json
 from sklearn.ensemble import RandomForestClassifier 
 
 __version__ = 0.1
-__date__ = '2016-02-19'
-__updated__ = '2016-02-19'
+__date__ = '2016-02-22'
+__updated__ = '2016-02-22'
 
 
-def extract_pixels(polygon_file, raster_file):
+def extract_pixels(polygon_file, raster_file, geom_sr = None):
     """Extracts pixels for each polygon in polygon_file from raster_file.
 
        Args:
            polygon_file (str): Filename. Collection of geometries in 
                                geojson or shp format.
            raster_file (str): Image filename.
+           geom_sr (osr object): Geometry spatial reference system (srs). 
+                                 If None, defaults to the polygon_file srs. 
        
        Yields:
-           Feature object and corresponding masked numpy array.
+           Feature object, geometry, and corresponding masked numpy array.
     """
 
     # Open data
@@ -47,24 +42,33 @@ def extract_pixels(polygon_file, raster_file):
     featList = range(lyr.GetFeatureCount())
 
     # Get raster geo-reference info
+    proj = raster.GetProjectionRef()
     transform = raster.GetGeoTransform()
     xOrigin = transform[0]
     yOrigin = transform[3]
     pixelWidth = transform[1]
     pixelHeight = transform[5]
 
-    sourceSR = lyr.GetSpatialRef()
-    targetSR = osr.SpatialReference()
-    targetSR.ImportFromWkt(raster.GetProjectionRef())
-    coordTrans = osr.CoordinateTransformation(sourceSR, targetSR)
-    
+    # Determine coordinate transformation from feature srs to raster srs
+    feature_sr = lyr.GetSpatialRef()
+    raster_sr = osr.SpatialReference()
+    raster_sr.ImportFromWkt(proj)
+    coord_trans = osr.CoordinateTransformation(feature_sr, raster_sr)
+
+    # Determine coordinate transformation from raster srs to geometry srs
+    # (this is why: the geometry is derived in the raster srs)
+    if geom_sr is None:
+        coord_trans_2 = osr.CoordinateTransformation(raster_sr, feature_sr)
+    else:
+        coord_trans_2 = osr.CoordinateTransformation(raster_sr, geom_sr)
+
     for FID in featList:
 
         feat = lyr.GetFeature(FID)
     
         # Reproject vector geometry to same projection as raster
         geom = feat.GetGeometryRef()
-        geom.Transform(coordTrans)
+        geom.Transform(coord_trans)
  
         # Get extent of feat
         geom = feat.GetGeometryRef()
@@ -88,10 +92,15 @@ def extract_pixels(polygon_file, raster_file):
                 lon, lat, z = ring.GetPoint(p)
                 pointsX.append(lon)
                 pointsY.append(lat)
-    
+
         else:
             sys.exit("ERROR: Geometry needs to be Polygon or Multipolygon")
-    
+
+        # get polygon coordinates
+        poly = ogr.Geometry(ogr.wkbPolygon)
+        poly.AddGeometry(ring)
+        poly.Transform(coord_trans_2)
+        
         xmin = min(pointsX)
         xmax = max(pointsX)
         ymin = min(pointsY)
@@ -112,10 +121,8 @@ def extract_pixels(polygon_file, raster_file):
         ))
            
         # Create target raster projection 
-        raster_srs = osr.SpatialReference()
-        raster_srs.ImportFromWkt(raster.GetProjectionRef())
-        target_ds.SetProjection(raster_srs.ExportToWkt())
-    
+        target_ds.SetProjection(raster_sr.ExportToWkt())
+
         # Rasterize zone polygon to raster
         gdal.RasterizeLayer(target_ds, [1], lyr, burn_values=[1])    
     
@@ -132,7 +139,7 @@ def extract_pixels(polygon_file, raster_file):
         # Mask zone of raster
         zoneraster = np.ma.masked_array(dataraster, np.logical_not(datamask))
     
-        yield (feat, zoneraster)
+        yield (feat, poly, zoneraster)
 
 
 def simple_feature_extractor(data):
@@ -155,8 +162,8 @@ def train_model(polygon_file, raster_file, classifier):
            polygon_file (str): Filename. Collection of geometries in 
                                geojson or shp format.
            raster_file (str): Image filename.
-           classifier (object): instance of one of many supervised classifier
-                                classes supported by scikit-learn
+           classifier (object): Instance of one of many supervised classifier
+                                classes supported by scikit-learn.
        
        Returns:
            Trained classifier (object).                                             
@@ -164,7 +171,7 @@ def train_model(polygon_file, raster_file, classifier):
     # compute feature vectors for each polygon
     features = []
     labels = []
-    for (feat,data) in extract_pixels(polygon_file, raster_file):        
+    for (feat, poly, data) in extract_pixels(polygon_file, raster_file):        
         label = feat.GetFieldAsString('class_name')
         for featureVector in simple_feature_extractor(data):
             features.append(featureVector)
@@ -178,106 +185,38 @@ def train_model(polygon_file, raster_file, classifier):
     # # store model
     # with open(classifier_file,"w") as fh:
     #     pickle.dump( classifier, fh )
+    print 'Done!'    
     return classifier
 
-    print 'Done!'    
 
-
-def tf_raster_to_proj(x,y, geoTransform):
-    """Converts coordinates from raster pixel to projected coordinate system.
+def apply_model(polygon_file, raster_file, classifier):
+    """Deploy classifier and output list of classified features.
 
        Args:
-           x (float): x coordinate.
-           y (float): y coordinate.
-           geoTransform (float tuple): Geotransform of gdal.Dataset.
-
-       Returns:
-           New x coordinate (float) and y coordinate (float).
-    """    
-    dfGeoX = geoTransform[0] + geoTransform[1] * x + geoTransform[2] * y;
-    dfGeoY = geoTransform[3] + geoTransform[4] * x + geoTransform[5] * y;    
-    return dfGeoX, dfGeoY
-
-
-def sliding_window_classifier(raster_file, classifier, 
-                              winX, winY, stepX, stepY):
-    """Applies classifier on raster_file.
-
-       Args: 
+           polygon_file (str): Filename. Collection of geometries in 
+                               geojson or shp format.
            raster_file (str): Image filename.
-           classifier (object): instance of one of many supervised classifier
-                                classes supported by scikit-learn
-           winX (int): window x size in pixels.
-           winY (int): window y size in pixels.
-           stepX (int): step x size in pixels.
-           stepY (int): step y size in pixels.
-
+           classifier (object): Instance of one of many supervised classifier
+                                classes supported by scikit-learn.
+       
        Returns:
-           Feature list. Each feature is a dictionary with 
-           a class_name key and a geometry key.    
+           List of classified features (list).                                             
     """
-    
-    # in case classifier is in pickle format
-    # # get classifier parameters
-    # with open(modelfile,"r") as fh:
-    #     classifier = pickle.load(fh)
 
-    # Open data
-    raster = gdal.Open(raster_file)
-    nbands = raster.RasterCount
-    w = raster.RasterXSize
-    h = raster.RasterYSize
-    
-    # set up coordinate transformations
-    geoTransform = raster.GetGeoTransform()
-    sourceSRS = osr.SpatialReference()
-    sourceSRS.ImportFromWkt( raster.GetProjectionRef() )
-    targetSRS = osr.SpatialReference()
-    targetSRS.ImportFromEPSG(4326)    
-    coordTrans = osr.CoordinateTransformation(sourceSRS,targetSRS)
+    # set target spatial reference to EPSG:4326
+    target_sr = osr.SpatialReference().ImportFromEPSG(4326)
 
+    # compute feature vectors for each polygon
     features = []
+    for (feat, poly, data) in extract_pixels(polygon_file, raster_file):        
+        for featureVector in simple_feature_extractor(data):
+            labels = classifier.predict(featureVector)                        
+        features.append({"class_name":labels[0], "geometry": poly})
 
-    # simple sliding detection window
-    y0 = 0
-    while h-y0 >= winY:
-        x0 = 0
-        while w-x0 >= winX:
-            # Create geometry
-            ring = ogr.Geometry(ogr.wkbLinearRing)
-            xc,yc = tf_raster_to_proj(x0,y0,geoTransform)
-            ring.AddPoint( xc,yc )
-            xc,yc = tf_raster_to_proj(x0+winX,y0,geoTransform)
-            ring.AddPoint( xc,yc )
-            xc,yc = tf_raster_to_proj(x0+winX,y0+winY,geoTransform)
-            ring.AddPoint( xc,yc )
-            xc,yc = tf_raster_to_proj(x0,y0+winY,geoTransform)
-            ring.AddPoint( xc,yc )            
-            xc,yc = tf_raster_to_proj(x0,y0,geoTransform)
-            ring.AddPoint( xc,yc )
-            poly = ogr.Geometry(ogr.wkbPolygon)
-            poly.AddGeometry(ring)
+    print 'Done!'    
+    return features        
 
-            # Transform to target SRS
-            poly.Transform(coordTrans)
-
-            # Read data            
-            data = raster.ReadAsArray(x0, y0, winX, winY).astype(np.float)
-            # Classify data. Now this depends on if there is one or many 
-            # feature vectors being computed
-            # handle those cases accordingly, maybe a majority decision, 
-            # maybe count labels, etc
-            for featureVector in simple_feature_extractor(data):
-                labels = classifier.predict(featureVector)
-                        
-            features.append({"class_name":labels[0], "geometry": poly})
-            
-            x0 += stepX
-        y0 += stepY
     
-    return features
-
-
 def write_results(features, output_file):
     """Writes feature list to geojson file.
 
@@ -336,10 +275,9 @@ def main(job_file):
    
     # get job parameters
     job = json.load(open(job_file, 'r'))
-    window_size = job["params"]["window_size"]
-    step_size = job["params"]["step_size"]
     image_file = job["image_file"]
     train_file = job["train_file"]
+    target_file = job["target_file"]
     output_file = job["output_file"]
 
     # Using a simple random forest with default parameters 
@@ -350,10 +288,8 @@ def main(job_file):
     trained_classifier = train_model(train_file, image_file, classifier)
     
     print "Apply model"
-    results = sliding_window_classifier(image_file, trained_classifier,
-                                        window_size, window_size, 
-                                        step_size, step_size)
-
+    results = apply_model(target_file, image_file, trained_classifier)
+                                        
     print "Write results"    
     
     # if file exists, remove 
