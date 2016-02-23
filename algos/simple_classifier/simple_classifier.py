@@ -215,9 +215,10 @@ def classify(polygon_file, raster_file, classifier):
 
         
 def write_labels(labels, polygon_file, output_file):
-    """Adds labels to target_file to create output_file.
+    """Adds labels to polygon_file to create output_file.
        The number of labels must be equal to the number of features in 
-       polygon_file.
+       polygon_file. If some of the features in polygon_file are already
+       labeled, the labels are overwritten. 
 
        Args:
            labels (list): Label list. 
