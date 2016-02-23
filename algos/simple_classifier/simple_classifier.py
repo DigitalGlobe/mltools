@@ -2,6 +2,8 @@
 Simple classifier.
 
 Authors: Carsten Tusk, Kostas Stamatiou
+Created: 02/22/2016
+Updated: 02/23/2016
 Contact: ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
 '''
 
@@ -13,10 +15,6 @@ import json
 import geojson
 
 from sklearn.ensemble import RandomForestClassifier 
-
-__version__ = 0.2
-__date__ = '2016-02-22'
-__updated__ = '2016-02-23'
 
 
 def extract_pixels(polygon_file, raster_file, geom_sr = None):

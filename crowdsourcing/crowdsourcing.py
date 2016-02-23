@@ -2,6 +2,7 @@
 Contains functions for reading from and writing to the Tomnod DB.
 
 Author: Kostas Stamatiou
+Created: 02/23/2016
 Contact: kostas.stamatiou@digitalglobe.com
 """
 
