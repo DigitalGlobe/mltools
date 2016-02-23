@@ -12,8 +12,8 @@ import numpy as np
 from shapely.wkb import loads
 import tomnodDB as DB
 
-def to_geojson(schema, cat_id, class_name, thres, 
-	                              max_number, output_file):
+
+def to_geojson(schema, cat_id, class_name, thres, max_number, output_file):
 	"""Read features from Tomnod campaign and return geojson.
 
        Args:
@@ -44,19 +44,21 @@ def to_geojson(schema, cat_id, class_name, thres,
 	           	                                              thres, 
 	           	                                              max_number)
 
-	
 	train_data = DB.db_fetch_array(query)
 
 	# convert to GeoJSON
 	geojson_features = [] 
 	for entry in train_data:
 		feature_id, coords_in_hex = entry
-		coords = list(loads(coords_in_hex, hex=True).exterior.coords)
+		polygon = loads(coords_in_hex, hex=True)
+		coords = [list(polygon.exterior.coords)]   # the brackets are dictated
+		                                           # by geojson format!!! 
 		geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
 			                              properties={"id": feature_id, 
 			                                          "class_name": class_name, 
 			                                          "image_name": cat_id})
 		geojson_features.append(geojson_feature)
+	
 	feature_collection = geojson.FeatureCollection(geojson_features)	
 
 	# store

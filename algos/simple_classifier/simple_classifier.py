@@ -269,7 +269,7 @@ def main(job_file):
     trained_classifier = train_model(train_file, image_file, classifier)
     
     print "Classify"
-    labels = apply_model(target_file, image_file, trained_classifier)
+    labels = classify(target_file, image_file, trained_classifier)
                                         
     print "Write results"    
     write_results(labels, target_file, output_file)
