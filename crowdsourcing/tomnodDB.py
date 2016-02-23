@@ -1,3 +1,8 @@
+'''
+This module contains a collection of functions for 
+connecting with and running queries on the Tomnod DB.
+'''
+
 import psycopg2
 import psycopg2.extras
 import os

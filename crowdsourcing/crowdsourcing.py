@@ -1,59 +1,69 @@
 """
-CROWDSOURCING COMPONENT
+Contains functions for reading from and writing to the Tomnod DB.
+
+Author: Kostas Stamatiou
+Contact: kostas.stamatiou@digitalglobe.com
 """
 
 import os
 import geojson
 import json
 import numpy as np
-import shapely
+from shapely.wkb import loads
 import tomnodDB as DB
 
+def to_geojson(schema, cat_id, class_name, thres, 
+	                              max_number, output_file):
+	"""Read features from Tomnod campaign and return geojson.
 
-def create_classify_train_geojson(schema, threshold, job_id, max_number):
+       Args:
+           schema (str): Campaign schema.
+           cat_id (str): Image catalog id.
+           class_name (str): Feature class (type in Tomnod jargon) name.
+           thres(float): Score threshold (only features with score>=thres will
+                         be read.
+           max_number (int): Maximum number of features to be read.
+           output_file (str): Output file name (extension .geojson).              
 	"""
-	Retrieve up to max_number features from schema.feature with score >= threshold and store in schema/job_id/train_data.json.
-	Returns 1 if features were retrieved and saved, else 0.
-	For a description of the GeoJSON format, look here: http://geojson.org/geojson-spec.html
-	@param schema: the campaign schema in the Tomnod DB
-	@param threshold: the confidence score threshold to retrieve a feature
-	@param job_id: the machine job id
-	@param max_number: maximum number of features
-	"""
 
-	print 'Retrieve training data for ' + schema
+	print 'Retrieve data for: ' 
+	print 'Schema: ' + schema
+	print 'Catalog id: ' + cat_id
+	print 'Class name: ' + class_name
 
-	query = """SELECT id, feature, type_id, imagery_reference
-	           FROM {}.feature
-	           WHERE score >= {}
-	           ORDER BY score DESC LIMIT {}""".format(schema, threshold, max_number)
+	query = """SELECT feature.id, feature.feature
+	           FROM {}.feature, tag_type, overlay
+	           WHERE feature.type_id = tag_type.id
+	           AND feature.overlay_id = overlay.id
+	           AND overlay.catalogid = '{}'
+	           AND tag_type.name = '{}'
+	           AND feature.score >= {}
+	           ORDER BY feature.score DESC LIMIT {}""".format(schema, 
+	           	                                              cat_id, 
+	           	                                              class_name, 
+	           	                                              thres, 
+	           	                                              max_number)
 
-	try:
-		train_data = DB.db_fetch_array(query)
-	except:
-		print 'Error reading from Tomnod DB. Quitting!'
-		return 0
+	
+	train_data = DB.db_fetch_array(query)
 
 	# convert to GeoJSON
 	geojson_features = [] 
 	for entry in train_data:
-		feature_id, coords_in_hex, class_id, cat_id = entry
-		coords = list(shapely.wkb.loads(coords_in_hex, hex=True).exterior.coords)
-		geojson_feature = geojson.Feature(geometry=geojson.Polygon(coords), properties={"id": feature_id, "class_id": class_id, "cat_id": cat_id})
+		feature_id, coords_in_hex = entry
+		coords = list(loads(coords_in_hex, hex=True).exterior.coords)
+		geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
+			                              properties={"id": feature_id, 
+			                                          "class_name": class_name, 
+			                                          "image_name": cat_id})
 		geojson_features.append(geojson_feature)
 	feature_collection = geojson.FeatureCollection(geojson_features)	
 
-	# old json format --- we opted for standard GeoJSON	
-	#train_dict = {entry[0]:entry[1:] for entry in train_data}
-
 	# store
-	filename = os.path.join(schema, str(job_id), 'train_data.json')
-	with open(filename, 'wb') as f:
+	with open(output_file, 'wb') as f:
 		geojson.dump(feature_collection, f)		 	   
 
-	print 'Done retrieving training data for ' + schema
-	return 1
-
+	print 'Done!'
 
 
 def create_classify_deploy_geojson(schema, job_id, max_number):
@@ -86,7 +96,7 @@ def create_classify_deploy_geojson(schema, job_id, max_number):
 	geojson_features = [] 
 	for entry in deploy_data:
 		feature_id, coords_in_hex, class_id, cat_id = entry
-		coords = list(shapely.wkb.loads(coords_in_hex, hex=True).exterior.coords)
+		coords = list(loads(coords_in_hex, hex=True).exterior.coords)
 		geojson_feature = geojson.Feature(geometry=geojson.Polygon(coords), properties={"id": feature_id, "class_id": class_id, "cat_id": cat_id})
 		geojson_features.append(geojson_feature)
 	feature_collection = geojson.FeatureCollection(geojson_features)	

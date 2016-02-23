@@ -1,9 +1,8 @@
 '''
 Simple classifier.
 
-@authors:    Carsten Tusk, Kostas Stamatiou
-@copyright:  2016 DigitalGlobe Inc. All rights reserved.
-@contact:    ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
+Authors: Carsten Tusk, Kostas Stamatiou
+Contact: ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
 '''
 
 import sys
@@ -11,12 +10,13 @@ import os
 import gdal, ogr, osr
 import numpy as np
 import json
+import geojson
 
 from sklearn.ensemble import RandomForestClassifier 
 
-__version__ = 0.1
+__version__ = 0.2
 __date__ = '2016-02-22'
-__updated__ = '2016-02-22'
+__updated__ = '2016-02-23'
 
 
 def extract_pixels(polygon_file, raster_file, geom_sr = None):
@@ -189,8 +189,8 @@ def train_model(polygon_file, raster_file, classifier):
     return classifier
 
 
-def apply_model(polygon_file, raster_file, classifier):
-    """Deploy classifier and output list of classified features.
+def classify(polygon_file, raster_file, classifier):
+    """Deploy classifier and output corresponding list of labels.
 
        Args:
            polygon_file (str): Filename. Collection of geometries in 
@@ -200,71 +200,52 @@ def apply_model(polygon_file, raster_file, classifier):
                                 classes supported by scikit-learn.
        
        Returns:
-           List of classified features (list).                                             
+           List of labels (list).                                             
     """
 
-    # set target spatial reference to EPSG:4326
-    target_sr = osr.SpatialReference().ImportFromEPSG(4326)
-
     # compute feature vectors for each polygon
-    features = []
+    labels = []
     for (feat, poly, data) in extract_pixels(polygon_file, raster_file):        
         for featureVector in simple_feature_extractor(data):
-            labels = classifier.predict(featureVector)                        
-        features.append({"class_name":labels[0], "geometry": poly})
+            labels_this_feature = classifier.predict(featureVector)                        
+        labels.append(labels_this_feature[0])
 
     print 'Done!'    
-    return features        
+    return labels     
 
-    
-def write_results(features, output_file):
-    """Writes feature list to geojson file.
+        
+def write_labels(labels, polygon_file, output_file):
+    """Adds labels to target_file to create output_file.
+       The number of labels must be equal to the number of features in 
+       polygon_file.
 
        Args:
-           features (list): Feature list. Each feature is a dictionary with 
-                            a class_name key and a geometry key.
+           labels (list): Label list. 
+           polygon_file (str): Filename. Collection of unclassified 
+                               geometries in geojson or shp format.
            output_file (str): Output filename (extension .geojson)
     """
 
-    # set up the driver
-    driver = ogr.GetDriverByName("GeoJSON")
-    
-    # create the data source
-    data_source = driver.CreateDataSource(output_file)
-    
-    # create the spatial reference, WGS84
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-    
-    # create the layer
-    layer = data_source.CreateLayer("results", srs, ogr.wkbPolygon)
-    
-    # Add the fields we're interested in
-    field_name = ogr.FieldDefn("class_name", ogr.OFTString)
-    field_name.SetWidth(24)
-    layer.CreateField(field_name)
-    #layer.CreateField(ogr.FieldDefn("score", ogr.OFTReal))
-    
-    # Process the text file and add the attributes and features to the shapefile
-    for f in features:
-        # create the feature
-        feature = ogr.Feature(layer.GetLayerDefn())
-        # Set the attributes using the values from the delimited text file
-        feature.SetField("class_name", f['class_name'])
-        #feature.SetField("score", f['score'])
+    # get input feature collection
+    with open(polygon_file) as f:
+        feature_collection = geojson.load(f)
 
-        # Set the feature geometry using the point
-        feature.SetGeometry(f['geometry'])
-
-        # Create the feature in the layer (shapefile)
-        layer.CreateFeature(feature)
-
-        # Destroy the feature to free resources
-        feature.Destroy()
+    features = feature_collection['features']
+    no_features = len(features)
     
-    # Destroy the data source to free resources
-    data_source.Destroy()            
-    
+    # enter label information
+    for i in range(0, no_features):
+        feature, label = features[i], labels[i]
+        feature['properties']['class_name'] = label
+
+    feature_collection['features'] = features    
+
+    # write to output file
+    with open(output_file, 'w') as f:
+        geojson.dump(feature_collection, f)     
+
+    print 'Done!'    
+
   
 def main(job_file):
     """Runs the simple_lulc workflow.
@@ -287,16 +268,11 @@ def main(job_file):
     print "Train model"
     trained_classifier = train_model(train_file, image_file, classifier)
     
-    print "Apply model"
-    results = apply_model(target_file, image_file, trained_classifier)
+    print "Classify"
+    labels = apply_model(target_file, image_file, trained_classifier)
                                         
     print "Write results"    
-    
-    # if file exists, remove 
-    if os.path.exists(output_file):
-        os.remove(output_file)
-
-    write_results(results, output_file)
+    write_results(labels, target_file, output_file)
 
     print "Done!"
    
