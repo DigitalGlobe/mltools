@@ -197,4 +197,3 @@ def split_geojson(input_file, file_1, file_2, ratio):
 	with open(file_2, 'w') as f:
 		geojson.dump(feat_collection_2, f) 	
 
-
