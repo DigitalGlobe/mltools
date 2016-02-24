@@ -64,7 +64,7 @@ def train_geojson(schema,
 		coords = [list(polygon.exterior.coords)]   # the brackets are dictated
 		                                           # by geojson format!!! 
 		geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
-			                              properties={"id": feature_id, 
+			                              properties={"id": str(feature_id), 
 			                                          "class_name": class_name, 
 			                                          "image_name": cat_id})
 		geojson_features.append(geojson_feature)
