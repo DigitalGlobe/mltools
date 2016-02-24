@@ -30,6 +30,15 @@ The output of a MLA is one or more of the following:
 - one or more processed images
 - an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
+Comments
+--------
+
+mltools is developed as part of an effort to standardize MLA design and implementation. 
+
+Here is a slide with some ideas:
+
+https://docs.google.com/drawings/d/1tKSgFMp0lLd7Abne8CdOhb1PbdJfgCz5x9XkLwDeET0/edit 
+
 The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:
 
 https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing
