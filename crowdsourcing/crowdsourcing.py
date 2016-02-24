@@ -104,8 +104,10 @@ def target_geojson(schema,
 	print 'Schema: ' + schema
 	print 'Catalog id: ' + cat_id
 
-	query = """SELECT feature.id, feature.feature, feature.type_id
-	           FROM {}.feature, overlay
+	query = """SELECT feature.id, feature.feature, tag_type.name
+			   FROM {}.feature, tag_type, overlay
+		       WHERE feature.type_id = tag_type.id
+	           AND {}.feature, overlay
 	           AND feature.overlay_id = overlay.id
 	           AND overlay.catalogid = '{}'
 	           AND feature.score <= {}
@@ -122,13 +124,13 @@ def target_geojson(schema,
 	# convert to GeoJSON
 	geojson_features = [] 
 	for entry in data:
-		feature_id, coords_in_hex, type_id = entry
+		feature_id, coords_in_hex, class_name = entry
 		polygon = loads(coords_in_hex, hex=True)
 		coords = [list(polygon.exterior.coords)]   # the brackets are dictated
 		                                           # by geojson format!!! 
 		geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
-			                              properties={"id": feature_id, 
-			                                          "class_name": type_id, 
+			                              properties={"id": str(feature_id), 
+			                                          "class_name": class_name, 
 			                                          "image_name": cat_id})
 		geojson_features.append(geojson_feature)
 	
