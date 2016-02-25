@@ -127,7 +127,7 @@ def main(job_file):
     train_file = job["train_file"]
     target_file = job["target_file"]
     output_file = job["output_file"]
-    no_trees = job["no_trees"]
+    no_trees = job["params"]["no_trees"]
 
     # Using a simple random forest with default parameters 
     # for this demonstration

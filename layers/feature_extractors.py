@@ -6,6 +6,7 @@ Contact: kostas.stamatiou@digitalglobe.com
 """
 
 import numpy as np
+import spectral_angle as sa
 
 
 def vanilla_features(data):
@@ -22,13 +23,13 @@ def vanilla_features(data):
     
 
 def water_features(data):
-	"""Feature extractor for water detection (e.g., swimming pools over land)
+    """Feature extractor for water detection (e.g., swimming pools over land)
 
        Args:
            data (numpy array): Pixel data vector.
 
-       Yields:
-           Feature vector (numpy array).
+      Yields:
+          Feature vector (numpy array).
     """
 
     output_data = sa.spectral_angles(data)

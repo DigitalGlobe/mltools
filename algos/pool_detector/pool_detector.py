@@ -8,9 +8,9 @@ import numpy as np
 import json 
 import geojson
 
-from layers import pixel_extractors as pe
+from geoio import pixel_extractors as pe
 
-from features import feature_extractors as fe
+from layers import feature_extractors as fe
 
 from jsonio import json_tools as jt
 
@@ -88,7 +88,7 @@ def main(job_file):
     train_file = job["train_file"]
     target_file = job["target_file"]
     output_file = job["output_file"]
-    no_trees = job["no_trees"]
+    no_trees = job["params"]["no_trees"]
 
     # Using a simple random forest with default parameters 
     # for this demonstration
