@@ -87,15 +87,15 @@ def get_classes_from_geojson(input_file):
 	return labels    
 
 
-def confusion_matrix_two_geojsons(file_1, file_2, class_names):
+def confusion_matrix_two_geojsons(file_1, file_2):
 	"""
 	Compute confusion matrix to evaluate the accuracy of a classification.
+	Ordered class names are used to index the matrix.
 
 	Args:
 	    file_1 (str): Ground truth filename (.geojson extension)
 	    file_2 (str): Prediction filename (.geojson extension)
-	    class_names (list): List of class names. Each class name is a string.
-
+	    
 	Returns:
 	    An integer numpy array C, where C[i,j] is the number of observations 
 	    known to be in group i but predicted to be in group j (numpy array).     
@@ -104,7 +104,7 @@ def confusion_matrix_two_geojsons(file_1, file_2, class_names):
 	true_classes = get_classes_from_geojson(file_1)
 	pred_classes = get_classes_from_geojson(file_2)
 
-	C = confusion_matrix(true_classes, pred_classes, class_names)
+	C = confusion_matrix(true_classes, pred_classes)
 
 	return C
 

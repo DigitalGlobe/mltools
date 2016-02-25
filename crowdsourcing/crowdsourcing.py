@@ -142,14 +142,3 @@ def target_geojson(schema,
 		geojson.dump(feature_collection, f)		 	   
 
 	print 'Done!'	
-
-
-
-
-
-
-
-
-
-
-

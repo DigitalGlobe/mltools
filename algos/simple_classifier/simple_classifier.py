@@ -71,7 +71,7 @@ def classify(polygon_file, raster_file, classifier):
 
     # compute feature vectors for each polygon
     labels = []
-    for (feat, poly, data, label) in extract_pixels(polygon_file, raster_file):        
+    for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
         for featureVector in fe.vanilla_features(data):
             labels_this_feature = classifier.predict(featureVector)                        
         labels.append(labels_this_feature[0])
@@ -129,8 +129,7 @@ def main(job_file):
     output_file = job["output_file"]
     no_trees = job["params"]["no_trees"]
 
-    # Using a simple random forest with default parameters 
-    # for this demonstration
+    # Random forest classifier
     classifier = RandomForestClassifier(n_estimators = no_trees)
         
     print "Train model"
@@ -140,7 +139,7 @@ def main(job_file):
     labels = classify(target_file, image_file, trained_classifier)
                                         
     print "Write results"    
-    jt.write_labels(labels, target_file, output_file)
+    jt.write_labels_to_geojson(labels, target_file, output_file)
 
     print "Confusion matrix"
     C = jt.confusion_matrix_two_geojsons(target_file, output_file)

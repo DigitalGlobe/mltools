@@ -35,13 +35,12 @@ Requirements
 ------------
 
 You need Nathan Longbotham's geoio package. You need to be on DG atmosphere in order to install this (this will hopefully change soon).
- 
+
 .. highlights::
 
    pip install git+https://github.digitalglobe.com/nw002655/geoio.git
 
  
-
 
 Comments
 --------

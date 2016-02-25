@@ -30,11 +30,14 @@ def train_model(polygon_file, raster_file, classifier):
        Returns:
            Trained classifier (object).                                             
     """
+
+    # get water signature
+
     # compute feature vectors for each polygon
     features = []
     labels = []
     for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
-        for featureVector in fe.vanilla_features(data):
+        for featureVector in fe.pool_features(data, raster_file):
             features.append(featureVector)
             labels.append(label)
             print label, featureVector
@@ -66,8 +69,8 @@ def classify(polygon_file, raster_file, classifier):
 
     # compute feature vectors for each polygon
     labels = []
-    for (feat, poly, data, label) in extract_pixels(polygon_file, raster_file):        
-        for featureVector in fe.vanilla_features(data):
+    for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
+        for featureVector in fe.pool_features(data, raster_file):
             labels_this_feature = classifier.predict(featureVector)                        
         labels.append(labels_this_feature[0])
 
@@ -88,20 +91,28 @@ def main(job_file):
     train_file = job["train_file"]
     target_file = job["target_file"]
     output_file = job["output_file"]
-    no_trees = job["params"]["no_trees"]
-
-    # Using a simple random forest with default parameters 
-    # for this demonstration
+    algo_params = job["params"]       # these are parameters pertinent to the 
+                                      # algorithm
+    
+    no_trees = algo_params["no_trees"]
+    
+    # Using random forest classifier
     classifier = RandomForestClassifier(n_estimators = no_trees)
         
     print "Train model"
-    trained_classifier = train_model(train_file, image_file, classifier)
+    trained_classifier = train_model(train_file, 
+                                     image_file, 
+                                     classifier, 
+                                     algo_params)
     
     print "Classify"
-    labels = classify(target_file, image_file, trained_classifier)
+    labels = classify(target_file, 
+                      image_file, 
+                      trained_classifier,
+                      algo_params)
                                         
     print "Write results"    
-    jt.write_labels(labels, target_file, output_file)
+    jt.write_labels_to_geojson(labels, target_file, output_file)
 
     print "Confusion matrix"
     C = jt.confusion_matrix_two_geojsons(target_file, output_file)
@@ -109,9 +120,3 @@ def main(job_file):
     print C
 
     print "Done!"
-   
-
-
-
-
-
