@@ -4,13 +4,7 @@ import numpy as np
 import timeit
 import os
 import sys
-if os.name == 'nt':
-    sys.path.append("D:/Projects/geoio")
-    #sys.path.append('D:/Projects/supercube_working/supercube')
 import geoio 
-
-
-#import ipdb
 
 water_sig = np.asarray([399,509,437,266,219,154,119,114])
 water_sig.shape = (1,8)
