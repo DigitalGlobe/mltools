@@ -5,13 +5,14 @@ Pool detector built after simple_classifier.
 import sys
 import os
 import numpy as np
-import json
-import json_tools 
+import json 
 import geojson
 
 from layers import pixel_extractors as pe
 
 from features import feature_extractors as fe
+
+from jsonio import json_tools as jt
 
 from sklearn.ensemble import RandomForestClassifier 
     
@@ -73,40 +74,6 @@ def classify(polygon_file, raster_file, classifier):
     print 'Done!'    
     return labels     
 
-        
-def write_labels(labels, polygon_file, output_file):
-    """Adds labels to polygon_file to create output_file.
-       The number of labels must be equal to the number of features in 
-       polygon_file. If some of the features in polygon_file are already
-       labeled, the labels are overwritten. 
-
-       Args:
-           labels (list): Label list. 
-           polygon_file (str): Filename. Collection of unclassified 
-                               geometries in geojson or shp format.
-           output_file (str): Output filename (extension .geojson)
-    """
-
-    # get input feature collection
-    with open(polygon_file) as f:
-        feature_collection = geojson.load(f)
-
-    features = feature_collection['features']
-    no_features = len(features)
-    
-    # enter label information
-    for i in range(0, no_features):
-        feature, label = features[i], labels[i]
-        feature['properties']['class_name'] = label
-
-    feature_collection['features'] = features    
-
-    # write to output file
-    with open(output_file, 'w') as f:
-        geojson.dump(feature_collection, f)     
-
-    print 'Done!'    
-
   
 def main(job_file):
     """Runs the simple_lulc workflow.
@@ -134,10 +101,10 @@ def main(job_file):
     labels = classify(target_file, image_file, trained_classifier)
                                         
     print "Write results"    
-    write_labels(labels, target_file, output_file)
+    jt.write_labels(labels, target_file, output_file)
 
     print "Confusion matrix"
-    C = json_tools.confusion_matrix_two_geojsons(target_file, output_file)
+    C = jt.confusion_matrix_two_geojsons(target_file, output_file)
 
     print C
 

@@ -10,13 +10,14 @@ Contact: ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
 import sys
 import os
 import numpy as np
-import json
-import json_tools 
+import json 
 import geojson
 
 from layers import pixel_extractors as pe
 
 from features import feature_extractors as fe
+
+from jsonio import json_tools as jt
 
 from sklearn.ensemble import RandomForestClassifier 
     
@@ -139,10 +140,10 @@ def main(job_file):
     labels = classify(target_file, image_file, trained_classifier)
                                         
     print "Write results"    
-    write_labels(labels, target_file, output_file)
+    jt.write_labels(labels, target_file, output_file)
 
     print "Confusion matrix"
-    C = json_tools.confusion_matrix_two_geojsons(target_file, output_file)
+    C = jt.confusion_matrix_two_geojsons(target_file, output_file)
 
     print C
 
