@@ -1,10 +1,5 @@
 '''
-Simple classifier.
-
-Authors: Carsten Tusk, Kostas Stamatiou
-Created: 02/22/2016
-Updated: 02/23/2016
-Contact: ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
+Pool detector built after simple_classifier.
 '''
 
 import sys

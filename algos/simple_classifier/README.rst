@@ -14,7 +14,8 @@ Input
 
 .. code-block:: javascript
 
-   {"image_file": "aoi.tif",
+   {"params":{"no_trees":100},
+    "image_file": "aoi.tif",
     "train_file": "train.geojson",
     "target_file":, "target.geojson",
     "output_file": "output.geojson"}
