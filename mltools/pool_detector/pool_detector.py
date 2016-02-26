@@ -8,14 +8,11 @@ import numpy as np
 import json 
 import geojson
 
-from geoio import pixel_extractors as pe
+import json_tools as jt
+import feature_extractors as fe
+import pixel_extractors as pe
 
-from layers import feature_extractors as fe
-
-from jsonio import json_tools as jt
-
-from sklearn.ensemble import RandomForestClassifier 
-    
+from sklearn.ensemble import RandomForestClassifier     
 
 def train_model(polygon_file, raster_file, classifier):
     """Train classifier and output classifier parameters.

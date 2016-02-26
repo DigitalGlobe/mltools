@@ -3,7 +3,7 @@ Simple classifier.
 
 Authors: Carsten Tusk, Kostas Stamatiou
 Created: 02/22/2016
-Updated: 02/23/2016
+Updated: 02/26/2016
 Contact: ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
 '''
 
@@ -13,11 +13,9 @@ import numpy as np
 import json 
 import geojson
 
-from layers import pixel_extractors as pe
-
-from features import feature_extractors as fe
-
-from jsonio import json_tools as jt
+import json_tools as jt
+import feature_extractors as fe
+import pixel_extractors as pe
 
 from sklearn.ensemble import RandomForestClassifier 
     
