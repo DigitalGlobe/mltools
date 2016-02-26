@@ -1,10 +1,10 @@
 API Documentation
 =================
 
-algos.pool_detector module
+algos.pool_detector.pool_detector module
 --------------------------
 
-.. automodule:: algos.pool_detector
+.. automodule:: algos.pool_detector.pool_detector
     :members:
     :undoc-members:
     :show-inheritance:
