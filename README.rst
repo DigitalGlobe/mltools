@@ -5,6 +5,8 @@ mltools
 
 A collection of Machine Learning (ML) Tools for object detection and classification on satellite imagery.
 
+mltools is MIT licenced.
+
 Full documentation is hosted here: http://mltools.readthedocs.org/en/latest/.
 
 Installation will be easy:

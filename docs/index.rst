@@ -10,7 +10,7 @@ mltools
 
 A collection of (un)supervised Machine Learning (ML) Tools for object detection and classification on satellite imagery.
 
-Full documentation is hosted here: http://mltools.readthedocs.org/en/latest/
+mltools is MIT licenced.
 
 Installation will be easy::
 
@@ -44,4 +44,4 @@ Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or o
 .. toctree::
    :maxdepth: 2
 
-   modules
+   api_docs
