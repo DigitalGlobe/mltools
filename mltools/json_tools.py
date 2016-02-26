@@ -1,6 +1,5 @@
 """
-Contains functions for manipulating jsons and geojsons.
-
+What: Contains functions for manipulating jsons and geojsons.
 Author: Kostas Stamatiou
 Created: 02/24/2016
 Contact: kostas.stamatiou@digitalglobe.com

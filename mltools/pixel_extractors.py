@@ -1,6 +1,5 @@
 """
-Various tools to extract pixels from georeferenced imagery
-
+What: Contains functions for extracting pixels from georeferenced imagery.
 Authors: Carsten Tusk, Kostas Stamatiou
 Contact: kostas.stamatiou@digitalglobe.com
 """

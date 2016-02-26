@@ -1,6 +1,5 @@
 """
-Various feature extraction methods.
-
+What: Contains various feature extraction functions.
 Authors: Carsten Tusk, Kostas Stamatiou, Nathan Longbotham
 Contact: kostas.stamatiou@digitalglobe.com
 """
