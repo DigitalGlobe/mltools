@@ -1,5 +1,5 @@
 """
-Contains functions for reading from and writing to the Tomnod DB.
+Contains functions for reading from and writing to the Tomnod database.
 
 Author: Kostas Stamatiou
 Created: 02/23/2016
@@ -7,9 +7,54 @@ Contact: kostas.stamatiou@digitalglobe.com
 """
 
 import geojson
-import tomnodDB as DB
+import os
+import psycopg2
+import psycopg2.extras
 
 from shapely.wkb import loads
+
+
+# DB parameters:
+host = os.getenv( 'DB_HOST', None )
+db = os.getenv( 'DB_NAME', None )
+user = os.getenv( 'DB_USER', None )
+password = os.getenv( 'DB_PASSWORD', None )
+port = os.getenv( 'DB_PORT', None )
+
+
+class DatabaseError(Exception):
+    pass
+
+
+def getConn(host=host,db=db,port=port,user=user,password=password):
+    if user == '' or password == '':
+        raise DatabaseError('Database username or password not set.')
+
+    conn_string = "host=%s dbname=%s user=%s password=%s" % (host, db, user, password)
+    conn = psycopg2.connect(conn_string)
+    conn.autocommit = True
+    return conn
+
+
+def getCursor( conn, fetch_array = True ):
+    if fetch_array:
+    	return conn.cursor()
+    else:
+        return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+
+def db_fetch( sql, fetch_array = True ):
+    conn = getConn()
+    cursor = getCursor(conn, fetch_array)
+    try:
+        cursor.execute( sql )
+        r = cursor.fetchall()
+        conn.close()
+        return r
+    except psycopg2.ProgrammingError, e:
+        print "Programming error in query:\n%s" % e
+        conn.close()
+        return 
 
 
 def train_geojson(schema, 
@@ -55,7 +100,7 @@ def train_geojson(schema,
 		           	                                          min_votes,
 		           	                                          max_number)
 
-	data = DB.db_fetch_array(query)
+	data = DB.db_fetch(query)
 
 	# convert to GeoJSON
 	geojson_features = [] 
@@ -120,7 +165,7 @@ def target_geojson(schema,
 	       	                      max_score, 
 	       	                      max_number)          
 
-	data = DB.db_fetch_array(query)
+	data = DB.db_fetch(query)
 
 	# convert to GeoJSON
 	geojson_features = [] 
