@@ -7,7 +7,7 @@ A collection of Machine Learning (ML) Tools for object detection and classificat
 
 mltools is MIT licenced.
 
-Installation will be easy:
+Installation is easy:
 
 .. highlights::
 
