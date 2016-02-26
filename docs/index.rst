@@ -44,4 +44,4 @@ Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or o
 .. toctree::
    :maxdepth: 2
 
-   api_docs
+   modules
