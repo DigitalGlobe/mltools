@@ -94,9 +94,8 @@ def main(job_file):
     algo_params = job["params"]       # these are parameters pertinent to the 
                                       # algorithm
     
-    no_trees = algo_params["no_trees"]
-    
     # Using random forest classifier
+    no_trees = algo_params["no_trees"]
     classifier = RandomForestClassifier(n_estimators = no_trees)
         
     print "Train model"

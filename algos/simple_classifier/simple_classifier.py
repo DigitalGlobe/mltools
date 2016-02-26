@@ -127,9 +127,10 @@ def main(job_file):
     train_file = job["train_file"]
     target_file = job["target_file"]
     output_file = job["output_file"]
-    no_trees = job["params"]["no_trees"]
-
+    algo_params = job["params"]
+    
     # Random forest classifier
+    no_trees = algo_params["no_trees"]
     classifier = RandomForestClassifier(n_estimators = no_trees)
         
     print "Train model"

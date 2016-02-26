@@ -6,9 +6,9 @@ Subpackages
 
 .. toctree::
 
-    algos.demo_machine
-    algos.vanilla_classifier
-    algos.vanilla_detector
+    algos.pool_detector
+    algos.simple_classifier
+    algos.simple_lulc
 
 Module contents
 ---------------
