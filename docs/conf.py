@@ -30,7 +30,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return Mock()
 
-MOCK_MODULES = ['numpy', 'geojson', 'gdal', 'psycopg2', 'geojson', ]
+MOCK_MODULES = ['numpy', 'geojson', 'gdal', 'psycopg2', 'geojson', 'ogr', 'osr', 'sklearn' ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
