@@ -3,7 +3,7 @@ mltools
 
 (Disclaimer: work in progress...)
 
-A collection of Machine Learning (ML) Tools for object detection and classification on satellite imagery.
+A collection of Machine Learning (ML) Tools for object detection and classification on DG imagery.
 
 mltools is MIT licenced.
 
@@ -29,17 +29,6 @@ The output of a MLA is one or more of the following:
 
 - one or more processed images
 - an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
-
-
-Requirements
-------------
-
-You need Nathan Longbotham's geoio package. You need to be on DG atmosphere in order to install this (this will hopefully change soon).
-
-.. highlights::
-
-   pip install git+https://github.digitalglobe.com/nw002655/geoio.git
-
  
 
 Comments
