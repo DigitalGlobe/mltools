@@ -101,14 +101,12 @@ def main(job_file):
     print "Train model"
     trained_classifier = train_model(train_file, 
                                      image_file, 
-                                     classifier, 
-                                     algo_params)
+                                     classifier)
     
     print "Classify"
     labels = classify(target_file, 
                       image_file, 
-                      trained_classifier,
-                      algo_params)
+                      trained_classifier)
                                         
     print "Write results"    
     jt.write_labels_to_geojson(labels, target_file, output_file)

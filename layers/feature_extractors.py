@@ -23,12 +23,11 @@ def spectral_angles(data, members):
     """
 
     # if members is one-dimensional, convert to horizontal vector 
-    if len(members) ==1:
+    if len(members.shape) ==1:
         members.shape = (1, len(members))
 
     # Basic test that the data looks ok before we get going.
-    assert members.shape[1] == data.shape[0], 'Data and members not of the ' \
-                                              'same dimention.'
+    assert members.shape[1] == data.shape[0], 'Dimension conflict!'
 
     # Calculate sum of square for both data and members
     dnorm = np.linalg.norm(data,ord=2,axis=0)

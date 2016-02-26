@@ -12,7 +12,7 @@ if sys.version_info > (3,):
       
 setup(name='mltools',
       version='0.0.1',
-      description='Python tools for object detection and classification on DG imagery.',
+      description='Basic lulc, classification and pool detection',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
@@ -22,5 +22,5 @@ setup(name='mltools',
       packages=find_packages(exclude=['docs']),
       include_package_data=True,
       zip_safe=False,
-      install_requires=['numpy','json','geojson','sklearn','shapely','gdal','ogr','osr','psycopg2','psycopg2.extras']
+      install_requires=['numpy','geojson','scikit-learn','shapely','psycopg2']
       )
