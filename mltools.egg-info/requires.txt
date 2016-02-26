@@ -1,5 +1,0 @@
-numpy
-geojson
-scikit-learn
-shapely
-psycopg2
