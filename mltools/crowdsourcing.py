@@ -99,7 +99,7 @@ def train_geojson(schema,
 		           	                                          min_votes,
 		           	                                          max_number)
 
-	data = DB.db_fetch(query)
+	data = db_fetch(query)
 
 	# convert to GeoJSON
 	geojson_features = [] 
@@ -164,7 +164,7 @@ def target_geojson(schema,
 	       	                      max_score, 
 	       	                      max_number)          
 
-	data = DB.db_fetch(query)
+	data = db_fetch(query)
 
 	# convert to GeoJSON
 	geojson_features = [] 
