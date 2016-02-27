@@ -37,8 +37,7 @@ def train_model(polygon_file, raster_file, classifier):
         for featureVector in fe.pool_features(data, raster_file):
             features.append(featureVector)
             labels.append(label)
-            print label, featureVector
-            
+                        
     # train classifier
     X, y = np.array(features), np.array(labels)
     # train
@@ -96,21 +95,19 @@ def main(job_file):
     classifier = RandomForestClassifier(n_estimators = no_trees)
         
     print "Train model"
-    trained_classifier = train_model(train_file, 
-                                     image_file, 
-                                     classifier)
+    trained_classifier = train_model(train_file, image_file, classifier)
     
     print "Classify"
-    labels = classify(target_file, 
-                      image_file, 
-                      trained_classifier)
+    labels = classify(target_file, image_file, trained_classifier)
                                         
     print "Write results"    
     jt.write_labels_to_geojson(labels, target_file, output_file)
 
     print "Confusion matrix"
     C = jt.confusion_matrix_two_geojsons(target_file, output_file)
-
     print C
+
+    print "Normalized confusion matrix"
+    print C.astype(float)/C.sum(1)[:, None]
 
     print "Done!"

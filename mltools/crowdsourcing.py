@@ -8,59 +8,46 @@ Contact: kostas.stamatiou@digitalglobe.com
 import geojson
 import os
 import psycopg2
-import psycopg2.extras
 
 from shapely.wkb import loads
-
-
-# DB parameters:
-host = os.getenv( 'DB_HOST', None )
-db = os.getenv( 'DB_NAME', None )
-user = os.getenv( 'DB_USER', None )
-password = os.getenv( 'DB_PASSWORD', None )
-port = os.getenv( 'DB_PORT', None )
-
 
 class DatabaseError(Exception):
     pass
 
+def get_conn(credentials):
+	host = credentials['host']
+	db = credentials['db']
+	user = credentials['user']
+	password = credentials['password']
+	if user == '' or password == '':
+	    raise DatabaseError('Database username or password not set.')
 
-def getConn(host=host,db=db,port=port,user=user,password=password):
-    if user == '' or password == '':
-        raise DatabaseError('Database username or password not set.')
-
-    conn_string = "host=%s dbname=%s user=%s password=%s" % (host, db, user, password)
-    conn = psycopg2.connect(conn_string)
-    conn.autocommit = True
-    return conn
-
-
-def getCursor( conn, fetch_array = True ):
-    if fetch_array:
-    	return conn.cursor()
-    else:
-        return conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+	conn_string = "host=%s dbname=%s user=%s password=%s" % (host, db, user, password)
+	conn = psycopg2.connect(conn_string)
+	conn.autocommit = True
+	return conn
 
 
-def db_fetch( sql, fetch_array = True ):
-    conn = getConn()
-    cursor = getCursor(conn, fetch_array)
-    try:
-        cursor.execute( sql )
-        r = cursor.fetchall()
-        conn.close()
-        return r
-    except psycopg2.ProgrammingError, e:
-        print "Programming error in query:\n%s" % e
-        conn.close()
-        return 
+def db_fetch(sql, credentials):
+	conn = get_conn(credentials)
+	cursor = conn.cursor()
+	try:
+	    cursor.execute(sql)
+	    r = cursor.fetchall()
+	    conn.close()
+	    return r
+	except psycopg2.ProgrammingError, e:
+	    print "Programming error in query: %s" % e
+	    conn.close()
+	    return 
 
 
 def train_geojson(schema, 
 	              cat_id,
 	              max_number, 
 	              output_file, 
-	              class_name, 
+	              class_name,
+	              credentials, 
 	              min_score=0.95, 
 	              min_votes=0
 	             ):
@@ -75,6 +62,7 @@ def train_geojson(schema,
            max_number (int): Maximum number of features to be read.
            output_file (str): Output file name (extension .geojson).
            class_name (str): Feature class (type in Tomnod jargon) name.
+           credentials (dict): Dictionary with host, db, user and password. 
            min_score (float): Only features with score>=min_score will be read.
            min_votes (int): Only features with votes>=min_votes will be read.
 	"""
@@ -99,7 +87,7 @@ def train_geojson(schema,
 		           	                                          min_votes,
 		           	                                          max_number)
 
-	data = db_fetch(query)
+	data = db_fetch(query, credentials)
 
 	# convert to GeoJSON
 	geojson_features = [] 
@@ -127,6 +115,7 @@ def target_geojson(schema,
 	               cat_id,
 	               max_number, 
 	               output_file, 
+	               credentials,
 	               max_score=1.0,
 	               max_votes=0 
 	              ):
@@ -141,6 +130,7 @@ def target_geojson(schema,
            cat_id (str): Image catalog id.
            max_number (int): Maximum number of features to be read.
            output_file (str): Output file name (extension .geojson).
+           credentials (dict): Dictionary with host, db, user and password. 
            max_score (float): Only features with score<=max_score will be read.
 		   max_votes (int): Only features with votes<=max_votes will be read.
 	"""
@@ -164,7 +154,7 @@ def target_geojson(schema,
 	       	                      max_score, 
 	       	                      max_number)          
 
-	data = db_fetch(query)
+	data = db_fetch(query, credentials)
 
 	# convert to GeoJSON
 	geojson_features = [] 
