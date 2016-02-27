@@ -67,7 +67,10 @@ def classify(polygon_file, raster_file, classifier):
     labels = []
     for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
         for featureVector in fe.pool_features(data, raster_file):
-            labels_this_feature = classifier.predict(featureVector)                        
+            try:
+                labels_this_feature = classifier.predict(featureVector)    
+            except ValueError:
+                labels_this_feature = ['']                       
         labels.append(labels_this_feature[0])
 
     print 'Done!'    
@@ -103,6 +106,8 @@ def main(job_file):
     print "Write results"    
     jt.write_labels_to_geojson(labels, target_file, output_file)
 
+    # Compute confusion matrix; this makes sense only if the target file
+    # contains known labels
     print "Confusion matrix"
     C = jt.confusion_matrix_two_geojsons(target_file, output_file)
     print C

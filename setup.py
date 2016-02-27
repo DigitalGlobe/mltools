@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='0.0.3',
-      description='Basic lulc, classification and pool detection',
+      version='0.0.4',
+      description='Basic classification.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
