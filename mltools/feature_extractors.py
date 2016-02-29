@@ -79,4 +79,4 @@ def pool_features(data, raster_file):
     
     band37_ratio = (data[2,:,:]-data[6,:,:])/(data[2,:,:]+data[6,:,:])
 
-    yield [ band28_ratio.max(), band37_ratio.max(), np.min(spectral_data) ]
+    return [ band28_ratio.max(), band37_ratio.max(), np.min(spectral_data) ]

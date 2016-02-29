@@ -139,4 +139,39 @@ def write_labels_to_geojson(labels, polygon_file, output_file):
     with open(output_file, 'w') as f:
         geojson.dump(feature_collection, f)     
 
-    print 'Done!'    
+    print 'Done!'  
+
+
+def write_values_to_geojson(values, property_name, polygon_file, output_file):
+    """Writes values of given property to polygon_file to create output_file.
+       The number of labels must be equal to the number of features in 
+       polygon_file. If some of the features in polygon_file already have 
+       values, the values are overwritten.
+
+       Args:
+           values (list): Value list. 
+           property_name (str): Property name.
+           polygon_file (str): Filename. Collection of unclassified 
+                               geometries in geojson or shp format.
+           output_file (str): Output filename (extension .geojson)
+    """
+
+    # get input feature collection
+    with open(polygon_file) as f:
+        feature_collection = geojson.load(f)
+
+    features = feature_collection['features']
+    no_features = len(features)
+    
+    # enter label information
+    for i in range(0, no_features):
+        feature, value = features[i], values[i]
+        feature['properties'][property_name] = value
+
+    feature_collection['features'] = features    
+
+    # write to output file
+    with open(output_file, 'w') as f:
+        geojson.dump(feature_collection, f)     
+
+    print 'Done!'      
