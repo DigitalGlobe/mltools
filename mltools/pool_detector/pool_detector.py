@@ -1,5 +1,8 @@
 '''
-Pool detector built after simple_classifier.
+What: Pool detector built after simple_classifier.
+Author: Kostas Stamatiou
+Created: 02/16/2016
+Contact: kostas.stamatiou@digitalglobe.com
 '''
 
 import sys
@@ -8,11 +11,14 @@ import numpy as np
 import json 
 import geojson
 
-from .. import json_tools as jt
-from .. import feature_extractors as fe
-from .. import pixel_extractors as pe
+import json_tools as jt
+import feature_extractors as fe
+import pixel_extractors as pe
 
-from sklearn.ensemble import RandomForestClassifier     
+from sklearn.ensemble import RandomForestClassifier    
+
+import math 
+
 
 def train_model(polygon_file, raster_file, classifier):
     """Train classifier and output classifier parameters.
@@ -33,17 +39,58 @@ def train_model(polygon_file, raster_file, classifier):
     # compute feature vectors for each polygon
     features = []
     labels = []
+    counter = 0
     for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
+        # if there is something weird, pass
+        if math.isnan(np.linalg.norm(feature_vector)): continue        
         features.append(feature_vector)
         labels.append(label)
-                        
+        counter += 1
+
     # train classifier
     X, y = np.array(features), np.array(labels)
-    classifier.fit( X, y )
+    classifier.fit(X, y)
 
     print 'Done!'    
     return classifier
+
+
+def compute_mean_accuracy(polygon_file, raster_file, classifier):
+    """Deploy classifier and compute mean classification accuracy
+       across classes. polygon_file must contain labels.
+
+       Args:
+           polygon_file (str): Filename. Collection of geometries in 
+                               geojson or shp format.
+           raster_file (str): Image filename.
+           classifier (object): Instance of one of many supervised classifier
+                                classes supported by scikit-learn.
+       
+       Returns:
+           List of labels (list).                                             
+    """
+
+    # compute feature vectors for each polygon
+    labels, error_counter = [], 0
+    for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
+                                                               raster_file):        
+        feature_vector = fe.pool_features(data, raster_file)
+        try:
+            # classifier prediction looks like array([]), 
+            # so we need the first entry: hence the [0] 
+            label = classifier.predict(feature_vector)[0]    
+        except ValueError:
+            label = ''                       
+        labels.append(label)
+
+        if label != tentative_label:
+            error_counter += 1
+            
+    accuracy = float(len(labels) - error_counter)/len(labels)        
+    
+    print 'Done!'    
+    return accuracy
 
 
 def classify(polygon_file, raster_file, classifier):
@@ -62,10 +109,13 @@ def classify(polygon_file, raster_file, classifier):
 
     # compute feature vectors for each polygon
     labels = []
-    for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
+    for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
+                                                               raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
         try:
-            label = classifier.predict(feature_vector)    
+            # classifier prediction looks like array([]), 
+            # so we need the first entry: hence the [0] 
+            label = classifier.predict(feature_vector)[0]    
         except ValueError:
             label = ''                       
         labels.append(label)
@@ -89,22 +139,26 @@ def classify_w_scores(polygon_file, raster_file, classifier):
     """
 
     class_names = classifier.classes_
+    print class_names
 
     # compute feature vectors for each polygon
     labels, scores = [], []
-    for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
+    for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
+                                                               raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
         try:
-            probs = classifier.predict_proba(feature_vector) 
-            ind = np.argmax(probs)
+            # classifier prediction looks like [[]], 
+            # so we need the first entry: hence the [0]    
+            probs = classifier.predict_proba(feature_vector)[0] 
+            ind = np.argmax(probs)    
             label, score = class_names[ind], probs[ind]
         except ValueError:
-            label, score = '', 1.0                       
+            label, score = '', 1.0                               
         labels.append(label)
         scores.append(score)
-
+       
     print 'Done!'    
-    return labels, np.array(scores)  
+    return labels, np.array(scores)
 
 
 def main(job_file):
@@ -135,13 +189,13 @@ def main(job_file):
     trained_classifier = train_model(train_file, image_file, classifier)
     
     print "Classify"
-    # labels = classify(target_file, image_file, trained_classifier)
     labels, scores = classify_w_scores(target_file, image_file, 
                                        trained_classifier)
-
+    
     print "Write results"    
-    jt.write_values_to_geojson(labels, 'class_name', target_file, output_file)
-    jt.write_values_to_geojson(scores, 'score', target_file, output_file)
+    values = zip(labels,scores)
+    jt.write_values_to_geojson(values, ['class_name', 'score'], 
+                               target_file, output_file)
 
     # Compute confusion matrix; this makes sense only if the target file
     # contains known labels

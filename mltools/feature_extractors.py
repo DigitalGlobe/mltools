@@ -71,12 +71,17 @@ def pool_features(data, raster_file):
 
     # get water signature from raster_file
     # this is hard-coded for the time being
-    water_sig = np.array([399, 509, 437, 266, 219, 154, 119, 114])
+    # water_sig = np.array([399, 509, 437, 266, 219, 154, 119, 114])
+    water_sig = np.array([393, 465, 473, 271, 173, 76, 47, 25])
+
+    covered_pool_sig = np.array([404, 463, 430, 332, 276, 268, 587, 394])
 
     spectral_data = spectral_angles(data, water_sig)
+    spectral_data_2 = spectral_angles(data, covered_pool_sig)
 
-    band28_ratio = (data[1,:,:]-data[7,:,:])/(data[1,:,:]+data[7,:,:])
+    #band28_ratio = (data[1,:,:]-data[7,:,:])/(data[1,:,:]+data[7,:,:])
     
-    band37_ratio = (data[2,:,:]-data[6,:,:])/(data[2,:,:]+data[6,:,:])
+    #band37_ratio = (data[2,:,:]-data[6,:,:])/(data[2,:,:]+data[6,:,:])
 
-    return [ band28_ratio.max(), band37_ratio.max(), np.min(spectral_data) ]
+    #return [ band28_ratio.max(), band37_ratio.max(), np.min(spectral_data), np.min(spectral_data_2) ]
+    return [np.min(spectral_data), np.min(spectral_data_2) ]
