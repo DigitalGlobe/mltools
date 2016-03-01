@@ -33,7 +33,7 @@ The output of a MLA is one or more of the following:
 
 Requirements
 ------------
-gdal (https://pypi.python.org/pypi/GDAL/)
+scipy,gdal (https://pypi.python.org/pypi/GDAL/)
  
 
 Comments

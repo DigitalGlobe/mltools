@@ -11,7 +11,7 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='0.0.7',
+      version='0.0.8',
       description='Basic classification.',
       classifiers=[],
       keywords='',
