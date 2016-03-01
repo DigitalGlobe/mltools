@@ -33,8 +33,21 @@ The output of a MLA is one or more of the following:
 
 Requirements
 ------------
-scipy,gdal (https://pypi.python.org/pypi/GDAL/)
+scipy,gdal.
+
+In order to install python bindings for gdal, first get your gdal version with 
+
+.. highlights::
+
+   gdalinfo --version
  
+Suppose this is 1.10.1. Then do:
+
+.. highlights::
+   
+   pip install pygdal==1.10.1
+
+
 
 Comments
 --------
