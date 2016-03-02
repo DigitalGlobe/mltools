@@ -22,7 +22,8 @@ def get_conn(credentials):
 	if user == '' or password == '':
 	    raise DatabaseError('Database username or password not set.')
 
-	conn_string = "host=%s dbname=%s user=%s password=%s" % (host, db, user, password)
+	conn_string = "host=%s dbname=%s user=%s password=%s" % (host, db, 
+		                                                     user, password)
 	conn = psycopg2.connect(conn_string)
 	conn.autocommit = True
 	return conn
@@ -49,7 +50,8 @@ def train_geojson(schema,
 	              class_name,
 	              credentials, 
 	              min_score=0.95, 
-	              min_votes=0
+	              min_votes=0,
+	              max_area = 1e06
 	             ):
 	"""Read features from Tomnod campaign and write to geojson.
 	   The purpose of this function is to create training data for a machine.
@@ -65,6 +67,7 @@ def train_geojson(schema,
            credentials (dict): Dictionary with host, db, user and password. 
            min_score (float): Only features with score>=min_score will be read.
            min_votes (int): Only features with votes>=min_votes will be read.
+           max_area (float): Only import features with (area in m2) <= max_area.
 	"""
 
 	print 'Retrieve data for: ' 
@@ -80,11 +83,13 @@ def train_geojson(schema,
 		       AND tag_type.name = '{}'
 		       AND feature.score >= {}
 		       AND feature.num_votes_total >= {}
+		       AND ST_Area(feature.feature) <= {}
 		       ORDER BY feature.score DESC LIMIT {}""".format(schema, 
 		           	                                          cat_id, 
 		           	                                          class_name, 
 		           	                                          min_score,
 		           	                                          min_votes,
+		           	                                          max_area,
 		           	                                          max_number)
 
 	data = db_fetch(query, credentials)
@@ -117,7 +122,8 @@ def target_geojson(schema,
 	               output_file, 
 	               credentials,
 	               max_score=1.0,
-	               max_votes=0 
+	               max_votes=0,
+	               max_area = 1e06 
 	              ):
 
 	"""Read features from Tomnod campaign and write to geojson.
@@ -133,6 +139,7 @@ def target_geojson(schema,
            credentials (dict): Dictionary with host, db, user and password. 
            max_score (float): Only features with score<=max_score will be read.
 		   max_votes (int): Only features with votes<=max_votes will be read.
+		   max_area (float): Only import features with (area in m2) <= max_area.
 	"""
 
 	print 'Retrieve data for: ' 
@@ -147,11 +154,13 @@ def target_geojson(schema,
 	           AND overlay.catalogid = '{}'
 	           AND feature.score <= {}
 	           AND feature.num_votes_total <= {}
+	           AND ST_Area(feature.feature) <= {}
 	           ORDER BY feature.score ASC NULLS FIRST
 	           LIMIT {}""".format(schema, 
 	       	                      cat_id,  
 	       	                      min_score,
-	       	                      max_score, 
+	       	                      max_score,
+	       	                      max_area, 
 	       	                      max_number)          
 
 	data = db_fetch(query, credentials)
