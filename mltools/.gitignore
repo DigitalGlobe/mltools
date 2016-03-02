@@ -1,2 +1,4 @@
 *.pyc
 *.geojson
+*.tif
+*.tiff
