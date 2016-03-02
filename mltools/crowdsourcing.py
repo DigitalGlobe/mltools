@@ -51,8 +51,8 @@ def db_query(sql, credentials):
         cursor.execute(sql)
     except psycopg2.ProgrammingError, e:
         print "Programming error in query: %s" % e
-		conn.close()
-		return	     
+	conn.close()
+	return	     
 
 
 def train_geojson(schema, 
