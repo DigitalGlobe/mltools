@@ -27,7 +27,7 @@ max_nopools_samples = 5000
 ratio_train_nopools = 0.02
 train_file = 'train.geojson'
 target_file = 'target.geojson'
-output_file = 'classified_no_covered.geojson'
+output_file = 'classified_with_covered.geojson'
 max_area = 1000                           # max area in m2
 
 # classifier params

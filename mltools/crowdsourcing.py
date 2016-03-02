@@ -8,6 +8,7 @@ Contact: kostas.stamatiou@digitalglobe.com
 import geojson
 import os
 import psycopg2
+import gdal, ogr, osr
 
 from shapely.wkb import loads
 
@@ -40,7 +41,18 @@ def db_fetch(sql, credentials):
 	except psycopg2.ProgrammingError, e:
 	    print "Programming error in query: %s" % e
 	    conn.close()
-	    return 
+	    return
+
+
+def db_query(sql, credentials):
+    conn = get_conn(credentials)
+    cursor = conn.cursor
+    try:
+        cursor.execute(sql)
+    except psycopg2.ProgrammingError, e:
+        print "Programming error in query: %s" % e
+		conn.close()
+		return	     
 
 
 def train_geojson(schema, 
@@ -49,8 +61,8 @@ def train_geojson(schema,
 	              output_file, 
 	              class_name,
 	              credentials, 
-	              min_score=0.95, 
-	              min_votes=0,
+	              min_score = 0.95, 
+	              min_votes = 0,
 	              max_area = 1e06
 	             ):
 	"""Read features from Tomnod campaign and write to geojson.
@@ -121,8 +133,8 @@ def target_geojson(schema,
 	               max_number, 
 	               output_file, 
 	               credentials,
-	               max_score=1.0,
-	               max_votes=0,
+	               max_score = 1.0,
+	               max_votes = 0,
 	               max_area = 1e06 
 	              ):
 
@@ -184,4 +196,54 @@ def target_geojson(schema,
 	with open(output_file, 'wb') as f:
 		geojson.dump(feature_collection, f)		 	   
 
-	print 'Done!'	
+	print 'Done!'
+
+
+def write_geojson(schema, table, input_file, batch_size = 1000):
+    """Write contents of geojson to database table.
+       At the moment, this only works for the feature table
+       of a classification campaign.
+
+       Args:
+           schema (str): Campaign schema.
+           table (str): The table of schema where to write.
+           input_file (str): Input file name (extension .geojson).
+           batch_size (int): Write batch_size results at a time.
+
+    """
+
+    print 'Write data to: '
+    print 'Schema: ' + schema
+    print 'Table:' + table
+
+    # get feature data
+    shp = ogr.Open(polygon_file)
+    lyr = shp.GetLayer()
+    no_features = lyr.GetFeatureCount()
+
+    for i in range(no_features):
+
+        # get feature data
+        feat = lyr.GetFeature(i)
+        feature_id = int(feat.GetFieldAsString('id')) 
+        class_name = feat.GetFieldAsString('class_name')
+        if class_name == '': continue      # make sure class name is not empty
+        score = float(feat.GetFieldAsString('score'))
+        tomnod_priority = float(feat.GetFieldAsString('tomnod_priority')) 
+
+        query = """UPDATE {}.feature 
+                   SET type_id = (SELECT id FROM tag_type WHERE name = '{}'),
+                       score = {}, 
+                       priority = {} 
+                   WHERE id = {};""".format(schema,
+                   	                        class_name,
+                   	                        score, 
+                   	                        tomnod_priority,
+                   	                        feature_id)
+
+	    total_query += query
+	    if  (i%(batch_size-1)  == 0) or (i == no_features-1):
+	        db_query(total_query)
+	        total_query = ""
+
+	print 'Done!'      

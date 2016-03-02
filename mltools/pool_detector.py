@@ -39,14 +39,12 @@ def train_model(polygon_file, raster_file, classifier):
     # compute feature vectors for each polygon
     features = []
     labels = []
-    counter = 0
     for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
         # if there is something weird, pass
         if math.isnan(np.linalg.norm(feature_vector)): continue        
         features.append(feature_vector)
         labels.append(label)
-        counter += 1
 
     # train classifier
     X, y = np.array(features), np.array(labels)
@@ -124,6 +122,34 @@ def classify(polygon_file, raster_file, classifier):
     return labels  
 
 
+def compute_tomnod_priority(label, score):
+    """Compute a priority value to be used on tomnod if a feature classified
+       by the machine is to be inspected by the crowd. This is a custom 
+       function and should be defined based on use case. 
+       Priority is a non-negative number.
+       Features on Tomnod are ordered in ascending priority order 
+       (i.e. priority 0 means highest priority). 
+
+       Args:
+           label (str): The feature label.
+           score (float): Confidence score from 0 to 1.
+
+       Returns:
+           Priority value (float).
+    """
+
+    # we want to prioritize polygons that the machine thinks have
+    # swimming pools; this will help weed out false positives
+    # is the machine thinks there are no swimming pools, we prioritize
+    # by score
+    if label == 'Swimming pool':
+        priority = 0.0
+    else:
+        priority = abs(score - 0.5)
+
+    return priority     
+
+
 def classify_w_scores(polygon_file, raster_file, classifier):
     """Deploy classifier and output estimated labels with confidence scores.
 
@@ -135,14 +161,14 @@ def classify_w_scores(polygon_file, raster_file, classifier):
                                 classes supported by scikit-learn.
        
        Returns:
-           List of labels (list) and vector of scores (numpy vector).                                             
+           Labels (list), scores (numpy vector) and priorities (numpy vector).   
     """
 
     class_names = classifier.classes_
     print class_names
 
-    # compute feature vectors for each polygon
-    labels, scores = [], []
+    # go through each polygon, compute features and classify
+    labels, scores, priorities = [], [], []
     for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
                                                                raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
@@ -152,13 +178,15 @@ def classify_w_scores(polygon_file, raster_file, classifier):
             probs = classifier.predict_proba(feature_vector)[0] 
             ind = np.argmax(probs)    
             label, score = class_names[ind], probs[ind]
+            priority = compute_tomnod_priority(label, score)
         except ValueError:
-            label, score = '', 1.0                               
+            label, score, priority = '', 1.0, 0                               
         labels.append(label)
         scores.append(score)
+        priorities.append(priority)
        
     print 'Done!'    
-    return labels, np.array(scores)
+    return labels, np.array(scores), np.array(priorities)
 
 
 def main(job_file):
@@ -193,9 +221,11 @@ def main(job_file):
                                        trained_classifier)
     
     print "Write results"    
-    values = zip(labels,scores)
-    jt.write_values_to_geojson(values, ['class_name', 'score'], 
-                               target_file, output_file)
+    values = zip(labels, scores, priorities)
+    jt.write_values_to_geojson(values, 
+                               ['class_name', 'score', 'tomnod_priority'], 
+                               target_file, 
+                               output_file)
 
     # Compute confusion matrix; this makes sense only if the target file
     # contains known labels

@@ -69,14 +69,14 @@ def pool_features(data, raster_file):
            Feature vector (numpy array).
     """
 
-    # get signatures from raster_file
+    # get signatures from raster_file; this needs to be acomped
     # this is hard-coded for the time being
-    pool_sig = np.array([393, 465, 473, 271, 173, 76, 47, 25])
-    #covered_pool_sig = np.array([404, 463, 430, 332, 276, 268, 587, 394])
-
-    pool_data = spectral_angles(data, pool_sig)
-    #covered_pool_data = spectral_angles(data, covered_pool_sig)
-    band26_ratio = (data[1,:,:]-data[5,:,:])/(data[1,:,:]+data[5,:,:])
-    band36_ratio = (data[2,:,:]-data[5,:,:])/(data[2,:,:]+data[5,:,:])
+    pool_sig = np.array([1179, 2295, 2179, 759, 628, 186, 270, 110])
     
-    return [np.max(band26_ratio), np.max(band36_ratio), np.min(pool_data)]
+    pool_data = spectral_angles(data, pool_sig)
+    band26_ratio = (data[1,:,:] - data[5,:,:])/(data[1,:,:] + data[5,:,:])
+    band36_ratio = (data[2,:,:] - data[5,:,:])/(data[2,:,:] + data[5,:,:])
+    band28_ratio = (data[1,:,:] - data[7,:,:])/(data[2,:,:] + data[7,:,:])
+
+    return [np.max(band26_ratio), np.max(band36_ratio), np.max(band28_ratio), np.min(pool_data)]
+    
