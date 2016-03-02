@@ -217,8 +217,8 @@ def main(job_file):
     trained_classifier = train_model(train_file, image_file, classifier)
     
     print "Classify"
-    labels, scores = classify_w_scores(target_file, image_file, 
-                                       trained_classifier)
+    labels, scores, priorities = classify_w_scores(target_file, image_file, 
+                                                   trained_classifier)
     
     print "Write results"    
     values = zip(labels, scores, priorities)

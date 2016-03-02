@@ -76,7 +76,6 @@ def pool_features(data, raster_file):
     pool_data = spectral_angles(data, pool_sig)
     band26_ratio = (data[1,:,:] - data[5,:,:])/(data[1,:,:] + data[5,:,:])
     band36_ratio = (data[2,:,:] - data[5,:,:])/(data[2,:,:] + data[5,:,:])
-    band28_ratio = (data[1,:,:] - data[7,:,:])/(data[2,:,:] + data[7,:,:])
-
-    return [np.max(band26_ratio), np.max(band36_ratio), np.max(band28_ratio), np.min(pool_data)]
+    
+    return [np.max(band26_ratio), np.max(band36_ratio), np.min(pool_data)]
     
