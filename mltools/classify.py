@@ -3,6 +3,8 @@
 
 import json
 import os
+import sys
+
 
 import pool_detector as pd
 import crowdsourcing as cr
@@ -12,23 +14,28 @@ import json_tools as jt
 import warnings
 warnings.filterwarnings("ignore")
 
-# parameters
+# tomnod parameters
 credentials = {'host':'mapperdb.cj6xoak5f54o.us-east-1.rds.amazonaws.com',
                'db':'tomnod', 
                'user':'tomnod', 
                'password':'5cqJUfOXmEufeexwJ2EW4XCE'}
 
-schema = 'adelaide_pools_2016'
-cat_id = '1040010015D38800'
-image_file = '14316.tif'
-max_pools_samples = 300
-ratio_train_pools = 0.333
-max_nopools_samples = 5000
-ratio_train_nopools = 0.02
-train_file = 'train.geojson'
-target_file = 'target.geojson'
-output_file = 'classified.geojson'
-max_area = 1000                           # max area in m2
+
+with open('class_job.json', 'r') as f:
+    class_job = json.load(f)
+
+# get parameters from command line
+schema = class_job['schema']
+cat_id = class_job['cat_id']
+image_file = class_job['image_file']
+max_pools_samples = class_job['max_pools_samples']
+ratio_train_pools = class_job['ratio_train_pools']
+max_nopools_samples = class_job['max_nopools_samples']
+ratio_train_nopools = class_job['ratio_train_pools']
+train_file = class_job['train_file']
+target_file = class_job['target_file']
+output_file = class_job['output_file']
+max_area = class_job['max_area']                           # max area in m2
 
 # classifier params
 n_estimators = 200
