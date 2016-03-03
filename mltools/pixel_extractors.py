@@ -4,7 +4,7 @@ Authors: Carsten Tusk, Kostas Stamatiou
 Contact: kostas.stamatiou@digitalglobe.com
 """
 
-import gdal, ogr, osr
+from osgeo import gdal, ogr, osr
 import numpy as np
 
 
