@@ -8,7 +8,7 @@ Contact: kostas.stamatiou@digitalglobe.com
 import geojson
 import os
 import psycopg2
-import gdal, ogr, osr
+from osgeo import gdal, ogr, osr
 
 from shapely.wkb import loads
 
