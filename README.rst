@@ -7,12 +7,6 @@ A collection of Machine Learning (ML) Tools for object detection and classificat
 
 mltools is MIT licenced.
 
-Installation is easy:
-
-.. highlights::
-
-   pip install mltools
-
 ML Algorithms (MLAs) (either supervised or unsupervised) are implemented using standard ML libraries such as scikit-learn and tensorflow. MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
 
 The purpose of this repository is to enable fast prototyping of object detection and classification solutions employing
@@ -31,22 +25,41 @@ The output of a MLA is one or more of the following:
 - an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
 
 
-Requirements
+DevOps
 ------------
-scipy,gdal.
 
-In order to install python bindings for gdal, first get your gdal version with 
+Start with a fresh Ubuntu EC2 instance.
 
 .. highlights::
 
-   gdalinfo --version
- 
-Suppose this is 1.10.1. Then do:
+   sudo apt-get update
+   sudo apt-get upgrade
+   sudo apt-get install git python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran libfreetype6-dev libpng-dev
+   ssh-keygen -t rsa
+   more .ssh/id_rsa.pub # and copy this key to github.com deploy keys for the mltools repo
+
+
+Install GDAL
 
 .. highlights::
    
-   pip install pygdal==1.10.1
+   sudo apt-get install gdal-bin
+   sudo apt-get install libgdal-dev libgdal1h
 
+Clone the repo:
+
+.. highlights::
+
+   git clone git@github.com:kostasthebarbarian/mltools.git
+   cd mltools
+   virtualenv venv
+   . venv/bin/activate
+ 
+Then install the requirements:
+
+.. highlights::
+
+   pip install -r requirements.txt
 
 
 Comments
