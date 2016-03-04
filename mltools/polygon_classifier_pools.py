@@ -183,7 +183,7 @@ def classify_w_scores(polygon_file, raster_file, classifier):
     print class_names
 
     # go through each polygon, compute features and classify
-    labels, scores, priorities = [], [], []
+    labels, scores, priorities, counter = [], [], [], 0
     for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
                                                                raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
@@ -199,6 +199,11 @@ def classify_w_scores(polygon_file, raster_file, classifier):
         labels.append(label)
         scores.append(score)
         priorities.append(priority)
+
+        counter += 1
+
+        if counter % 1000 == 0:
+            print counter
        
     print 'Done!'    
     return labels, np.array(scores), np.array(priorities)

@@ -1,6 +1,5 @@
 *.pyc
 *.geojson
-*.tif
+*.tif*
 *.tiff
 *.json
-*.tif.aux
