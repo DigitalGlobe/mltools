@@ -93,7 +93,7 @@ def train_geojson(schema,
     query = """SELECT feature.id, feature.feature
                FROM {}.feature, tag_type, overlay
                WHERE feature.type_id = tag_type.id
-               AND feature.new_overlay_id = overlay.id
+               AND feature.new_overlay_id = overlay.id    # TO BE CHANGED!!!! 
                AND overlay.catalogid = '{}'
                AND tag_type.name = '{}'
                AND feature.score >= {}
@@ -144,7 +144,7 @@ def target_geojson(schema,
     """Read features from Tomnod campaign and write to geojson.
        The purpose of this function is to create target data for a machine.
        Features are read from the DB in increasing score order, nulls first.
-       (A feature with null score has not been viewed by a user yet.)
+       (A feature with null score has not had its score computed by crowdrank.)
        
        Args:
            schema (str): Campaign schema.
@@ -161,20 +161,21 @@ def target_geojson(schema,
     print 'Schema: ' + schema
     print 'Catalog id: ' + cat_id
 
-    query = """SELECT feature.id, feature.feature, tag_type.name
-               FROM {}.feature, tag_type, overlay
-               WHERE feature.type_id = tag_type.id
-               AND {}.feature, overlay
-               AND feature.overlay_id = overlay.id
+    # this query HAS BEEN CHANGED to use new_overlay_id instead of 
+    # overlay_id; this is a quick fix for adelaide_pools_2016!!!
+
+    query = """SELECT feature.id, feature.feature
+               FROM {}.feature, overlay
+               AND feature.new_overlay_id = overlay.id        # TO BE CHANGED!!!
                AND overlay.catalogid = '{}'
-               AND feature.score <= {}
+               AND (feature.score <= {} OR feature.score IS NULL)
                AND feature.num_votes_total <= {}
                AND ST_Area(feature.feature) <= {}
                ORDER BY feature.score ASC NULLS FIRST
                LIMIT {}""".format(schema, 
                                   cat_id,  
-                                  min_score,
                                   max_score,
+                                  max_votes,
                                   max_area, 
                                   max_number)          
 

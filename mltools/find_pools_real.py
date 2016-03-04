@@ -35,10 +35,11 @@ cat_id = class_job['cat_id']
 image_file = cat_id + '.tif'
 no_train_pools = class_job['no_train_pools']
 no_train_nopools = class_job['no_train_nopools']
+max_polygons = class_job['max_polygons']   # max polygons to be classified
+max_area = class_job['max_area']           # max area in m2
 train_file = cat_id + '_train_real.geojson'
 target_file = cat_id + '_target_real.geojson'
 output_file = cat_id + '_real.geojson'
-max_area = class_job['max_area']                           # max area in m2
 
 # classifier params
 n_estimators = 200
@@ -57,7 +58,8 @@ jt.join_two_geojsons('gt_pools.geojson', 'gt_nopools.geojson',
                    train_file)
 
 # get target file 
-cr.target_geojson(schema, cat_id, 1e06, 
+cr.target_geojson(schema, cat_id, 
+                  max_polygons, 
                   target_file, 
                   credentials,
                   max_votes = 0,
