@@ -28,10 +28,10 @@ with open('class_job.json', 'r') as f:
 schema = class_job['schema']
 cat_id = class_job['cat_id']
 image_file = cat_id + '.tif'
-max_pools_samples = class_job['max_pools_samples']
-ratio_train_pools = class_job['ratio_train_pools']
-max_nopools_samples = class_job['max_nopools_samples']
-ratio_train_nopools = class_job['ratio_train_nopools']
+no_pools = class_job['no_pools']
+no_train_pools = class_job['no_train_pools']
+no_nopools = class_job['no_nopools']
+no_train_nopools = class_job['no_train_nopools']
 train_file = class_job['train_file']
 target_file = class_job['target_file']
 output_file = cat_id + '.geojson'
