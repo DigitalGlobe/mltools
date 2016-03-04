@@ -24,17 +24,17 @@ credentials = {'host':'mapperdb.cj6xoak5f54o.us-east-1.rds.amazonaws.com',
 with open('class_job.json', 'r') as f:
     class_job = json.load(f)
 
-# get parameters from command line
+# get parameters from json
 schema = class_job['schema']
 cat_id = class_job['cat_id']
-image_file = class_job['image_file']
+image_file = cat_id + '.tif'
 max_pools_samples = class_job['max_pools_samples']
 ratio_train_pools = class_job['ratio_train_pools']
 max_nopools_samples = class_job['max_nopools_samples']
-ratio_train_nopools = class_job['ratio_train_pools']
+ratio_train_nopools = class_job['ratio_train_nopools']
 train_file = class_job['train_file']
 target_file = class_job['target_file']
-output_file = class_job['output_file']
+output_file = cat_id + '.geojson'
 max_area = class_job['max_area']                           # max area in m2
 
 # classifier params

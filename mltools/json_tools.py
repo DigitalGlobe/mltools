@@ -36,15 +36,14 @@ def join_two_geojsons(file_1, file_2, output_file):
 	    geojson.dump(feat_collection_1, f) 
 
     
-def split_geojson(input_file, file_1, file_2, ratio):
+def split_geojson(input_file, file_1, file_2, no_features):
 	"""Split a geojson in two separate files.
 	   
 	   Args:
 	       input_file (str): Input filename (ext. geojson).
 	       file_1 (str): Output filename 1 (ext. geojson).
 	       file_2 (str): Output filename 2 (ext. geojson).
-	       ratio (float): Proportion of features in input_file that goes to 
-	                      file_1. ratio is from 0 to 1.
+	       no_features (int): Number of features in input_file to go to file_1.
 	       output_file (str): Output filename (ext. geojson).
 	"""
 
@@ -53,10 +52,8 @@ def split_geojson(input_file, file_1, file_2, ratio):
 	    feat_collection = geojson.load(f)
 
 	features = feat_collection['features']
-	no_features = len(features)
-	no_features_1 = int(round(ratio*no_features))
-	feat_collection_1 = geojson.FeatureCollection(features[0:no_features_1])
-	feat_collection_2 = geojson.FeatureCollection(features[no_features_1:])
+	feat_collection_1 = geojson.FeatureCollection(features[0:no_features])
+	feat_collection_2 = geojson.FeatureCollection(features[no_features:])
 
 	with open(file_1, 'w') as f:
 	    geojson.dump(feat_collection_1, f) 
