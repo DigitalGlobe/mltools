@@ -166,7 +166,7 @@ def target_geojson(schema,
 
     query = """SELECT feature.id, feature.feature
                FROM {}.feature, overlay
-               AND feature.new_overlay_id = overlay.id        
+               WHERE feature.new_overlay_id = overlay.id        
                AND overlay.catalogid = '{}'
                AND (feature.score <= {} OR feature.score IS NULL)
                AND feature.num_votes_total <= {}
