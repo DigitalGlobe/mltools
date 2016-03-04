@@ -48,14 +48,25 @@ class_weight = None
 
 # get ground truth for pools and no pools 
 print 'Get GT'
-cr.train_geojson(schema, cat_id, no_pools, 
-	               'gt_pools.geojson', 'Swimming pool', credentials)
 
-cr.train_geojson(schema, cat_id, no_nopools, 
-	               'gt_nopools.geojson', 'No swimming pool', 
-                 credentials, max_area=max_area)
-jt.join_two_geojsons('gt_pools.geojson', 'gt_nopools.geojson', 
-                   train_file)
+cr.train_geojson(schema, 
+                 cat_id, 
+                 no_train_pools, 
+	               'gt_pools.geojson', 
+                 'Swimming pool', 
+                 credentials)
+
+cr.train_geojson(schema, 
+                 cat_id, 
+                 no_train_nopools, 
+	               'gt_nopools.geojson', 
+                 'No swimming pool', 
+                 credentials, 
+                 max_area=max_area)
+
+jt.join_two_geojsons('gt_pools.geojson', 
+                     'gt_nopools.geojson', 
+                     train_file)
 
 # get target file  
 cr.target_geojson(schema, 
