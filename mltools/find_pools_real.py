@@ -57,11 +57,12 @@ cr.train_geojson(schema, cat_id, no_nopools,
 jt.join_two_geojsons('gt_pools.geojson', 'gt_nopools.geojson', 
                    train_file)
 
-# get target file 
-cr.target_geojson(schema, cat_id, 
-                  max_polygons, 
+# get target file  
+cr.target_geojson(schema, 
+                  cat_id, 
                   target_file, 
                   credentials,
+                  max_number = max_polygons, 
                   max_votes = 0,
                   max_area = max_area 
                   )

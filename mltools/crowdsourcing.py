@@ -133,9 +133,9 @@ def train_geojson(schema,
 
 def target_geojson(schema, 
                    cat_id,
-                   max_number, 
                    output_file, 
                    credentials,
+                   max_number = 1e06,
                    max_score = 1.0,
                    max_votes = 0,
                    max_area = 1e06 
