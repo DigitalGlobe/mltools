@@ -93,7 +93,7 @@ def train_geojson(schema,
     query = """SELECT feature.id, feature.feature
                FROM {}.feature, tag_type, overlay
                WHERE feature.type_id = tag_type.id
-               AND feature.new_overlay_id = overlay.id    # TO BE CHANGED!!!! 
+               AND feature.new_overlay_id = overlay.id     
                AND overlay.catalogid = '{}'
                AND tag_type.name = '{}'
                AND feature.score >= {}
@@ -166,7 +166,7 @@ def target_geojson(schema,
 
     query = """SELECT feature.id, feature.feature
                FROM {}.feature, overlay
-               AND feature.new_overlay_id = overlay.id        # TO BE CHANGED!!!
+               AND feature.new_overlay_id = overlay.id        
                AND overlay.catalogid = '{}'
                AND (feature.score <= {} OR feature.score IS NULL)
                AND feature.num_votes_total <= {}
