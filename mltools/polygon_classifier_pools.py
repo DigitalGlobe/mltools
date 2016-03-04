@@ -1,5 +1,7 @@
 '''
-MLA: Pool classification algorithm build after simple_classifier.
+MLA: Polygon classifier for pools. 
+     Two classes: (1) Polygon with swimming pool. 
+                  (2) Polygon without swimming pool.
 Author: Kostas Stamatiou
 Created: 02/16/2016
 Contact: kostas.stamatiou@digitalglobe.com

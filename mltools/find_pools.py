@@ -10,7 +10,7 @@ import os
 import sys
 
 
-import pool_classifier as pc
+import polygon_classifier_pools as pcp
 import crowdsourcing as cr
 import json_tools as jt
 
@@ -80,4 +80,4 @@ with open('job.json', 'w') as f:
 
 # run pool detector
 print 'Run detector'
-pc.main('job.json')
+pcp.main('job.json')

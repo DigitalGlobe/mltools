@@ -1,6 +1,5 @@
 '''
-Simple classifier.
-
+MLA: Polygon classifier. Classifies a set of polygons on a given image.
 Authors: Carsten Tusk, Kostas Stamatiou
 Created: 02/22/2016
 Updated: 02/26/2016
