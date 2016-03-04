@@ -26,7 +26,7 @@ credentials = {'host':'mapperdb.cj6xoak5f54o.us-east-1.rds.amazonaws.com',
                'password':'5cqJUfOXmEufeexwJ2EW4XCE'}
 
 
-with open('class_job.json', 'r') as f:
+with open('class_job_real.json', 'r') as f:
     class_job = json.load(f)
 
 # get parameters from json
