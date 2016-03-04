@@ -31,9 +31,13 @@ Start with a fresh Ubuntu EC2 instance.
 .. highlights::
 
    sudo apt-get update
+
    sudo apt-get upgrade
+
    sudo apt-get install git python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran libfreetype6-dev libpng-dev
+   
    ssh-keygen -t rsa
+   
    more .ssh/id_rsa.pub # and copy this key to github.com deploy keys for the mltools repo
 
 
