@@ -105,8 +105,13 @@ def classify(polygon_file, raster_file, classifier):
            List of labels (list).                                             
     """
 
+    # get number of features to be classified
+    shp = ogr.Open(polygon_file)
+    lyr = shp.GetLayer()
+    no_features = lyr.GetFeatureCount()
+
     # compute feature vectors for each polygon
-    labels = []
+    labels, counter = [], 0
     for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
                                                                raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
@@ -117,6 +122,12 @@ def classify(polygon_file, raster_file, classifier):
         except ValueError:
             label = ''                       
         labels.append(label)
+
+        counter += 1
+
+        if counter % 1000 == 0:
+            print counter
+            
 
     print 'Done!'    
     return labels  
