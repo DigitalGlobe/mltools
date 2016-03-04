@@ -184,13 +184,13 @@ def target_geojson(schema,
     # convert to GeoJSON
     geojson_features = [] 
     for entry in data:
-        feature_id, coords_in_hex, class_name = entry
+        feature_id, coords_in_hex = entry
         polygon = loads(coords_in_hex, hex=True)
         coords = [list(polygon.exterior.coords)]   # the brackets are dictated
                                                    # by geojson format!!! 
         geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
-                                          properties={"id": str(feature_id), 
-                                                      "class_name": class_name, 
+                                          properties={"id": str(feature_id),
+                                                      "class_name": '',  
                                                       "image_name": cat_id})
         geojson_features.append(geojson_feature)
     
