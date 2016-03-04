@@ -1,5 +1,5 @@
 '''
-What: Pool classifier.
+MLA: Pool classification algorithm build after simple_classifier.
 Author: Kostas Stamatiou
 Created: 02/16/2016
 Contact: kostas.stamatiou@digitalglobe.com

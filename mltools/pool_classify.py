@@ -1,5 +1,10 @@
-# A little python script that uses mltools to train a pool detector and classify
-# polygons in a given overlay
+'''
+What: a python script that deploys pool_classifier to train a pool classifier 
+and classify polygons in a given overlay
+Author: Kostas Stamatiou
+Created: 02/28/2016
+Contact: kostas.stamatiou@digitalglobe.com
+'''
 
 import json
 import os
@@ -44,18 +49,18 @@ class_weight = None
 
 # get ground truth for pools and no pools 
 print 'Get GT'
-cr.train_geojson(schema, cat_id, max_pools_samples, 
+cr.train_geojson(schema, cat_id, no_pools, 
 	               'gt_pools.geojson', 'Swimming pool', credentials)
 
-cr.train_geojson(schema, cat_id, max_nopools_samples, 
+cr.train_geojson(schema, cat_id, no_nopools, 
 	               'gt_nopools.geojson', 'No swimming pool', 
                  credentials, max_area=max_area)
 
 # separate in train and test
 jt.split_geojson('gt_pools.geojson', 'train_pools.geojson', 
-	             'test_pools.geojson', ratio_train_pools)
+	             'test_pools.geojson', no_train_pools)
 jt.split_geojson('gt_nopools.geojson', 'train_nopools.geojson', 
-	             'test_nopools.geojson', ratio_train_nopools)
+	             'test_nopools.geojson', no_train_nopools)
 jt.join_two_geojsons('train_pools.geojson', 'train_nopools.geojson', 
 	                 train_file)
 jt.join_two_geojsons('test_pools.geojson', 'test_nopools.geojson', 

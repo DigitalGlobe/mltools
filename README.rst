@@ -7,12 +7,10 @@ A collection of Machine Learning (ML) Tools for object detection and classificat
 
 mltools is MIT licenced.
 
-ML Algorithms (MLAs) (either supervised or unsupervised) are implemented using standard ML libraries such as scikit-learn and tensorflow. MLAs also utilize open source libraries which can read from and write to georeferenced satellite images such as gdal.
+The purpose of this repository is to enable fast prototyping of object detection and classification solutions 
+employing one of the existing algorithms or by constructing new ones based on the provided modules.
 
-The purpose of this repository is to enable fast prototyping of object detection and classification solutions employing
-one of the existing algorithms or by constructing new ones based on the provided modular tools.
-
-The input of a MLA is one or more of the following:
+The input of a ML algorithm (MLA) is one or more of the following:
 
 - one or more images;
 - a job.json specifying the parameters of the MLA;
@@ -60,6 +58,13 @@ Then install the requirements:
 .. highlights::
 
    pip install -r requirements.txt
+
+
+Docs
+----
+
+Explanations of the modules and existing MLAs can be found in docs. 
+(This will be available on readthedocs...) 
 
 
 Comments

@@ -13,9 +13,9 @@ import numpy as np
 import json 
 import geojson
 
-from .. import json_tools as jt
-from .. import feature_extractors as fe
-from .. import pixel_extractors as pe
+import json_tools as jt
+import feature_extractors as fe
+import pixel_extractors as pe
 
 from sklearn.ensemble import RandomForestClassifier 
     
