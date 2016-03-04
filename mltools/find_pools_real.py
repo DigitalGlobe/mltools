@@ -35,8 +35,8 @@ cat_id = class_job['cat_id']
 image_file = cat_id + '.tif'
 no_train_pools = class_job['no_train_pools']
 no_train_nopools = class_job['no_train_nopools']
-train_file = class_job['train_file']
-target_file = class_job['target_file']
+train_file = cat_id + '_train_real.geojson'
+target_file = cat_id + '_target_real.geojson'
 output_file = cat_id + '_real.geojson'
 max_area = class_job['max_area']                           # max area in m2
 
@@ -53,6 +53,8 @@ cr.train_geojson(schema, cat_id, no_pools,
 cr.train_geojson(schema, cat_id, no_nopools, 
 	               'gt_nopools.geojson', 'No swimming pool', 
                  credentials, max_area=max_area)
+jt.join_two_geojsons('gt_pools.geojson', 'gt_nopools.geojson', 
+                   train_file)
 
 # get target file 
 cr.target_geojson(schema, cat_id, 1e06, 

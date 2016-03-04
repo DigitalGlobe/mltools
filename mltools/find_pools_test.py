@@ -37,9 +37,9 @@ no_pools = class_job['no_pools']
 no_train_pools = class_job['no_train_pools']
 no_nopools = class_job['no_nopools']
 no_train_nopools = class_job['no_train_nopools']
-train_file = class_job['train_file']
-target_file = class_job['target_file']
-output_file = cat_id + '.geojson'
+train_file = cat_id + '_train_test.geojson'
+target_file = cat_id + '_target_test.geojson'
+output_file = cat_id + '_test.geojson'
 max_area = class_job['max_area']                           # max area in m2
 
 # classifier params
