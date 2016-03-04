@@ -42,6 +42,7 @@ Install GDAL
 .. highlights::
    
    sudo apt-get install gdal-bin
+   
    sudo apt-get install libgdal-dev libgdal1h
 
 Clone the repo:
@@ -49,8 +50,11 @@ Clone the repo:
 .. highlights::
 
    git clone git@github.com:kostasthebarbarian/mltools.git
+   
    cd mltools
+   
    virtualenv venv
+   
    . venv/bin/activate
  
 Then install the requirements:
