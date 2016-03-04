@@ -41,6 +41,7 @@ def train_model(polygon_file, raster_file, classifier):
     labels = []
     for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
+        print feature_vector, label
         # if there is something weird, pass
         if math.isnan(np.linalg.norm(feature_vector)): continue        
         features.append(feature_vector)
@@ -74,6 +75,7 @@ def compute_mean_accuracy(polygon_file, raster_file, classifier):
     for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
                                                                raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
+
         try:
             # classifier prediction looks like array([]), 
             # so we need the first entry: hence the [0] 
@@ -115,6 +117,7 @@ def classify(polygon_file, raster_file, classifier):
     for (feat, poly, data, tentative_label) in pe.extract_data(polygon_file, 
                                                                raster_file):        
         feature_vector = fe.pool_features(data, raster_file)
+
         try:
             # classifier prediction looks like array([]), 
             # so we need the first entry: hence the [0] 
@@ -127,7 +130,7 @@ def classify(polygon_file, raster_file, classifier):
 
         if counter % 1000 == 0:
             print counter
-            
+
 
     print 'Done!'    
     return labels  
