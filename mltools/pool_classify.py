@@ -1,6 +1,6 @@
 '''
 What: a python script that deploys pool_classifier to train a pool classifier 
-and classify polygons in a given overlay
+and classify polygons as containing pools or not in given 8-band image.
 Author: Kostas Stamatiou
 Created: 02/28/2016
 Contact: kostas.stamatiou@digitalglobe.com
