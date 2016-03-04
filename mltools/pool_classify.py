@@ -11,7 +11,7 @@ import os
 import sys
 
 
-import pool_detector as pd
+import pool_classifier as pc
 import crowdsourcing as cr
 import json_tools as jt
 
@@ -81,4 +81,4 @@ with open('job.json', 'w') as f:
 
 # run pool detector
 print 'Run detector'
-pd.main('job.json')
+pc.main('job.json')
