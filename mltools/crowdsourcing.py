@@ -46,7 +46,7 @@ def db_fetch(sql, credentials):
 
 def db_query(sql, credentials):
     conn = get_conn(credentials)
-    cursor = conn.cursor
+    cursor = conn.cursor()
     try:
         cursor.execute(sql)
     except psycopg2.ProgrammingError, e:
@@ -203,7 +203,7 @@ def target_geojson(schema,
     print 'Done!'
 
 
-def write_geojson(schema, table, input_file, batch_size = 1000):
+def write_geojson(schema, table, input_file, credentials, batch_size = 1000):
     """Write contents of geojson to database table.
        At the moment, this only works for the feature table
        of a classification campaign.
@@ -212,6 +212,7 @@ def write_geojson(schema, table, input_file, batch_size = 1000):
            schema (str): Campaign schema.
            table (str): The table of schema where to write.
            input_file (str): Input file name (extension .geojson).
+           credentials (dict): Dictionary with host, db, user and password.
            batch_size (int): Write batch_size results at a time.
 
     """
@@ -221,10 +222,11 @@ def write_geojson(schema, table, input_file, batch_size = 1000):
     print 'Table:' + table
 
     # get feature data
-    shp = ogr.Open(polygon_file)
+    shp = ogr.Open(input_file)
     lyr = shp.GetLayer()
     no_features = lyr.GetFeatureCount()
 
+    total_query = ""
     for i in range(no_features):
 
         # get feature data
@@ -247,7 +249,8 @@ def write_geojson(schema, table, input_file, batch_size = 1000):
 
         total_query += query
         if (i%(batch_size-1)  == 0) or (i == no_features-1):
-            db_query(total_query)
+            print str(i+1) + ' out of ' + str(no_features)
+            db_query(total_query, credentials)
             total_query = ""
 
     print 'Done!'      
