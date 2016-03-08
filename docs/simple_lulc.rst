@@ -39,17 +39,3 @@ Output
 
 - output.geojson: contains a collection of all classified tiles. 
 
-
-Requirements
-------------
-
-python, numpy, scipy, scikit-learn, gdal
-
-
-Comments
---------
-
-This algorithm is meant to illustrate the general workflow of a classification engine.
-Please keep in mind that writing an actually well performing classification engine is beyond the scope of this package.
-Things are kept very very simple for illustrative purposes.
-
