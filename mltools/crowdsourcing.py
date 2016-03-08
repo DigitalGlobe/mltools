@@ -199,7 +199,8 @@ def target_geojson(schema,
     print 'Done!'
 
 
-def write_geojson(schema, table, input_file, credentials, batch_size = 1000):
+def write_geojson(schema, table, input_file, credentials, 
+                  batch_size = 1000, max_votes = 0):
     """Write contents of geojson to database table.
        At the moment, this only works for the feature table
        of a classification campaign.
@@ -210,6 +211,8 @@ def write_geojson(schema, table, input_file, credentials, batch_size = 1000):
            input_file (str): Input file name (extension .geojson).
            credentials (dict): Dictionary with host, db, user and password.
            batch_size (int): Write batch_size results at a time.
+           max_votes (int): Only results for features with votes<=max_votes 
+                            will be written.
 
     """
 
@@ -237,11 +240,12 @@ def write_geojson(schema, table, input_file, credentials, batch_size = 1000):
                    SET type_id = (SELECT id FROM tag_type WHERE name = '{}'),
                        score = {}, 
                        priority = {} 
-                   WHERE id = {};""".format(schema,
+                   WHERE id = {} AND num_votes_total <= {};""".format(schema,
                                             class_name,
                                             score, 
                                             tomnod_priority,
-                                            feature_id)
+                                            feature_id,
+                                            max_votes)
 
         total_query += query
         if (i%(batch_size-1)  == 0) or (i == no_features-1):
