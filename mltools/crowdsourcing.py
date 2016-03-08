@@ -117,7 +117,7 @@ def train_geojson(schema,
         coords = [list(polygon.exterior.coords)]   # the brackets are dictated
                                                    # by geojson format!!! 
         geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
-                                          properties={"id": str(feature_id), 
+                                          properties={"feature_id": str(feature_id), 
                                                       "class_name": class_name, 
                                                       "image_name": cat_id})
         geojson_features.append(geojson_feature)
@@ -189,7 +189,7 @@ def target_geojson(schema,
         coords = [list(polygon.exterior.coords)]   # the brackets are dictated
                                                    # by geojson format!!! 
         geojson_feature = geojson.Feature(geometry = geojson.Polygon(coords), 
-                                          properties={"id": str(feature_id),
+                                          properties={"feature_id": str(feature_id),
                                                       "class_name": '',  
                                                       "image_name": cat_id})
         geojson_features.append(geojson_feature)
@@ -231,11 +231,11 @@ def write_geojson(schema, table, input_file, credentials, batch_size = 1000):
 
         # get feature data
         feat = lyr.GetFeature(i)
-        feature_id = int(feat.GetFieldAsString('id')) 
-        class_name = feat.GetFieldAsString('class_name')
+        feature_id = feat.GetField('feature_id') 
+        class_name = feat.GetField('class_name')
         if class_name == '': continue      # make sure class name is not empty
-        score = float(feat.GetFieldAsString('score'))
-        tomnod_priority = float(feat.GetFieldAsString('tomnod_priority')) 
+        score = feat.GetField('score')
+        tomnod_priority = feat.GetField('tomnod_priority') 
 
         query = """UPDATE {}.feature 
                    SET type_id = (SELECT id FROM tag_type WHERE name = '{}'),
