@@ -87,13 +87,11 @@ def train_geojson(schema,
     print 'Catalog id: ' + cat_id
     print 'Class name: ' + class_name
 
-    # this query HAS BEEN CHANGED to use new_overlay_id instead of 
-    # overlay_id; this is a quick fix for adelaide_pools_2016!!!
 
     query = """SELECT feature.id, feature.feature
                FROM {}.feature, tag_type, overlay
                WHERE feature.type_id = tag_type.id
-               AND feature.new_overlay_id = overlay.id     
+               AND feature.overlay_id = overlay.id     
                AND overlay.catalogid = '{}'
                AND tag_type.name = '{}'
                AND feature.score >= {}
@@ -161,12 +159,10 @@ def target_geojson(schema,
     print 'Schema: ' + schema
     print 'Catalog id: ' + cat_id
 
-    # this query HAS BEEN CHANGED to use new_overlay_id instead of 
-    # overlay_id; this is a quick fix for adelaide_pools_2016!!!
 
     query = """SELECT feature.id, feature.feature
                FROM {}.feature, overlay
-               WHERE feature.new_overlay_id = overlay.id        
+               WHERE feature.overlay_id = overlay.id        
                AND overlay.catalogid = '{}'
                AND (feature.score <= {} OR feature.score IS NULL)
                AND feature.num_votes_total <= {}

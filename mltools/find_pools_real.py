@@ -54,7 +54,8 @@ cr.train_geojson(schema,
                  no_train_pools, 
 	               'gt_pools.geojson', 
                  'Swimming pool', 
-                 credentials)
+                 credentials,
+                 min_votes = 1)
 
 cr.train_geojson(schema, 
                  cat_id, 
@@ -62,7 +63,8 @@ cr.train_geojson(schema,
 	               'gt_nopools.geojson', 
                  'No swimming pool', 
                  credentials, 
-                 max_area=max_area)
+                 max_area=max_area,
+                 min_votes = 1)
 
 jt.join_two_geojsons('gt_pools.geojson', 
                      'gt_nopools.geojson', 
