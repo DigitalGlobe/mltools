@@ -254,3 +254,32 @@ def write_geojson(schema, table, input_file, credentials,
             total_query = ""
 
     print 'Done!'      
+
+
+def compute_tomnod_priority(label, score):
+    """Compute a priority value to be used on tomnod if a feature classified
+       by the machine is to be inspected by the crowd. This is a custom 
+       function and should be defined based on use case. 
+       Priority is a non-negative number.
+       Features on Tomnod are ordered in ascending priority order 
+       (i.e. priority 0 means highest priority). 
+
+       Args:
+           label (str): The feature label.
+           score (float): Confidence score from 0 to 1.
+
+       Returns:
+           Priority value (float).
+    """
+
+    # we want to prioritize polygons that the machine thinks have
+    # swimming pools; this will help weed out false positives
+    # is the machine thinks there are no swimming pools, we prioritize
+    # by score
+    if label == 'Swimming pool':
+        priority = 0.0
+    else:
+        priority = abs(score - 0.5)
+
+    return priority     
+    

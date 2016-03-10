@@ -62,15 +62,16 @@ def split_geojson(input_file, file_1, file_2, no_features):
 		geojson.dump(feat_collection_2, f) 	
 
 
-def get_classes_from_geojson(input_file):
-	"""Reads a geojson with class_name property and returns a vector
-	   with all the class names.
+def get_values_from_geojson(input_file, property = 'class_name'):
+	"""Reads a geojson and returns a vector with all the values of the property
+       property_name.
 
 	   Args:
-	       input_file (str): Input filename (.geojson extension).
+	       input_file (str): Input filename (has to be geojson).
+           property (str): Property whose values will be extracted.
 
 	   Returns:
-	       A list of class names (list).     
+	       List of values (list).     
 	"""
 
 	# get feature collections
@@ -78,9 +79,9 @@ def get_classes_from_geojson(input_file):
 	    feature_collection = geojson.load(f)
 
 	features = feature_collection['features']    
-	labels = [feat['properties']['class_name'] for feat in features]
+	values = [feat['properties'][property_name] for feat in features]
 
-	return labels    
+	return values    
 
 
 def confusion_matrix_two_geojsons(file_1, file_2):
