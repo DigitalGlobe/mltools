@@ -4,15 +4,15 @@ from osgeo import gdal, ogr, osr
 import numpy as np
 
 
-def extract_data(polygon_file, raster_file, geom_sr = None):
+def extract_data(polygon_file, geom_sr = None):
     """Extracts pixels for each polygon in polygon_file.
        The image reference for each polygon is found in the image_name
        property of the polygon_file.
+       NOTE: this function only works if all polygons are from the same image!
 
        Args:
            polygon_file (str): Filename. Collection of geometries in 
                                geojson or shp format.
-           raster_file (str): Image filename.
            geom_sr (osr object): Geometry spatial reference system (srs). 
                                  If None, defaults to the polygon_file srs. 
        
@@ -21,15 +21,21 @@ def extract_data(polygon_file, raster_file, geom_sr = None):
            (otherwise None).
     """
 
-    # Open data
-    raster = gdal.Open(raster_file)
-    nbands = raster.RasterCount
-    
+    # Get polygon data    
     shp = ogr.Open(polygon_file)
     lyr = shp.GetLayer()
-    featList = range(lyr.GetFeatureCount())
+    no_features = lyr.GetFeatureCount() 
 
-    # Get raster geo-reference info
+    # Find raster identity from image_name of first polygon
+    feat = lyr.GetFeature(0)
+    raster_file = feat.GetFieldAsString('image_name')
+    # check if raster_file has .tif extension; if not, append
+    if raster_file[-4:] != '.tif':
+        raster_file += '.tif'
+
+    # Get raster info
+    raster = gdal.Open(raster_file)
+    nbands = raster.RasterCount
     proj = raster.GetProjectionRef()
     transform = raster.GetGeoTransform()
     xOrigin = transform[0]
@@ -50,9 +56,9 @@ def extract_data(polygon_file, raster_file, geom_sr = None):
     else:
         coord_trans_2 = osr.CoordinateTransformation(raster_sr, geom_sr)
 
-    for FID in featList:
+    for fid in xrange(no_features):
 
-        feat = lyr.GetFeature(FID)
+        feat = lyr.GetFeature(fid)
     
         # Reproject vector geometry to same projection as raster
         geom = feat.GetGeometryRef()
@@ -118,18 +124,19 @@ def extract_data(polygon_file, raster_file, geom_sr = None):
         dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount)
         dataraster = dataraster.astype(np.float)
     
-        datamask = target_ds.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
+        data_mask = target_ds.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
     
         # replicate mask for each band
-        datamask = np.dstack([datamask for i in range(nbands)])
-        datamask = datamask.transpose(2,0,1)
+        data_mask = np.dstack([data_mask for i in range(nbands)])
+        data_mask = data_mask.transpose(2,0,1)
         
         # Mask zone of raster
-        zone_raster = np.ma.masked_array(dataraster, np.logical_not(datamask))
-    	
-    	try:
-        	label = feat.GetFieldAsString('class_name')
-        except:
-        	label = None	
+        zone_raster = np.ma.masked_array(dataraster, np.logical_not(data_mask))
+        
+        try:
+            label = feat.GetField('class_name')
+        except ValueError:
+            label = None    
 
         yield poly, zone_raster, label
+

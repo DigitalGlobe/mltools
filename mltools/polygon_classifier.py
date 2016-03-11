@@ -41,20 +41,18 @@ class PolygonClassifier():
                 pass
 
 
-    def train(self, train_file, image_file, classifier_pickle_file = ''):
+    def train(self, train_file, classifier_pickle_file = ''):
         '''Train classifier.
 
            Args:
                train_file (str): Training data filename (geojson).
-               image_file (str): Image filename.
                classifier_pickle_file (str): File to store classifier pickle.
                                              If empty, don't store.   
         '''
        
         # compute feature vector for each polygon
         features, labels = [], []
-        for poly, data, label in extract_data(polygon_file = train_file, 
-                                              raster_file = image_file):        
+        for poly, data, label in extract_data(polygon_file = train_file):        
             feature_vector = self.feature_extractor(data)
             print feature_vector, label
             
@@ -74,28 +72,26 @@ class PolygonClassifier():
                 pickle.dump(classifier, f)
               
 
-    def classify(self, target_file, image_file, return_confusion_matrix = False):
+    def classify(self, target_file, return_confusion_matrix = False):
         """Deploy classifier on target_file and output estimated labels
            and corresponding confidence scores. 
 
-       Args:
-           target_file (str): Target filename (geojson).
-           image_file (str): Image filename.
-           return_confusion_matrix (bool): If true, a confusion matrix is returned.
-                                           This makes sense only when target_file
-                                           includes known labels and can be used
-                                           to estimate the classifier accuracy.            
+           Args:
+               target_file (str): Target filename (geojson).
+               return_confusion_matrix (bool): If true, a confusion matrix is returned.
+                                           This makes sense only when target_file includes 
+                                           known labels and can be used to estimate the 
+                                           classifier accuracy.            
 
-       Returns:
-           Label list, numpy score vector and numpy confusion matrix (optional).   
+           Returns:
+               Label list, numpy score vector and numpy confusion matrix (optional).   
         """
 
         class_names = self.classifier.classes_
         test_labels, predicted_labels, scores = [], [], [] 
         
         # for each polygon, compute feature vector and classify
-        for poly, data, test_label in extract_data(polygon_file = target_file, 
-                                                   raster_file = image_file):        
+        for poly, data, test_label in extract_data(polygon_file = target_file):       
             
             feature_vector = self.feature_extractor(data)
         
