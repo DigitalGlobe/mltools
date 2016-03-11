@@ -54,7 +54,6 @@ class PolygonClassifier():
         features, labels = [], []
         for poly, data, label in extract_data(polygon_file = train_file):        
             feature_vector = self.feature_extractor(data)
-            print feature_vector, label
             
             # if there is something weird, pass
             if math.isnan(np.linalg.norm(feature_vector)): 
@@ -107,7 +106,9 @@ class PolygonClassifier():
             test_labels.append(test_label)
             predicted_labels.append(predicted_label)
             scores.append(score)
-                    
+        
+        predicted_labels, scores = np.array(predicted_labels), np.array(scores)
+            
         if return_confusion_matrix:
             C = confusion_matrix(test_labels, predicted_labels)
             return predicted_labels, scores, C
