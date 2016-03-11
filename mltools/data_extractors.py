@@ -5,7 +5,9 @@ import numpy as np
 
 
 def extract_data(polygon_file, raster_file, geom_sr = None):
-    """Extracts pixels for each polygon in polygon_file from raster_file.
+    """Extracts pixels for each polygon in polygon_file.
+       The image reference for each polygon is found in the image_name
+       property of the polygon_file.
 
        Args:
            polygon_file (str): Filename. Collection of geometries in 

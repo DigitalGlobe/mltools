@@ -41,7 +41,7 @@ class PolygonClassifier():
                 pass
 
 
-    def train(self, train_file = '', image_file = '', classifier_pickle_file = ''):
+    def train(self, train_file, image_file, classifier_pickle_file = ''):
         '''Train classifier.
 
            Args:
@@ -90,7 +90,7 @@ class PolygonClassifier():
            Label list, numpy score vector and numpy confusion matrix (optional).   
         """
 
-        class_names = classifier.classes_
+        class_names = self.classifier.classes_
         test_labels, predicted_labels, scores = [], [], [] 
         
         # for each polygon, compute feature vector and classify
@@ -110,7 +110,7 @@ class PolygonClassifier():
        
             test_labels.append(test_label)
             predicted_labels.append(predicted_label)
-            scores.append(score) 
+            scores.append(score)
                     
         if return_confusion_matrix:
             C = confusion_matrix(test_labels, predicted_labels)

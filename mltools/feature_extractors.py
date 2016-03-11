@@ -1,8 +1,4 @@
-"""
-What: Contains various feature extraction functions.
-Authors: Carsten Tusk, Kostas Stamatiou, Nathan Longbotham
-Contact: kostas.stamatiou@digitalglobe.com
-"""
+# Contains various feature extraction functions.
 
 from __future__ import division
 import numpy as np
@@ -50,26 +46,24 @@ def vanilla_features(data):
        Args:
            data (numpy array): Pixel data vector.
 
-       Return:
+       Returns:
            A vector with the mean, std and variance of data.
     """
     
     return [np.mean(data), np.std(data), np.var(data)]
     
 
-def adelaide_features(data, raster_file):
+def adelaide_features(data):
     """Feature extractor for swimming pool detection.
 
        Args:
            data (numpy array): Pixel data vector.
-           raster_file (str): Image filename.
-
-       Yields:
-           Feature vector (numpy array).
+          
+       Returns:
+           Feature numpy vector.
     """
 
-    # get signatures from raster_file; this needs to be acomped
-    # this is hard-coded for the time being
+    # hard-coded
     pool_sig = np.array([1179, 2295, 2179, 759, 628, 186, 270, 110])
     covered_pool_sig = np.array([1584, 1808, 1150, 1104, 1035, 995, 1659, 1741])
     
