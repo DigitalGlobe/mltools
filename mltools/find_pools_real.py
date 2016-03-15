@@ -1,53 +1,48 @@
-'''
-What: a python script that deploys polygon_classifier_pools on an actual target
-      set.
-Author: Kostas Stamatiou
-Created: 03/04/2016
-Contact: kostas.stamatiou@digitalglobe.com
-'''
+# Script that uses the PolygonClassifier class to find all polygons from 
+# a given image that contain swimming pools.
+# The script pulls a set of classified polygons from Tomnod in order to train 
+# the classifier and then deploys the classifier on a set of unlabeled polygons.
+# The output of the script is a geojson file with the newly labeled polygons. 
+
+# This script was used in the adelaide_pools_2016 campaign. 
 
 import json
 import os
 import sys
 
-
-import polygon_classifier_pools as pcp
-import crowdsourcing as cr
-import json_tools as jt
+from polygon_classifier import PolygonClassifier
+from crowdsourcing import TomnodCommunicator
 
 # suppress annoying warnings
 import warnings
 warnings.filterwarnings("ignore")
 
-# tomnod parameters
-credentials = {'host':'mapperdb.cj6xoak5f54o.us-east-1.rds.amazonaws.com',
-               'db':'tomnod', 
-               'user':'tomnod', 
-               'password':'5cqJUfOXmEufeexwJ2EW4XCE'}
 
+# get job parameters
+with open('job.json', 'r') as f:
+    job = json.load(f)
 
-with open('class_job_real.json', 'r') as f:
-    class_job = json.load(f)
-
-# get parameters from json
-schema = class_job['schema']
-cat_id = class_job['cat_id']
+schema = job['schema']
+cat_id = job['cat_id']
 image_file = cat_id + '.tif'
-no_train_pools = class_job['no_train_pools']
-no_train_nopools = class_job['no_train_nopools']
-max_polygons = class_job['max_polygons']   # max polygons to be classified
-max_area = class_job['max_area']           # max area in m2
+no_train_pools = job['no_train_pools']
+no_train_nopools = job['no_train_nopools']
+max_polygons = job['max_polygons']   # max polygons to be classified
+max_area = job['max_area']           # max area in m2
 train_file = cat_id + '_train_real.geojson'
 target_file = cat_id + '_target_real.geojson'
 output_file = cat_id + '_real.geojson'
-
-# classifier params
-n_estimators = 200
-oob_score = False
-class_weight = None
+algorithm_params = job['algorithm_params']
 
 # get ground truth for pools and no pools 
 print 'Get GT'
+
+# get tomnod credentials
+with open('credentials.json', 'r') as f:
+    credentials = json.load(f)
+
+# initialize Tomnod communicator class
+crowd = TomnodCommunicator(credentials)
 
 cr.train_geojson(schema, 
                  cat_id, 
@@ -80,19 +75,61 @@ cr.target_geojson(schema,
                   max_area = max_area 
                   )
 
-# set job parameters
-job_json = {"params":{"n_estimators": n_estimators, 
-                      "oob_score": oob_score, 
-                      "class_weight": class_weight},
-            "image_file": image_file,
-            "train_file": train_file,
-            "target_file": target_file,
-            "output_file": output_file
-            }
+print 'Train and test model'
+c = PolygonClassifier(algorithm_params)
+c.train('train.geojson')
 
-with open('job.json', 'w') as f:
-	json.dump(job_json, f)
 
-# run pool detector
-print 'Run detector'
-pcp.main('job.json')
+#### more stuff, potentially useful for final form of this script
+
+# def main(job_file):
+#     """Runs the simple_lulc workflow.
+
+#        Args:
+#            job_file (str): Job filename (.json, see README of this repo) 
+#     """    
+   
+#     # get job parameters
+#     job = json.load(open(job_file, 'r'))
+#     image_file = job["image_file"]
+#     train_file = job["train_file"]
+#     target_file = job["target_file"]
+#     output_file = job["output_file"]
+#     algo_params = job["params"]       # these are parameters pertinent to the 
+#                                       # algorithm
+    
+#     # Using random forest classifier
+#     n_estimators = algo_params["n_estimators"]
+#     oob_score = algo_params["oob_score"]
+#     class_weight = algo_params["class_weight"]
+#     classifier = RandomForestClassifier(n_estimators = n_estimators, 
+#                                         oob_score = oob_score, 
+#                                         class_weight = class_weight)
+        
+#     print "Train model"
+#     trained_classifier = train_model(train_file, image_file, classifier)
+    
+#     print "Classify"
+#     labels, scores, priorities = classify_w_scores(target_file, image_file, 
+#                                                    trained_classifier)
+    
+#     print "Write results"    
+#     values = zip(labels, scores, priorities)
+#     jt.write_values_to_geojson(values, 
+#                                ['class_name', 'score', 'tomnod_priority'], 
+#                                target_file, 
+#                                output_file)
+
+#     # Compute confusion matrix; this makes sense only if the target file
+#     # contains known labels
+#     print "Confusion matrix"
+#     C = jt.confusion_matrix_two_geojsons(target_file, output_file)
+#     print C
+
+#     print "Normalized confusion matrix"
+#     print C.astype(float)/C.sum(1)[:, None]
+
+#     print "Done!"
+    
+
+
