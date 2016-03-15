@@ -7,6 +7,8 @@ Contact: kostas.stamatiou@digitalglobe.com
 
 import geojson
 
+from shapely.wkb import loads
+
 from sklearn.metrics import confusion_matrix
 
 
@@ -62,15 +64,16 @@ def split_geojson(input_file, file_1, file_2, no_features):
 		geojson.dump(feat_collection_2, f) 	
 
 
-def get_classes_from_geojson(input_file):
-	"""Reads a geojson with class_name property and returns a vector
-	   with all the class names.
+def get_values_from_geojson(input_file, property = 'class_name'):
+	"""Reads a geojson and returns a vector with all the values of the property
+       property_name.
 
 	   Args:
-	       input_file (str): Input filename (.geojson extension).
+	       input_file (str): Input filename (has to be geojson).
+           property (str): Property whose values will be extracted.
 
 	   Returns:
-	       A list of class names (list).     
+	       List of values (list).     
 	"""
 
 	# get feature collections
@@ -78,9 +81,9 @@ def get_classes_from_geojson(input_file):
 	    feature_collection = geojson.load(f)
 
 	features = feature_collection['features']    
-	labels = [feat['properties']['class_name'] for feat in features]
+	values = [feat['properties'][property_name] for feat in features]
 
-	return labels    
+	return values    
 
 
 def confusion_matrix_two_geojsons(file_1, file_2):
@@ -137,6 +140,36 @@ def write_labels_to_geojson(labels, polygon_file, output_file):
         geojson.dump(feature_collection, f)     
 
     print 'Done!'  
+
+
+def write_to_geojson(output_file, data, property_names):
+        '''Write list of tuples to geojson. 
+           First entry of each tuple should be geometry in hex coordinates 
+           and the rest properties.
+
+           Args:
+               output_file (str): Name of file to write to (should be .geojson)
+               data: List of tuples.
+               property_names: List of strings. Should be same length as the 
+                               number of properties in each tuple.
+        '''        
+
+        # convert to GeoJSON
+        geojson_features = [] 
+        for entry in data:
+            coords_in_hex, properties = entry[0], entry[1:]
+            polygon = loads(coords_in_hex, hex=True)
+            coords = [list(polygon.exterior.coords)]   # the brackets are dictated
+                                                       # by geojson format!!! 
+            property_dict = dict(zip(property_names, properties))
+            geojson_feature = geojson.Feature(geometry=geojson.Polygon(coords), 
+                                              properties=property_dict)
+            geojson_features.append(geojson_feature)
+        
+        feature_collection = geojson.FeatureCollection(geojson_features)    
+        
+        with open(output_file, 'wb') as f:
+            geojson.dump(feature_collection, f)
 
 
 def write_values_to_geojson(values, property_names, polygon_file, output_file):

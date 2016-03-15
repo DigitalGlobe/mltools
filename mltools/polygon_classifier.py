@@ -1,153 +1,117 @@
-'''
-MLA: Polygon classifier. Classifies a set of polygons on a given image.
-Authors: Carsten Tusk, Kostas Stamatiou
-Created: 02/22/2016
-Updated: 02/26/2016
-Contact: ctusk@digitalglobe.com, kostas.stamatiou@digitalglobe.com
-'''
+# Polygon classifier. Classifies a set of polygons on an image.
 
-import sys
-import os
-import numpy as np
-import json 
+import feature_extractors
 import geojson
+import math 
+import numpy as np
+import os
+import pickle
+import sklearn.ensemble
+import sys
 
-import json_tools as jt
-import feature_extractors as fe
-import pixel_extractors as pe
+from data_extractors import extract_data
+from sklearn.metrics import confusion_matrix
+   
 
-from sklearn.ensemble import RandomForestClassifier 
-    
+class PolygonClassifier():
 
-def train_model(polygon_file, raster_file, classifier):
-    """Train classifier and output classifier parameters.
+    def __init__(self, parameters):
+        '''
+        Args:
+            parameters (dict): Dictionary with algorithm parameters.
+        '''                
+        
+        try:
+            feature_extractor_name = parameters['feature_extractor']
+        except KeyError:
+            feature_extractor_name = 'vanilla_features'    
 
-       Args:
-           polygon_file (str): Filename. Collection of geometries in 
-                               geojson or shp format.
-           raster_file (str): Image filename.
-           classifier (object): Instance of one of many supervised classifier
-                                classes supported by scikit-learn.
+        self.feature_extractor = getattr(feature_extractors, feature_extractor_name)    
+
+        try:
+            classifier_name = parameters['classifier']
+        except KeyError:
+            classifier_name = 'random forest' 
+        
+        if classifier_name.lower() ==  'random forest':
+            self.classifier = sklearn.ensemble.RandomForestClassifier()
+            try:
+                self.classifier.n_estimators = parameters['no_trees']
+            except KeyError:         
+                pass
+
+
+    def train(self, train_file, classifier_pickle_file = ''):
+        '''Train classifier.
+
+           Args:
+               train_file (str): Training data filename (geojson).
+               classifier_pickle_file (str): File to store classifier pickle.
+                                             If empty, don't store.   
+        '''
        
-       Returns:
-           Trained classifier (object).                                             
-    """
-    # compute feature vectors for each polygon
-    features = []
-    labels = []
-    for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
-        for featureVector in fe.vanilla_features(data):
-            features.append(featureVector)
-            labels.append(label)
-            print label, featureVector
+        # compute feature vector for each polygon
+        features, labels = [], []
+        for poly, data, label in extract_data(polygon_file = train_file):        
+            feature_vector = self.feature_extractor(data)
             
-    # train classifier
-    X, y = np.array(features), np.array(labels)
-    # train
-    classifier.fit( X, y )
-    # # store model
-    # with open(classifier_file,"w") as fh:
-    #     pickle.dump( classifier, fh )
-    print 'Done!'    
-    return classifier
+            # if there is something weird, pass
+            if math.isnan(np.linalg.norm(feature_vector)): 
+                continue        
+            
+            features.append(feature_vector)
+            labels.append(label)
 
+        X, y = np.array(features), np.array(labels)
+        # train classifier
+        self.classifier.fit(X, y)
+        
+        if classifier_pickle_file:
+            with open(classifier_file, 'w') as f:
+                pickle.dump(classifier, f)
+              
 
-def classify(polygon_file, raster_file, classifier):
-    """Deploy classifier and output corresponding list of labels.
+    def classify(self, target_file, return_confusion_matrix = False):
+        """Deploy classifier on target_file and output estimated labels
+           and corresponding confidence scores. 
 
-       Args:
-           polygon_file (str): Filename. Collection of geometries in 
-                               geojson or shp format.
-           raster_file (str): Image filename.
-           classifier (object): Instance of one of many supervised classifier
-                                classes supported by scikit-learn.
+           Args:
+               target_file (str): Target filename (geojson).
+               return_confusion_matrix (bool): If true, a confusion matrix is returned.
+                                           This makes sense only when target_file includes 
+                                           known labels and can be used to estimate the 
+                                           classifier accuracy.            
+
+           Returns:
+               Label list, numpy score vector and numpy confusion matrix (optional).   
+        """
+
+        class_names = self.classifier.classes_
+        test_labels, predicted_labels, scores = [], [], [] 
+        
+        # for each polygon, compute feature vector and classify
+        for poly, data, test_label in extract_data(polygon_file = target_file):       
+            
+            feature_vector = self.feature_extractor(data)
+        
+            try:
+                # classifier prediction looks like array([]), 
+                # so we need the first entry: hence the [0] 
+                probability_distr = self.classifier.predict_proba(feature_vector)[0] 
+                ind = np.argmax(probability_distr)    
+                predicted_label, score = class_names[ind], probability_distr[ind]                
+            except ValueError:
+                predicted_label = ''                       
        
-       Returns:
-           List of labels (list).                                             
-    """
-
-    # compute feature vectors for each polygon
-    labels = []
-    for (feat, poly, data, label) in pe.extract_data(polygon_file, raster_file):        
-        for featureVector in fe.vanilla_features(data):
-            labels_this_feature = classifier.predict(featureVector)                        
-        labels.append(labels_this_feature[0])
-
-    print 'Done!'    
-    return labels     
-
+            test_labels.append(test_label)
+            predicted_labels.append(predicted_label)
+            scores.append(score)
         
-def write_labels(labels, polygon_file, output_file):
-    """Adds labels to polygon_file to create output_file.
-       The number of labels must be equal to the number of features in 
-       polygon_file. If some of the features in polygon_file are already
-       labeled, the labels are overwritten. 
-
-       Args:
-           labels (list): Label list. 
-           polygon_file (str): Filename. Collection of unclassified 
-                               geometries in geojson or shp format.
-           output_file (str): Output filename (extension .geojson)
-    """
-
-    # get input feature collection
-    with open(polygon_file) as f:
-        feature_collection = geojson.load(f)
-
-    features = feature_collection['features']
-    no_features = len(features)
-    
-    # enter label information
-    for i in range(0, no_features):
-        feature, label = features[i], labels[i]
-        feature['properties']['class_name'] = label
-
-    feature_collection['features'] = features    
-
-    # write to output file
-    with open(output_file, 'w') as f:
-        geojson.dump(feature_collection, f)     
-
-    print 'Done!'    
-
-  
-def main(job_file):
-    """Runs the simple_lulc workflow.
-
-       Args:
-           job_file (str): Job filename (.json, see README of this repo) 
-    """    
-   
-    # get job parameters
-    job = json.load(open(job_file, 'r'))
-    image_file = job["image_file"]
-    train_file = job["train_file"]
-    target_file = job["target_file"]
-    output_file = job["output_file"]
-    algo_params = job["params"]
-    
-    # Random forest classifier
-    no_trees = algo_params["no_trees"]
-    classifier = RandomForestClassifier(n_estimators = no_trees)
+        predicted_labels, scores = np.array(predicted_labels), np.array(scores)
+            
+        if return_confusion_matrix:
+            C = confusion_matrix(test_labels, predicted_labels)
+            return predicted_labels, scores, C
+        else:
+            return predicted_labels, scores
         
-    print "Train model"
-    trained_classifier = train_model(train_file, image_file, classifier)
-    
-    print "Classify"
-    labels = classify(target_file, image_file, trained_classifier)
-                                        
-    print "Write results"    
-    jt.write_labels_to_geojson(labels, target_file, output_file)
-
-    print "Confusion matrix"
-    C = jt.confusion_matrix_two_geojsons(target_file, output_file)
-
-    print C
-
-    print "Done!"
-   
-
-
-
-
-
