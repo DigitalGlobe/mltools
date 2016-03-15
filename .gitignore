@@ -3,3 +3,4 @@ mltools.egg-info/
 dist/
 *.tif
 *.tiff
+/venv

@@ -54,7 +54,7 @@ class PolygonClassifier():
         features, labels = [], []
         for poly, data, label in extract_data(polygon_file = train_file):        
             feature_vector = self.feature_extractor(data)
-            
+            print feature_vector, label
             # if there is something weird, pass
             if math.isnan(np.linalg.norm(feature_vector)): 
                 continue        
@@ -71,12 +71,14 @@ class PolygonClassifier():
                 pickle.dump(classifier, f)
               
 
-    def classify(self, target_file, return_confusion_matrix = False):
+    def classify(self, target_file, max_number = -1, return_confusion_matrix = False):
         """Deploy classifier on target_file and output estimated labels
            and corresponding confidence scores. 
 
            Args:
                target_file (str): Target filename (geojson).
+               max_number (int): Maximum number of features to classify. Default value 
+                                 of -1 classifies all features in target_file.
                return_confusion_matrix (bool): If true, a confusion matrix is returned.
                                            This makes sense only when target_file includes 
                                            known labels and can be used to estimate the 
@@ -87,13 +89,13 @@ class PolygonClassifier():
         """
 
         class_names = self.classifier.classes_
-        test_labels, predicted_labels, scores = [], [], [] 
+        test_labels, predicted_labels, scores, counter = [], [], [], 0 
         
         # for each polygon, compute feature vector and classify
         for poly, data, test_label in extract_data(polygon_file = target_file):       
             
             feature_vector = self.feature_extractor(data)
-        
+
             try:
                 # classifier prediction looks like array([]), 
                 # so we need the first entry: hence the [0] 
@@ -101,11 +103,15 @@ class PolygonClassifier():
                 ind = np.argmax(probability_distr)    
                 predicted_label, score = class_names[ind], probability_distr[ind]                
             except ValueError:
-                predicted_label = ''                       
+                predicted_label, score = '', 1.0                       
        
             test_labels.append(test_label)
             predicted_labels.append(predicted_label)
             scores.append(score)
+
+            counter += 1
+            if counter % 1000 == 0: print counter
+            if counter == max_number: break		
         
         predicted_labels, scores = np.array(predicted_labels), np.array(scores)
             

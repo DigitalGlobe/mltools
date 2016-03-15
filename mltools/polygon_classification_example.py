@@ -1,9 +1,8 @@
 # Script that uses the PolygonClassifier class to find all polygons from 
 # a given image that contain swimming pools.
 # The script pulls a set of classified polygons from Tomnod in order to train 
-# the classifier and then deploys the classifier on a set of unlabeled polygons.
-# The output of the script is a geojson file with the newly labeled polygons. 
-
+# the classifier and then deploys the classifier on a set of unclassified polygons.
+# The output of the script is a geojson file with the newly classified polygons. 
 # This script was used in the adelaide_pools_2016 campaign. 
 
 import json
@@ -24,15 +23,16 @@ with open('job.json', 'r') as f:
 
 schema = job['schema']
 cat_id = job['cat_id']
-image_file = cat_id + '.tif'
 no_train_pools = job['no_train_pools']
 no_train_nopools = job['no_train_nopools']
-max_polygons = job['max_polygons']   # max polygons to be classified
 max_area = job['max_area']           # max area in m2
-train_file = cat_id + '_train_real.geojson'
-target_file = cat_id + '_target_real.geojson'
-output_file = cat_id + '_real.geojson'
+max_polygons = job['max_polygons']   # max polygons to be classified
 algorithm_params = job['algorithm_params']
+
+image_file = cat_id + '.tif'
+train_file = cat_id + '_train.geojson'
+target_file = cat_id + '_target.geojson'
+output_file = cat_id + '.geojson'
 
 # get ground truth for pools and no pools 
 print 'Get GT'
@@ -77,7 +77,7 @@ cr.target_geojson(schema,
 
 print 'Train and test model'
 c = PolygonClassifier(algorithm_params)
-c.train('train.geojson')
+c.train(train_file)
 
 
 #### more stuff, potentially useful for final form of this script
