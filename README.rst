@@ -15,12 +15,12 @@ The input of a ML algorithm (MLA) is one or more of the following:
 - one or more images;
 - a job.json specifying the parameters of the MLA;
 - a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
-- a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier;
+- a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier.
 
 The output of a MLA is one or more of the following:
 
 - one or more processed images
-- an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
+- an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier.
 
 
 DevOps
@@ -72,7 +72,6 @@ Docs
 ----
 
 Explanations of the modules and existing MLAs can be found in docs. 
-(This will be available on readthedocs...) 
 
 
 Comments
