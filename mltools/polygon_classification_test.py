@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 # get job parameters
 with open('job.json', 'r') as f:
     job = json.load(f)
-
+    
 schema = job['schema']
 catalog_id = job['catalog_id']
 classes = job['classes']

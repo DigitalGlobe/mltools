@@ -1,16 +1,8 @@
-"""
-What: Contains functions for manipulating jsons and geojsons.
-Author: Kostas Stamatiou
-Created: 02/24/2016
-Contact: kostas.stamatiou@digitalglobe.com
-"""
+# Contains functions for manipulating jsons and geojsons.
 
 import geojson
 
 from shapely.wkb import loads
-
-from sklearn.metrics import confusion_matrix
-
 
 
 def join_geojsons(filenames, output_file):
@@ -84,75 +76,19 @@ def get_values_from_geojson(input_file, property = 'class_name'):
     return values    
 
 
-def confusion_matrix_two_geojsons(file_1, file_2):
-    """
-    Compute confusion matrix to evaluate the accuracy of a classification.
-    Ordered class names are used to index the matrix.
-
-    Args:
-        file_1 (str): Ground truth filename (.geojson extension)
-        file_2 (str): Prediction filename (.geojson extension)
-        
-    Returns:
-        An integer numpy array C, where C[i,j] is the number of observations 
-        known to be in group i but predicted to be in group j (numpy array).     
-    """
-
-    true_classes = get_classes_from_geojson(file_1)
-    pred_classes = get_classes_from_geojson(file_2)
-
-    C = confusion_matrix(true_classes, pred_classes)
-
-    return C
-
-
-def write_labels_to_geojson(labels, polygon_file, output_file):
-    """Adds labels to polygon_file to create output_file.
-       The number of labels must be equal to the number of features in 
-       polygon_file. If some of the features in polygon_file are already
-       labeled, the labels are overwritten. 
-
-       Args:
-           labels (list): Label list. 
-           polygon_file (str): Filename. Collection of unclassified 
-                               geometries in geojson or shp format.
-           output_file (str): Output filename (extension .geojson)
-    """
-
-    # get input feature collection
-    with open(polygon_file) as f:
-        feature_collection = geojson.load(f)
-
-    features = feature_collection['features']
-    no_features = len(features)
-    
-    # enter label information
-    for i in range(0, no_features):
-        feature, label = features[i], labels[i]
-        feature['properties']['class_name'] = label
-
-    feature_collection['features'] = features    
-
-    # write to output file
-    with open(output_file, 'w') as f:
-        geojson.dump(feature_collection, f)     
-
-    print 'Done!'  
-
-
-def write_to_geojson(filename, data, property_names):
+def write_to_geojson(data, property_names, output_file):
     '''Write list of tuples to geojson. 
        First entry of each tuple should be geometry in hex coordinates 
        and the rest properties.
 
        Args:
-           filename (str): File to write to (should be .geojson)
            data: List of tuples.
            property_names: List of strings. Should be same length as the 
                            number of properties in each tuple.
+           output_file (str): File to write to (should be .geojson).
+                           
     '''        
 
-    # convert to GeoJSON
     geojson_features = [] 
     for entry in data:
         coords_in_hex, properties = entry[0], entry[1:]
@@ -166,43 +102,35 @@ def write_to_geojson(filename, data, property_names):
 
     feature_collection = geojson.FeatureCollection(geojson_features)    
 
-    with open(filename, 'wb') as f:
+    with open(output_file, 'wb') as f:
         geojson.dump(feature_collection, f)
 
 
-def write_values_to_geojson(values, property_names, polygon_file, output_file):
-    """Writes property values to polygon_file to create output_file.
-       The length of values must be equal to the number of features in 
+def write_properties_to_geojson(data, property_names, input_file, output_file):
+    """Writes property data to polygon_file to create output_file.
+       The length of data must be equal to the number of features in 
        polygon_file. If some of the features in polygon_file already have 
-       values, the values are overwritten.
+       values for the corresponding properties, the values are overwritten.
 
        Args:
-           values (list): Values list. Each entry has equal dimension 
-                          to property_names 
-           property_name (list): Property names.
-           polygon_file (str): Filename. Collection of unclassified 
-                               geometries in geojson or shp format.
-           output_file (str): Output filename (extension .geojson)
+           data (list): List of tuples. Each entry is a tuple of dimension equal  
+                        to property_names. 
+           property_names (list): Property names.
+           input_file (str): Input filename (has to be .geojson)
+           output_file (str): Output filename (has to be .geojson)
     """
 
-    # get input feature collection
-    with open(polygon_file) as f:
+    with open(input_file) as f:
         feature_collection = geojson.load(f)
 
     features = feature_collection['features']
-    no_features = len(features)
-    no_properties = len(property_names)
-    
-    # enter label information
-    for i in range(no_features):
-        feature = features[i]
-        for j in range(no_properties):
-            feature['properties'][property_names[j]] = values[i][j]
+
+    for i, feature in enumerate(features):
+        for j, property_value in enumerate(data[i]):
+            feature['properties'][property_names[j]] = property_value
 
     feature_collection['features'] = features    
 
-    # write to output file
     with open(output_file, 'w') as f:
         geojson.dump(feature_collection, f)     
-
-    print 'Done!'      
+  

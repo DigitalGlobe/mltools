@@ -111,7 +111,7 @@ class TomnodCommunicator():
         data = self._fetch(query)
         if write_to:           
             property_names = ['feature_id', 'image_name', 'class_name']
-            jt.write_to_geojson(write_to, data, property_names)
+            jt.write_to_geojson(data, property_names, write_to)
         
         return data
 
@@ -122,7 +122,8 @@ class TomnodCommunicator():
                                     max_number = 1000,
                                     max_score = 1.0,
                                     max_votes = 0,
-                                    max_area = 1e06 
+                                    max_area = 1e06,
+                                    write_to = '' 
                                    ):
 
         '''Read low-confidence data from a Tomnod classification campaign for a 
@@ -138,12 +139,13 @@ class TomnodCommunicator():
                max_score (float): Only features with score<=max_score will be read.
                max_votes (int): Only features with votes<=max_votes will be read.
                max_area (float): Only import features with (area in m2) <= max_area.
+               write_to (str): Write results to this geojson file; if empty, ignore.
 
            Returns:
-               A list of tuples (feature_coordinates_in_hex, feature_id).    
+               A list of tuples (feature_coordinates_in_hex, feature_id, image_id).    
         '''
 
-        query = """SELECT feature.feature, feature.id
+        query = """SELECT feature.feature, feature.id, overlay.catalogid
                    FROM {}.feature, overlay
                    WHERE feature.overlay_id = overlay.id        
                    AND overlay.catalogid = '{}'
@@ -157,8 +159,16 @@ class TomnodCommunicator():
                                       max_votes,
                                       max_area, 
                                       max_number)          
-        return self._fetch(query)
-    
+
+        data = self._fetch(query)
+        if write_to:           
+            property_names = ['feature_id', 'image_name']
+            jt.write_to_geojson(data, property_names, write_to)
+        
+        return data
+
+
+#### CHECK THE FOLLOWING FUNCTIONS --------------------------------------------------
 
     def update(self, query, data, batch_size = 1000):
         '''Run update query for each entry in data in batches of batch_size.
@@ -175,6 +185,7 @@ class TomnodCommunicator():
 
 
     # create function get_from_geojson            
+
 
     def write(self, data, campaign_schema, table, attribute_names, batch_size = 1000):
         '''Write data to the corresponding attributes in campaign_schema.table for all 
