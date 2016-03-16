@@ -22,8 +22,7 @@ with open('job.json', 'r') as f:
 schema = job['schema']
 catalog_id = job['catalog_id']
 classes = job['classes']
-max_area = job['max_area']                            # max polygon area in m2
-max_polys_to_classify = job['max_polys_to_classify']
+target_params = job['target_params']
 algorithm_params = job['algorithm_params']
 
 
@@ -38,16 +37,22 @@ tc = TomnodCommunicator(credentials)
 train_filenames = []
 for i, class_entry in enumerate(classes):
     class_name = class_entry['name']
-    no_samples = class_entry['no_samples']    
-    print 'Collect', str(no_samples), 'samples for class', class_name, 
+    no_train_samples = class_entry['no_train_samples']
+    min_votes = class_entry['min_votes']
+    max_area = class_entry['max_area']    
+    print 'Collect', str(no_train_samples), 'samples for class', class_name, 
     'from', schema, 'and image', catalog_id 
 
     train_filenames.append('_'.join([class_name, catalog_id, 'train.geojson']))
     data = tc.get_high_confidence_features(campaign_schema = schema, 
                                            image_id = catalog_id, 
                                            class_name = class_name,
-                                           max_number = no_samples,
-                                           write_to = train_filenames[i])
+                                           max_number = no_train_samples,
+                                           min_votes = min_votes,
+                                           max_area = max_area)
+    jt.write_to_geojson(data = data, 
+                        property_names = ['feature_id', 'image_name', 'class_name'],
+                        output_file = train_filenames[i])
     
 # assemble final train file by joining constituent train files
 train_filename = '_'.join([catalog_id, 'train.geojson'])
@@ -55,10 +60,17 @@ jt.join_geojsons(train_filenames, train_filename)
 
 # fetch unclassified features for classification
 target_filename = '_'.join([catalog_id, 'target.geojson'])
+max_polys_to_classify = target_params['max_polys_to_classify']
+max_area = target_params['max_area']
+max_votes = target_params['max_votes'] 
 data = tc.get_low_confidence_features(campaign_schema = schema, 
                                       image_id = catalog_id, 
-                                      max_number = no_samples,
-                                      write_to = target_filename)
+                                      max_number = max_polys_to_classify,
+                                      max_area = max_area,
+                                      max_votes = max_votes)
+jt.write_to_geojson(data = data,
+                    property_names = ['feature_id', 'image_name'],
+                    output_file = target_filename)
 
 # define, train and deploy the classifier
 c = PolygonClassifier(algorithm_params)

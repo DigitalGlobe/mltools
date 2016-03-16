@@ -22,7 +22,6 @@ with open('job.json', 'r') as f:
 schema = job['schema']
 catalog_id = job['catalog_id']
 classes = job['classes']
-max_area = job['max_area']                            # max polygon area in m2
 algorithm_params = job['algorithm_params']
 
 
@@ -39,6 +38,8 @@ for i, class_entry in enumerate(classes):
     class_name = class_entry['name']
     no_samples = class_entry['no_samples']    
     no_train_samples = class_entry['no_train_samples']
+    min_votes = class_entry['min_votes']
+    max_area = class_entry['max_area']
     print 'Collect', str(no_samples), 'samples for class', class_name, 
     'from', schema, 'and image', catalog_id 
 
@@ -47,7 +48,11 @@ for i, class_entry in enumerate(classes):
                                            image_id = catalog_id, 
                                            class_name = class_name,
                                            max_number = no_samples,
-                                           write_to = gt_filename)
+                                           min_votes = min_votes,
+                                           max_area = max_area)
+    jt.write_to_geojson(data = data,
+                        property_names = ['feature_id', 'image_name', 'class_name'],
+                        output_file = gt_filename)
 
     train_filenames.append('_'.join([class_name, catalog_id, 'train.geojson']))
     test_filenames.append('_'.join([class_name, catalog_id, 'test.geojson']))
@@ -62,7 +67,6 @@ train_filename = '_'.join([catalog_id, 'train.geojson'])
 test_filename = '_'.join([catalog_id, 'test.geojson'])
 jt.join_geojsons(train_filenames, train_filename)
 jt.join_geojsons(test_filenames, test_filename)
-
 
 # define, train and test the classifier
 c = PolygonClassifier(algorithm_params)

@@ -1,6 +1,5 @@
 # Contains functions for reading from and writing to the Tomnod database.
 
-import json_tools as jt
 import geojson
 import os
 import psycopg2
@@ -70,7 +69,6 @@ class TomnodCommunicator():
                                      min_score = 0.95, 
                                      min_votes = 0,
                                      max_area = 1e06,
-                                     write_to = ''
                                     ):
         '''Read high-confidence data from a Tomnod classification campaign for 
            given image_id and given class. Features are read in decreasing score 
@@ -85,7 +83,6 @@ class TomnodCommunicator():
                min_score (float): Only features with score>=min_score will be read.
                min_votes (int): Only features with votes>=min_votes will be read.
                max_area (float): Only import features with (area in m2) <= max_area.
-               write_to (str): Write results to this geojson file; if empty, ignore.
 
            Returns:
                A list of tuples (feature_coordinates_in_hex, feature_id, image_id, class_name).    
@@ -108,12 +105,7 @@ class TomnodCommunicator():
                                                                   max_area,
                                                                   max_number)
         
-        data = self._fetch(query)
-        if write_to:           
-            property_names = ['feature_id', 'image_name', 'class_name']
-            jt.write_to_geojson(data, property_names, write_to)
-        
-        return data
+        return self._fetch(query)
 
         
     def get_low_confidence_features(self,
@@ -123,7 +115,6 @@ class TomnodCommunicator():
                                     max_score = 1.0,
                                     max_votes = 0,
                                     max_area = 1e06,
-                                    write_to = '' 
                                    ):
 
         '''Read low-confidence data from a Tomnod classification campaign for a 
@@ -139,7 +130,6 @@ class TomnodCommunicator():
                max_score (float): Only features with score<=max_score will be read.
                max_votes (int): Only features with votes<=max_votes will be read.
                max_area (float): Only import features with (area in m2) <= max_area.
-               write_to (str): Write results to this geojson file; if empty, ignore.
 
            Returns:
                A list of tuples (feature_coordinates_in_hex, feature_id, image_id).    
@@ -160,12 +150,7 @@ class TomnodCommunicator():
                                       max_area, 
                                       max_number)          
 
-        data = self._fetch(query)
-        if write_to:           
-            property_names = ['feature_id', 'image_name']
-            jt.write_to_geojson(data, property_names, write_to)
-        
-        return data
+        return self._fetch(query)
 
 
 #### CHECK THE FOLLOWING FUNCTIONS --------------------------------------------------
