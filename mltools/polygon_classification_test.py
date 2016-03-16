@@ -40,8 +40,10 @@ for i, class_entry in enumerate(classes):
     no_train_samples = class_entry['no_train_samples']
     min_votes = class_entry['min_votes']
     max_area = class_entry['max_area']
-    print 'Collect', str(no_samples), 'samples for class', class_name, 
-    'from', schema, 'and image', catalog_id 
+    print 'Collect {} {} samples from schema {} and image {}'.format(no_samples, 
+                                                                     class_name, 
+                                                                     schema, 
+                                                                     catalog_id) 
 
     gt_filename = '_'.join([class_name, catalog_id, 'gt.geojson'])
     data = tc.get_high_confidence_features(campaign_schema = schema, 
@@ -70,7 +72,9 @@ jt.join_geojsons(test_filenames, test_filename)
 
 # define, train and test the classifier
 c = PolygonClassifier(algorithm_params)
+print 'Train classifier'
 c.train(train_filename)
+print 'Test classifier'
 labels, scores, C = c.classify(test_filename, return_confusion_matrix=True)
 
 print 'Confusion matrix:'

@@ -40,9 +40,10 @@ for i, class_entry in enumerate(classes):
     no_train_samples = class_entry['no_train_samples']
     min_votes = class_entry['min_votes']
     max_area = class_entry['max_area']    
-    print 'Collect', str(no_train_samples), 'samples for class', class_name, 
-    'from', schema, 'and image', catalog_id 
-
+    print 'Collect {} {} samples from schema {} and image {}'.format(no_train_samples,
+                                                                     class_name,
+                                                                     schema,
+                                                                     catalog_id)
     train_filenames.append('_'.join([class_name, catalog_id, 'train.geojson']))
     data = tc.get_high_confidence_features(campaign_schema = schema, 
                                            image_id = catalog_id, 
@@ -74,7 +75,9 @@ jt.write_to_geojson(data = data,
 
 # define, train and deploy the classifier
 c = PolygonClassifier(algorithm_params)
+print 'Train classifier'
 c.train(train_filename)
+print 'Classify'
 labels, scores = c.classify(target_filename)
 
 # write results to geojson

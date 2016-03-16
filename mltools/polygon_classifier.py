@@ -54,7 +54,7 @@ class PolygonClassifier():
         features, labels = [], []
         for poly, data, label in extract_data(polygon_file = train_file):        
             feature_vector = self.feature_extractor(data)
-            print feature_vector, label
+            # print feature_vector, label
             # if there is something weird, pass
             if math.isnan(np.linalg.norm(feature_vector)): 
                 continue        

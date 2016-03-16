@@ -68,11 +68,6 @@ Then install the requirements:
    pip install -r requirements.txt
 
 
-Docs
-----
-
-Explanations of the modules and existing MLAs can be found in docs. 
-
 
 Comments
 --------
