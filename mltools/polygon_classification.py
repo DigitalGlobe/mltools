@@ -1,6 +1,8 @@
-# Test PolygonClassifier on a set of classified polygons.
-# The script pulls a set of classified polygons from Tomnod, splits it
-# in train and test set and evaluates the confusion matrix. 
+# Script that uses the PolygonClassifier class to find all polygons from 
+# a given image that contain swimming pools.
+# The script pulls a set of classified polygons from Tomnod in order to train 
+# the classifier and then deploys the classifier on a set of unclassified polygons.
+# The output of the script is a geojson file with the newly classified polygons. 
 # This script was used in the adelaide_pools_2016 campaign. 
 
 import json
@@ -14,36 +16,38 @@ from crowdsourcing import TomnodCommunicator
 import warnings
 warnings.filterwarnings("ignore")
 
+
 # get job parameters
 with open('job.json', 'r') as f:
     job = json.load(f)
 
 schema = job['schema']
 cat_id = job['cat_id']
-no_pools = job['no_pools']
-no_nopools = job['no_nopools']
+no_train_pools = job['no_train_pools']
+no_train_nopools = job['no_train_nopools']
 max_area = job['max_area']           # max area in m2
 max_polygons = job['max_polygons']   # max polygons to be classified
 algorithm_params = job['algorithm_params']
 
 image_file = cat_id + '.tif'
 train_file = cat_id + '_train.geojson'
-test_file = cat_id + '_test.geojson'
+target_file = cat_id + '_target.geojson'
+output_file = cat_id + '.geojson'
 
 # get ground truth for pools and no pools 
-print 'Get ground truth'
+print 'Get GT'
 
 # get tomnod credentials
 with open('credentials.json', 'r') as f:
     credentials = json.load(f)
 
 # initialize Tomnod communicator class
-crowd = TomnodCommunicator(credentials)
+tc = TomnodCommunicator(credentials)
 
 cr.train_geojson(schema, 
                  cat_id, 
                  no_train_pools, 
-	         'gt_pools.geojson', 
+	               'gt_pools.geojson', 
                  'Swimming pool', 
                  credentials,
                  min_votes = 1)
