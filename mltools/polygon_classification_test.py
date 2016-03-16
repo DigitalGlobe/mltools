@@ -23,7 +23,6 @@ schema = job['schema']
 catalog_id = job['catalog_id']
 classes = job['classes']
 max_area = job['max_area']                            # max polygon area in m2
-ratio_train_to_test = job['ratio_train_to_test']   
 algorithm_params = job['algorithm_params']
 
 
@@ -36,11 +35,12 @@ tc = TomnodCommunicator(credentials)
 
 # fetch high confidence features and separate in train/test for each class
 train_filenames, test_filenames = [], []
-ratio_train_to_total = float(ratio_train_to_test)/(ratio_train_to_test + 1)
 for i, class_entry in enumerate(classes):
     class_name = class_entry['name']
     no_samples = class_entry['no_samples']    
-    print 'Collect', str(no_samples), 'samples for class', class_name
+    no_train_samples = class_entry['no_train_samples']
+    print 'Collect', str(no_samples), 'samples for class', class_name, 
+    'from', schema, 'and image', catalog_id 
 
     gt_filename = '_'.join([class_name, catalog_id, 'gt.geojson'])
     data = tc.get_high_confidence_features(campaign_schema = schema, 
@@ -54,7 +54,7 @@ for i, class_entry in enumerate(classes):
     jt.split_geojson(gt_filename, 
                      train_filenames[i], 
                      test_filenames[i], 
-                     no_in_first_file = int(no_samples*ratio_train_to_total))
+                     no_in_first_file = no_train_samples)
     
 
 # assemble train and test files by joining constituent train and test files
@@ -69,5 +69,8 @@ c = PolygonClassifier(algorithm_params)
 c.train(train_filename)
 labels, scores, C = c.classify(test_filename, return_confusion_matrix=True)
 
+print 'Confusion matrix:'
 print C
+print 'Normalized confusion matrix:'
+print C.astype(float)/C.sum(1)[:, None]
 

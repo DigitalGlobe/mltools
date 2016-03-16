@@ -110,7 +110,7 @@ class PolygonClassifier():
             scores.append(score)
 
             counter += 1
-            if counter % 1000 == 0: print counter
+            if counter % 1000 == 0: print counter, 'classified'
             if counter == max_number: break		
         
         predicted_labels, scores = np.array(predicted_labels), np.array(scores)
