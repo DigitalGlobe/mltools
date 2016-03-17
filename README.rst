@@ -1,27 +1,30 @@
 mltools
 =======
 
-(Disclaimer: work in progress...)
-
 A collection of Machine Learning (ML) Tools for object detection and classification on DG imagery.
 
 mltools is MIT licenced.
 
-The purpose of this repository is to enable fast prototyping of object detection and classification solutions 
-employing one of the existing algorithms or by constructing new ones based on the provided modules.
+The purpose of this repository is to enable fast prototyping of object detection and classification solutions.
 
-The input of a ML algorithm (MLA) is one or more of the following:
+At the moment, there are four modules:
 
-- one or more images;
-- a job.json specifying the parameters of the MLA;
-- a train.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier;
-- a target.geojson containing a collection of geometries, each feature consisting of (at least) a geometry, a class and a unique image identifier.
+- data_extractors: functions to get pixels from georeferenced imagery
+- feature_extractors: functions to derive feature vectors 
+- crowdsourcing: interface with Tomnod to obtain training/test/target data and to write back machine output
+- json_tools: functions to manipulate json and geojson files
 
-The output of a MLA is one or more of the following:
+A ML algorithm (MLA) is a class with train and classify/detect functions. At the moment, the repo contains 
+the PolygonClassifier MLA which can classify a set of polygons overlayed on a DG image. 
 
-- one or more processed images
-- an output.geojson containing a collection of features, each feature consisting of (at least) a geometry, a class and a unique image identifier.
+An MLA is typically employed in a script which:
+- retrieves training data from Tomnod
+- trains the MLA
+- tests the MLA and computes accuracy metrics
+- deploys the MLA for detection or classification
+- writes the MLA results back to the Tomnod database.
 
+Example scripts can be found under /examples.
 
 DevOps
 ------------
@@ -66,7 +69,6 @@ Then install the requirements:
 .. highlights::
 
    pip install -r requirements.txt
-
 
 
 Comments

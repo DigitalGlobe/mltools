@@ -4,12 +4,12 @@
 # This script was used in the adelaide_pools_2016 campaign. 
 
 import json
-import json_tools as jt
 import os
 import sys
 
-from polygon_classifier import PolygonClassifier
-from crowdsourcing import TomnodCommunicator
+from mltools import json_tools as jt
+from mltools.polygon_classifier import PolygonClassifier
+from mltools.crowdsourcing import TomnodCommunicator
 
 # suppress annoying warnings
 import warnings

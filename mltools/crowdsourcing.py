@@ -1,10 +1,7 @@
 # Contains functions for reading from and writing to the Tomnod database.
 
-import geojson
 import os
 import psycopg2
-
-from osgeo import gdal, ogr, osr
 
 
 class TomnodCommunicator():
@@ -153,13 +150,12 @@ class TomnodCommunicator():
         return self._fetch(query)
 
 
-#### CHECK THE FOLLOWING FUNCTIONS --------------------------------------------------
-
-    def update(self, query, data, batch_size = 1000):
-        '''Run update query for each entry in data in batches of batch_size.
+    def execute(self, query, data, batch_size = 1000):
+        '''Execute query for each entry in data.
            Args:
                query (str): SQL query with {} for arguments.
-               data (list): Data to format sql query.  
+               data (list): Data to format sql query. Each entry is a tuple.
+               batch_size (int): Execute in batches of batch_size.  
         '''
         total_query, no_entries = '', len(data)
         for i, entry in enumerate(data):
@@ -167,124 +163,3 @@ class TomnodCommunicator():
             if (i%(batch_size-1)  == 0) or (i == no_entries-1):
                 self._execute(total_query)
                 total_query = ''
-
-
-    # create function get_from_geojson            
-
-
-    def write(self, data, campaign_schema, table, attribute_names, batch_size = 1000):
-        '''Write data to the corresponding attributes in campaign_schema.table for all 
-
-
-           Args:
-               data: List of tuples.
-               campaign_schema (str): Campaign campaign_schema.
-               table (str): Table of campaign_schema.
-               attribute_names: List of attributes to be written in table.
-        '''
-
-        total_query, no_entries = '', len(data)
-        for i, entry in enumerate(data):
-
-            query = '''UPDATE {}.{}
-                       SET type_id = (SELECT id FROM tag_type WHERE name = '{}'),
-                       score = {}, 
-                       priority = {} 
-                   WHERE id = {} 
-                   AND num_votes_total <= {};'''.format(campaign_schema,
-                                                        class_name,
-                                                        score, 
-                                                        tomnod_priority,
-                                                        feature_id,
-                                                        max_votes)
-
-            total_query += query
-            if (i%(batch_size-1)  == 0) or (i == no_entries-1):
-                print str(i+1) + ' out of ' + str(no_entries)
-                self._execute(total_query)
-                total_query = ''
-
-
-    def write_scores_and_priorities(input_file,
-                                    campaign_schema, 
-                                    batch_size = 1000, 
-                                    max_votes = 0):
-        """Write contents of geojson to campaign_schema.feature
-           
-           Args:
-               campaign_schema (str): Campaign campaign_schema.
-               table (str): The table of campaign_schema where to write.
-               input_file (str): Input file name (extension .geojson).
-               batch_size (int): Write batch_size results at a time.
-               max_votes (int): Only results for features with votes<=max_votes 
-                                will be written.
-
-        """
-
-        print 'Write data to: '
-        print 'Schema: ' + campaign_schema
-        print 'Table:' + table
-
-        # get feature data
-        shp = ogr.Open(input_file)
-        lyr = shp.GetLayer()
-        no_features = lyr.GetFeatureCount()
-
-        total_query = ""
-        for i in range(no_features):
-
-            # get feature data
-            feat = lyr.GetFeature(i)
-            feature_id = feat.GetField('feature_id') 
-            class_name = feat.GetField('class_name')
-            if class_name == '': continue      # make sure class name is not empty
-            score = feat.GetField('score')
-            tomnod_priority = feat.GetField('tomnod_priority') 
-
-            query = """UPDATE {}.feature 
-                       SET type_id = (SELECT id FROM tag_type WHERE name = '{}'),
-                           score = {}, 
-                           priority = {} 
-                       WHERE id = {} 
-                       AND num_votes_total <= {};""".format(campaign_schema,
-                                                            class_name,
-                                                            score, 
-                                                            tomnod_priority,
-                                                            feature_id,
-                                                            max_votes)
-
-            total_query += query
-            if (i%(batch_size-1)  == 0) or (i == no_features-1):
-                print str(i+1) + ' out of ' + str(no_features)
-                db_query(total_query, self.credentials)
-                total_query = ""
-
-        
-
-def compute_tomnod_priority(label, score):
-    """Compute a priority value to be used on tomnod if a feature classified
-       by the machine is to be inspected by the crowd. This is a custom 
-       function and should be defined based on use case. 
-       Priority is a non-negative number.
-       Features on Tomnod are ordered in ascending priority order 
-       (i.e. priority 0 means highest priority). 
-
-       Args:
-           label (str): The feature label.
-           score (float): Confidence score from 0 to 1.
-
-       Returns:
-           Priority value (float).
-    """
-
-    # we want to prioritize polygons that the machine thinks have
-    # swimming pools; this will help weed out false positives
-    # is the machine thinks there are no swimming pools, we prioritize
-    # by score
-    if label == 'Swimming pool':
-        priority = 0.0
-    else:
-        priority = abs(score - 0.5)
-
-    return priority     
-    

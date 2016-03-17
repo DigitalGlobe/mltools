@@ -4,12 +4,12 @@
 # This script was used in the adelaide_pools_2016 campaign. 
 
 import json
-import json_tools as jt
 import os
 import sys
 
-from polygon_classifier import PolygonClassifier
-from crowdsourcing import TomnodCommunicator
+from mltools import json_tools as jt
+from mltools.polygon_classifier import PolygonClassifier
+from mltools.crowdsourcing import TomnodCommunicator
 
 # suppress annoying warnings
 import warnings
@@ -24,7 +24,6 @@ catalog_id = job['catalog_id']
 classes = job['classes']
 target_params = job['target_params']
 algorithm_params = job['algorithm_params']
-
 
 # get tomnod credentials
 with open('credentials.json', 'r') as f:

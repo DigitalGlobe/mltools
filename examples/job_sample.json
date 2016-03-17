@@ -1,0 +1,10 @@
+{
+ "schema":"adelaide_pools_2016",
+ "catalog_id": "1040010014BF5100",
+ "classes":[{"name":"Swimming pool", "no_samples": 1000, "no_train_samples":200, "max_area": 1000, "min_votes": 1},
+            {"name":"No swimming pool", "no_samples": 10000, "no_train_samples":200, "max_area": 1000, "min_votes":1}],
+ "target_params":{"max_area": 1000, "max_polys_to_classify": 1000, "max_votes": 1},
+ "algorithm_params":{"feature_extractor": "adelaide_features",
+                     "classifier": "random forest",
+                     "no_trees": 100}
+}

@@ -54,24 +54,25 @@ def split_geojson(input_file, file_1, file_2, no_in_first_file):
         geojson.dump(feat_collection_2, f)  
 
 
-def get_values_from_geojson(input_file, property = 'class_name'):
-    """Reads a geojson and returns a vector with all the values of the property
-       property_name.
+def get_from_geojson(filename, property_names):
+    """Reads a geojson and returns a list of value tuples, each value
+       corresponding to a property in property_names.
 
        Args:
-           input_file (str): Input filename (has to be geojson).
-           property (str): Property whose values will be extracted.
+           filename (str): File name (has to be geojson).
+           property_names: List of strings. Each string is a property name.
 
        Returns:
-           List of values (list).     
+           List of value tuples.     
     """
 
     # get feature collections
-    with open(input_file) as f:
+    with open(filename) as f:
         feature_collection = geojson.load(f)
 
-    features = feature_collection['features']    
-    values = [feat['properties'][property_name] for feat in features]
+    features = feature_collection['features']
+    values = [tuple([feat['properties'].get(x) 
+                    for x in property_names]) for feat in features]
 
     return values    
 
@@ -83,8 +84,8 @@ def write_to_geojson(data, property_names, output_file):
 
        Args:
            data: List of tuples.
-           property_names: List of strings. Should be same length as the 
-                           number of properties in each tuple.
+           property_names: List of strings. Should be same length as each 
+                           tuple in data.
            output_file (str): File to write to (should be .geojson).
                            
     '''        
