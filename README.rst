@@ -19,7 +19,7 @@ At the moment, there are four modules:
 - json_tools: functions to manipulate json and geojson files.
 
 A ML algorithm (MLA) is a class with train and classify/detect functions. At the moment, the repo contains 
-the PolygonClassifier MLA which can classify a set of polygons overlayed on a DG image. 
+the PolygonClassifier MLA which can classify a set of polygon geometries associated with a DG image. 
 
 An MLA is typically employed in a script which:
 - retrieves training data from Tomnod
@@ -82,9 +82,9 @@ Install mltools:
 
    pip install mltools 
 
-You can now use the scripts found in /examples or create your own. Keep in mind 
-that the imagery has to be in your project folder. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package 
-(https://github.com/kostasthebarbarian/gbdxtools). You need GBDX credentials to use gbdxtools.
+You can now copy the scripts found in /examples in your project directory or create your own. 
+Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
+property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). 
  
 
 DevOps
