@@ -22,6 +22,7 @@ A ML algorithm (MLA) is a class with train and classify/detect functions. At the
 the PolygonClassifier MLA which can classify a set of polygon geometries associated with a DG image. 
 
 An MLA is typically employed in a script which:
+
 - retrieves training data from Tomnod
 - trains the MLA
 - tests the MLA and computes accuracy metrics
