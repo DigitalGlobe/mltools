@@ -1,5 +1,9 @@
-mltools
 =======
+mltools 
+=======
+
+.. image:: https://badge.fury.io/py/mltools.svg
+    :target: https://badge.fury.io/py/mltools
 
 A collection of Machine Learning (ML) Tools for object detection and classification on DG imagery.
 
@@ -26,10 +30,11 @@ An MLA is typically employed in a script which:
 
 Example scripts can be found under /examples.
 
-DevOps
-------------
 
-Start with a fresh Ubuntu EC2 instance.
+Installation/Usage
+------------------
+
+Start with a fresh Ubuntu EC2 instance:
 
 .. highlights::
 
@@ -39,18 +44,51 @@ Start with a fresh Ubuntu EC2 instance.
 
    sudo apt-get install git python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran libfreetype6-dev libpng-dev
    
-   ssh-keygen -t rsa
-   
-   more .ssh/id_rsa.pub # and copy this key to github.com deploy keys for the mltools repo
-
-
-Install GDAL
+Install GDAL drivers:
 
 .. highlights::
    
    sudo apt-get install gdal-bin
    
-   sudo apt-get install libgdal-dev libgdal1h
+   sudo apt-get install libgdal-dev
+
+Note: This should install gdal version 1.10.1 for which pygdal will work. Confirm that this is the case with the command:
+
+.. highlights::
+
+   gdal-config --version
+
+If for whatever reason you have another version of gdal you might run into problems.   
+
+Create a python virtual environment in your project directory:
+
+.. highlights::
+
+   cd my_project
+
+   virtualenv venv
+   
+   . venv/bin/activate
+
+Install GDAL:
+
+.. highlights::
+
+   pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+ 
+Install mltools:
+
+.. highlights::
+
+   pip install mltools 
+
+You can now use the scripts found in /examples or create your own. Keep in mind 
+that the imagery has to be in your project folder. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package 
+(https://github.com/kostasthebarbarian/gbdxtools). You need GBDX credentials to use gbdxtools.
+ 
+
+DevOps
+------
 
 Clone the repo:
 
@@ -64,7 +102,19 @@ Clone the repo:
    
    . venv/bin/activate
  
-Then install the requirements:
+
+Generate key:
+
+.. highlights::
+   
+   ssh-keygen -t rsa
+   
+   more .ssh/id_rsa.pub 
+
+Copy this key to github.com deploy keys for the mltools repo.
+
+
+Install the requirements:
 
 .. highlights::
 
@@ -83,5 +133,3 @@ https://docs.google.com/drawings/d/1tKSgFMp0lLd7Abne8CdOhb1PbdJfgCz5x9XkLwDeET0/
 The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:
 
 https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing
-
-Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). You need GBDX credentials to use gbdxtools.
