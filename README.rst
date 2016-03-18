@@ -69,12 +69,6 @@ Create a python virtual environment in your project directory:
    virtualenv venv
    
    . venv/bin/activate
-
-Install GDAL:
-
-.. highlights::
-
-   pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
  
 Install mltools:
 
