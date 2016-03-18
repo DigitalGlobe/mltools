@@ -23,10 +23,10 @@ the PolygonClassifier MLA which can classify a set of polygon geometries associa
 
 An MLA is typically employed in a script which:
 
-- retrieves training data from Tomnod
-- trains the MLA
-- tests the MLA and computes accuracy metrics
-- deploys the MLA for detection or classification
+- retrieves training data from Tomnod;
+- trains the MLA;
+- tests the MLA and computes accuracy metrics;
+- deploys the MLA for detection or classification;
 - writes the MLA results back to the Tomnod database.
 
 Example scripts can be found under /examples.
