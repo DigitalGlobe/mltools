@@ -4,6 +4,7 @@
 # This script was used in the adelaide_pools_2016 campaign. 
 
 import json
+import numpy as np
 import os
 import sys
 

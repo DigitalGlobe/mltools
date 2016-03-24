@@ -35,10 +35,9 @@ class PolygonClassifier():
                 pass
 
 
-
     def feature_extractor(self, data):
-        '''The simplest feature extractor. This should be overriden when
-           the class is instantiated based on use case.
+        '''The simplest feature extractor. This should be overriden 
+           based on use case when the class is instantiated.
            Args:
                data (numpy array): Pixel data vector.
            Returns:
