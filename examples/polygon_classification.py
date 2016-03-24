@@ -7,6 +7,7 @@ import json
 import os
 import sys
 
+from mltools import features
 from mltools import json_tools as jt
 from mltools.polygon_classifier import PolygonClassifier
 from mltools.crowdsourcing import TomnodCommunicator
@@ -72,10 +73,34 @@ jt.write_to_geojson(data = data,
                     property_names = ['feature_id', 'image_name'],
                     output_file = target_filename)
 
-# define, train and deploy the classifier
+# instantiate polygon classifier
 c = PolygonClassifier(algorithm_params)
+
+# override default feature extraction method
+def feature_extractor(data):
+    '''Feature extractor for swimming pool detection.
+       Args:
+           data (numpy array): Pixel data vector.          
+       Returns:
+           Feature numpy vector.
+    '''
+
+    # hard-coded
+    pool_sig = np.array([1179, 2295, 2179, 759, 628, 186, 270, 110])
+    covered_pool_sig = np.array([1584, 1808, 1150, 1104, 1035, 995, 1659, 1741])
+    
+    pool_data = features.spectral_angles(data, pool_sig)
+    covered_pool_data = features.spectral_angles(data, covered_pool_sig)
+    band26_ratio = features.band_ratios(data, 2, 6)
+    band36_ratio = features.band_ratios(data, 3, 6)
+
+    return [np.max(band26_ratio), np.max(band36_ratio), np.min(pool_data), np.min(covered_pool_data)]
+
+c.feature_extractor = feature_extractor
+
 print 'Train classifier'
 c.train(train_filename)
+
 print 'Classify'
 labels, scores = c.classify(target_filename)
 

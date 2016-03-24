@@ -7,6 +7,7 @@ import json
 import os
 import sys
 
+from mltools import features
 from mltools import json_tools as jt
 from mltools.polygon_classifier import PolygonClassifier
 from mltools.crowdsourcing import TomnodCommunicator
@@ -70,10 +71,34 @@ test_filename = '_'.join([catalog_id, 'test.geojson'])
 jt.join_geojsons(train_filenames, train_filename)
 jt.join_geojsons(test_filenames, test_filename)
 
-# define, train and test the classifier
+# instantiate polygon classifier
 c = PolygonClassifier(algorithm_params)
+
+# override default feature extraction method
+def feature_extractor(data):
+    '''Feature extractor for swimming pool detection.
+       Args:
+           data (numpy array): Pixel data vector.          
+       Returns:
+           Feature numpy vector.
+    '''
+
+    # hard-coded
+    pool_sig = np.array([1179, 2295, 2179, 759, 628, 186, 270, 110])
+    covered_pool_sig = np.array([1584, 1808, 1150, 1104, 1035, 995, 1659, 1741])
+    
+    pool_data = features.spectral_angles(data, pool_sig)
+    covered_pool_data = features.spectral_angles(data, covered_pool_sig)
+    band26_ratio = features.band_ratios(data, 2, 6)
+    band36_ratio = features.band_ratios(data, 3, 6)
+
+    return [np.max(band26_ratio), np.max(band36_ratio), np.min(pool_data), np.min(covered_pool_data)]
+
+c.feature_extractor = feature_extractor
+
 print 'Train classifier'
 c.train(train_filename)
+
 print 'Test classifier'
 labels, scores, C = c.classify(test_filename, return_confusion_matrix=True)
 
@@ -81,4 +106,3 @@ print 'Confusion matrix:'
 print C
 print 'Normalized confusion matrix:'
 print C.astype(float)/C.sum(1)[:, None]
-

@@ -1,6 +1,6 @@
 # Polygon classifier. Classifies a set of polygons on an image.
 
-import feature_extractors
+import features
 import geojson
 import math 
 import numpy as np
@@ -15,19 +15,13 @@ from sklearn.metrics import confusion_matrix
 
 class PolygonClassifier():
 
+
     def __init__(self, parameters):
         '''
         Args:
             parameters (dict): Dictionary with algorithm parameters.
         '''                
         
-        try:
-            feature_extractor_name = parameters['feature_extractor']
-        except KeyError:
-            feature_extractor_name = 'vanilla_features'    
-
-        self.feature_extractor = getattr(feature_extractors, feature_extractor_name)    
-
         try:
             classifier_name = parameters['classifier']
         except KeyError:
@@ -41,9 +35,22 @@ class PolygonClassifier():
                 pass
 
 
+
+    def feature_extractor(self, data):
+        '''The simplest feature extractor. This should be overriden when
+           the class is instantiated based on use case.
+           Args:
+               data (numpy array): Pixel data vector.
+           Returns:
+               A vector with the mean, std and variance of data.
+        '''
+
+        return [np.mean(data), np.std(data), np.var(data)]
+            
+                
+
     def train(self, train_file, classifier_pickle_file = ''):
         '''Train classifier.
-
            Args:
                train_file (str): Training data filename (geojson).
                classifier_pickle_file (str): File to store classifier pickle.
@@ -72,9 +79,8 @@ class PolygonClassifier():
               
 
     def classify(self, target_file, max_number = -1, return_confusion_matrix = False):
-        """Deploy classifier on target_file and output estimated labels
+        '''Deploy classifier on target_file and output estimated labels
            and corresponding confidence scores. 
-
            Args:
                target_file (str): Target filename (geojson).
                max_number (int): Maximum number of features to classify. Default value 
@@ -83,10 +89,9 @@ class PolygonClassifier():
                                            This makes sense only when target_file includes 
                                            known labels and can be used to estimate the 
                                            classifier accuracy.            
-
            Returns:
                Label list, numpy score vector and numpy confusion matrix (optional).   
-        """
+        '''
 
         class_names = self.classifier.classes_
         test_labels, predicted_labels, scores, counter = [], [], [], 0 

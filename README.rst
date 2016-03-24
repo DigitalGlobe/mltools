@@ -14,7 +14,7 @@ The purpose of this repository is to enable fast prototyping of object detection
 At the moment, there are four modules:
 
 - data_extractors: functions to get pixels from georeferenced imagery;
-- feature_extractors: functions to derive feature vectors; 
+- features: functions to derive features from pixels; 
 - crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
 - json_tools: functions to manipulate json and geojson files.
 
