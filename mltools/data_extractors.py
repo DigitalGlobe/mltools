@@ -9,13 +9,10 @@ def extract_data(polygon_file, geom_sr = None):
     """Extracts pixels for each polygon in polygon_file.
        The image reference for each polygon is found in the image_name
        property of the polygon_file.
-       NOTE: this function only works if all polygons are from the same image!
 
        Args:
            polygon_file (str): Filename. Collection of geometries in 
                                geojson or shp format.
-           return_class_name (bool): Return the class_name property of the polygon
-                                     (default True)
            geom_sr (osr object): Geometry spatial reference system (srs). 
                                  If None, defaults to the polygon_file srs. 
        
@@ -31,40 +28,40 @@ def extract_data(polygon_file, geom_sr = None):
     lyr = shp.GetLayer()
     no_features = lyr.GetFeatureCount() 
 
-    # Find raster identity from image_name of first polygon
-    feat = lyr.GetFeature(0)
-    raster_file = feat.GetFieldAsString('image_name')
-    # check if raster_file has .tif extension; if not, append
-    if raster_file[-4:] != '.tif':
-        raster_file += '.tif'
-
-    # Get raster info
-    raster = gdal.Open(raster_file)
-    nbands = raster.RasterCount
-    proj = raster.GetProjectionRef()
-    transform = raster.GetGeoTransform()
-    xOrigin = transform[0]
-    yOrigin = transform[3]
-    pixelWidth = transform[1]
-    pixelHeight = transform[5]
-
-    # Determine coordinate transformation from feature srs to raster srs
-    feature_sr = lyr.GetSpatialRef()
-    raster_sr = osr.SpatialReference()
-    raster_sr.ImportFromWkt(proj)
-    coord_trans = osr.CoordinateTransformation(feature_sr, raster_sr)
-
-    # Determine coordinate transformation from raster srs to geometry srs
-    # (this is why: the geometry is derived in the raster srs)
-    if geom_sr is None:
-        coord_trans_2 = osr.CoordinateTransformation(raster_sr, feature_sr)
-    else:
-        coord_trans_2 = osr.CoordinateTransformation(raster_sr, geom_sr)
-
     for fid in xrange(no_features):
 
         feat = lyr.GetFeature(fid)
-    
+
+        # find raster identity
+        feat = lyr.GetFeature(0)
+        raster_file = feat.GetFieldAsString('image_name')
+        # check if raster_file has .tif extension; if not, append
+        if raster_file[-4:] != '.tif':
+            raster_file += '.tif'
+
+        # Get raster info
+        raster = gdal.Open(raster_file)
+        nbands = raster.RasterCount
+        proj = raster.GetProjectionRef()
+        transform = raster.GetGeoTransform()
+        xOrigin = transform[0]
+        yOrigin = transform[3]
+        pixelWidth = transform[1]
+        pixelHeight = transform[5]
+
+        # Determine coordinate transformation from feature srs to raster srs
+        feature_sr = lyr.GetSpatialRef()
+        raster_sr = osr.SpatialReference()
+        raster_sr.ImportFromWkt(proj)
+        coord_trans = osr.CoordinateTransformation(feature_sr, raster_sr)
+
+        # Determine coordinate transformation from raster srs to geometry srs
+        # (this is why: the geometry is derived in the raster srs)
+        if geom_sr is None:
+            coord_trans_2 = osr.CoordinateTransformation(raster_sr, feature_sr)
+        else:
+            coord_trans_2 = osr.CoordinateTransformation(raster_sr, geom_sr)
+
         # Reproject vector geometry to same projection as raster
         geom = feat.GetGeometryRef()
         geom.Transform(coord_trans)
