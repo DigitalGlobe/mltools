@@ -41,15 +41,17 @@ def extract_data(polygon_file, geom_sr = None):
         # Get raster info
         try:
             raster = gdal.Open(raster_file)    
-            nbands = raster.RasterCount
-            proj = raster.GetProjectionRef()
-            transform = raster.GetGeoTransform()
-            xOrigin = transform[0]
-            yOrigin = transform[3]
-            pixelWidth = transform[1]
-            pixelHeight = transform[5]
         except RuntimeError:
-            yield [], ''            
+            yield [], ''
+            return
+                         
+        nbands = raster.RasterCount
+        proj = raster.GetProjectionRef()
+        transform = raster.GetGeoTransform()
+        xOrigin = transform[0]
+        yOrigin = transform[3]
+        pixelWidth = transform[1]
+        pixelHeight = transform[5]
             
         # Determine coordinate transformation from feature srs to raster srs
         feature_sr = lyr.GetSpatialRef()
