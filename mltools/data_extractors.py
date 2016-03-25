@@ -33,7 +33,6 @@ def extract_data(polygon_file, geom_sr = None):
         feat = lyr.GetFeature(fid)
 
         # find raster identity
-        feat = lyr.GetFeature(0)
         raster_file = feat.GetFieldAsString('image_name')
         # check if raster_file has .tif extension; if not, append
         if raster_file[-4:] != '.tif':
