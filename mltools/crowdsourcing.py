@@ -232,7 +232,7 @@ class TomnodCommunicator():
                        AND ST_Area(f.feature) <= {}
                        ORDER BY f.score ASC NULLS FIRST
                        LIMIT {}'''.format(campaign_schema, 
-                                          class_name
+                                          class_name,
                                           max_score,
                                           max_votes,
                                           max_area, 
