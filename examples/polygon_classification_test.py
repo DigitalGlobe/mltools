@@ -26,7 +26,6 @@ catalog_id = job['catalog_id']
 classes = job['classes']
 algorithm_params = job['algorithm_params']
 
-
 # get tomnod credentials
 with open('credentials.json', 'r') as f:
     credentials = json.load(f)
@@ -38,11 +37,9 @@ tc = TomnodCommunicator(credentials)
 train_filenames, test_filenames = [], []
 for i, class_entry in enumerate(classes):
     class_name = class_entry['name']
-    no_samples = class_entry['no_samples']    
     no_train_samples = class_entry['no_train_samples']
-    min_votes = class_entry['min_votes']
-    max_area = class_entry['max_area']
-    print 'Collect {} {} samples from schema {} and image {}'.format(no_samples, 
+    no_test_samples = class_entry['no_test_samples']
+    print 'Collect {} {} samples from schema {} and image {}'.format(no_train_samples + no_test_samples, 
                                                                      class_name, 
                                                                      schema, 
                                                                      catalog_id) 
@@ -51,9 +48,7 @@ for i, class_entry in enumerate(classes):
     data = tc.get_high_confidence_features(campaign_schema = schema, 
                                            image_id = catalog_id, 
                                            class_name = class_name,
-                                           max_number = no_samples,
-                                           min_votes = min_votes,
-                                           max_area = max_area)
+                                           max_number = no_train_samples + no_test_samples)
     jt.write_to_geojson(data = data,
                         property_names = ['feature_id', 'image_name', 'class_name'],
                         output_file = gt_filename)

@@ -58,17 +58,18 @@ class PolygonClassifier():
        
         # compute feature vector for each polygon
         features, labels = [], []
-        for poly, data, label in extract_data(polygon_file = train_file):        
+        for data, label in extract_data(polygon_file = train_file):        
+            # if no data was extracted, skip
+            if len(data) == 0: continue    
             feature_vector = self.feature_extractor(data)
-            # print feature_vector, label
-            # if there is something weird, pass
-            if math.isnan(np.linalg.norm(feature_vector)): 
-                continue        
+            # if there is something weird going on, skip
+            if math.isnan(np.linalg.norm(feature_vector)): continue        
             
             features.append(feature_vector)
             labels.append(label)
 
         X, y = np.array(features), np.array(labels)
+
         # train classifier
         self.classifier.fit(X, y)
         
@@ -96,26 +97,29 @@ class PolygonClassifier():
         test_labels, predicted_labels, scores, counter = [], [], [], 0 
         
         # for each polygon, compute feature vector and classify
-        for poly, data, test_label in extract_data(polygon_file = target_file):       
-            
+        for data, test_label in extract_data(polygon_file = target_file):       
+            # if no data was extracted, skip
+            if len(data) == 0: continue
+    
             feature_vector = self.feature_extractor(data)
-
+            # if there is something weird going on, skip
+            if math.isnan(np.linalg.norm(feature_vector)): continue
+  		
+            # classifier prediction looks like array([]), 
+            # so we need the first entry: hence the [0] 
             try:
-                # classifier prediction looks like array([]), 
-                # so we need the first entry: hence the [0] 
                 probability_distr = self.classifier.predict_proba(feature_vector)[0] 
                 ind = np.argmax(probability_distr)    
                 predicted_label, score = class_names[ind], probability_distr[ind]                
+                test_labels.append(test_label)
+                predicted_labels.append(predicted_label)
+                scores.append(score)
+                counter += 1
+                if counter % 1000 == 0: print counter, 'classified'
+                if counter == max_number: break
             except ValueError:
-                predicted_label, score = '', 1.0                       
-       
-            test_labels.append(test_label)
-            predicted_labels.append(predicted_label)
-            scores.append(score)
-
-            counter += 1
-            if counter % 1000 == 0: print counter, 'classified'
-            if counter == max_number: break		
+                # if classification went wrong, skip this feature
+                pass		
         
         predicted_labels, scores = np.array(predicted_labels), np.array(scores)
             

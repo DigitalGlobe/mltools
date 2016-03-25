@@ -39,8 +39,6 @@ train_filenames = []
 for i, class_entry in enumerate(classes):
     class_name = class_entry['name']
     no_train_samples = class_entry['no_train_samples']
-    min_votes = class_entry['min_votes']
-    max_area = class_entry['max_area']    
     print 'Collect {} {} samples from schema {} and image {}'.format(no_train_samples,
                                                                      class_name,
                                                                      schema,
@@ -49,9 +47,7 @@ for i, class_entry in enumerate(classes):
     data = tc.get_high_confidence_features(campaign_schema = schema, 
                                            image_id = catalog_id, 
                                            class_name = class_name,
-                                           max_number = no_train_samples,
-                                           min_votes = min_votes,
-                                           max_area = max_area)
+                                           max_number = no_train_samples)
     jt.write_to_geojson(data = data, 
                         property_names = ['feature_id', 'image_name', 'class_name'],
                         output_file = train_filenames[i])
@@ -62,14 +58,10 @@ jt.join_geojsons(train_filenames, train_filename)
 
 # fetch unclassified features for classification
 target_filename = '_'.join([catalog_id, 'target.geojson'])
-max_polys_to_classify = target_params['max_polys_to_classify']
-max_area = target_params['max_area']
-max_votes = target_params['max_votes'] 
+no_polys_to_classify = target_params['no_polys_to_classify']
 data = tc.get_low_confidence_features(campaign_schema = schema, 
                                       image_id = catalog_id, 
-                                      max_number = max_polys_to_classify,
-                                      max_area = max_area,
-                                      max_votes = max_votes)
+                                      max_number = no_polys_to_classify)
 jt.write_to_geojson(data = data,
                     property_names = ['feature_id', 'image_name'],
                     output_file = target_filename)
@@ -102,7 +94,7 @@ c.feature_extractor = feature_extractor
 print 'Train classifier'
 c.train(train_filename)
 
-print 'Classify'
+print 'Classify unknown polygons'
 labels, scores = c.classify(target_filename)
 
 # write results to geojson

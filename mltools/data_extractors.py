@@ -3,6 +3,7 @@
 from osgeo import gdal, ogr, osr
 import numpy as np
 
+gdal.UseExceptions()     # enable exceptions for gdal python bindings
 
 def extract_data(polygon_file, geom_sr = None):
     """Extracts pixels for each polygon in polygon_file.
@@ -13,12 +14,16 @@ def extract_data(polygon_file, geom_sr = None):
        Args:
            polygon_file (str): Filename. Collection of geometries in 
                                geojson or shp format.
+           return_class_name (bool): Return the class_name property of the polygon
+                                     (default True)
            geom_sr (osr object): Geometry spatial reference system (srs). 
                                  If None, defaults to the polygon_file srs. 
        
        Yields:
-           Geometry, pixels as masked numpy array and class name if it exists 
-           (otherwise None).
+           Pixels as masked numpy array and class name. If the
+           pixels can not be extracted, then the function yields an empty array.
+           If the class name does not exist, then the function yields an empty string.
+ 
     """
 
     # Get polygon data    
@@ -87,9 +92,6 @@ def extract_data(polygon_file, geom_sr = None):
                 pointsX.append(lon)
                 pointsY.append(lat)
 
-        else:
-            sys.exit("ERROR: Geometry needs to be Polygon or Multipolygon")
-
         # get polygon coordinates
         poly = ogr.Geometry(ogr.wkbPolygon)
         poly.AddGeometry(ring)
@@ -121,22 +123,24 @@ def extract_data(polygon_file, geom_sr = None):
         gdal.RasterizeLayer(target_ds, [1], lyr, burn_values=[1])    
     
         # Read raster as arrays    
-        dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount)
-        dataraster = dataraster.astype(np.float)
+        try:
+            dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount)
+            dataraster = dataraster.astype(np.float)
     
-        data_mask = target_ds.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
+            data_mask = target_ds.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
     
-        # replicate mask for each band
-        data_mask = np.dstack([data_mask for i in range(nbands)])
-        data_mask = data_mask.transpose(2,0,1)
+            # replicate mask for each band
+            data_mask = np.dstack([data_mask for i in range(nbands)])
+            data_mask = data_mask.transpose(2,0,1)
         
-        # Mask zone of raster
-        zone_raster = np.ma.masked_array(dataraster, np.logical_not(data_mask))
-        
+            # Mask zone of raster
+            zone_raster = np.ma.masked_array(dataraster, np.logical_not(data_mask))
+        except ValueError:
+            zone_raster, label = [], ''
+
         try:
             label = feat.GetField('class_name')
         except ValueError:
-            label = None    
+            label = ''
 
-        yield poly, zone_raster, label
-
+        yield zone_raster, label
