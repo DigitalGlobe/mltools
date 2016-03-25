@@ -207,7 +207,7 @@ class TomnodCommunicator():
         '''
 
         if image_id is not '':
-            query = '''SELECT f.feature, f.id, overlay.catalogid, tag_type.name
+            query = '''SELECT f.feature, f.id, overlay.catalogid
                        FROM {}.feature f, tag_type, overlay
                        WHERE f.overlay_id = overlay.id        
                        AND overlay.catalogid = '{}'
@@ -225,7 +225,7 @@ class TomnodCommunicator():
                                           max_area, 
                                           max_number)
         else:
-            query = '''SELECT f.feature, f.id, overlay.catalogid, tag_type.name
+            query = '''SELECT f.feature, f.id, overlay.catalogid
                        FROM {}.feature f, tag_type, overlay
                        WHERE f.overlay_id = overlay.id 
                        AND f.type_id = tag_type.id
