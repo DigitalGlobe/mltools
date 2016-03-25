@@ -104,7 +104,8 @@ class TomnodCommunicator():
         else:
             query = '''SELECT f.feature, f.id, overlay.catalogid, tag_type.name
                        FROM {}.feature f, tag_type, overlay
-                       WHERE f.type_id = tag_type.id
+                       WHERE f.overlay_id = overlay.id 
+                       AND f.type_id = tag_type.id
                        AND tag_type.name = '{}'
                        AND f.score >= {}
                        AND f.num_votes_total >= {}
@@ -163,7 +164,8 @@ class TomnodCommunicator():
         else:
             query = '''SELECT f.feature, f.id, overlay.catalogid
                        FROM {}.feature f, overlay
-                       WHERE (f.score <= {} OR f.score IS NULL)
+                       WHERE f.overlay_id = overlay.id
+                       AND (f.score <= {} OR f.score IS NULL)
                        AND f.num_votes_total <= {}
                        AND ST_Area(f.feature) <= {}
                        ORDER BY f.score ASC NULLS FIRST
@@ -225,7 +227,8 @@ class TomnodCommunicator():
         else:
             query = '''SELECT f.feature, f.id, overlay.catalogid, tag_type.name
                        FROM {}.feature f, tag_type, overlay
-                       WHERE f.type_id = tag_type.id
+                       WHERE f.overlay_id = overlay.id 
+                       AND f.type_id = tag_type.id
                        AND tag_type.name = '{}'
                        AND (f.score <= {} OR f.score IS NULL)
                        AND f.num_votes_total <= {}
