@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.2',
-      description='Override feature_extractor when PolygonClassifier is instantiated. This allows flexibility to define feature extraction vector based on use case.',
+      version='1.0.3',
+      description='Handle exceptions in PolygonClassifier and data_extractors',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
