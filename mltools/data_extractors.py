@@ -39,7 +39,11 @@ def extract_data(polygon_file, geom_sr = None):
             raster_file += '.tif'
 
         # Get raster info
-        raster = gdal.Open(raster_file)
+        try:
+            raster = gdal.Open(raster_file)
+        except RuntimeError:
+            yield [], ''            
+            
         nbands = raster.RasterCount
         proj = raster.GetProjectionRef()
         transform = raster.GetGeoTransform()
