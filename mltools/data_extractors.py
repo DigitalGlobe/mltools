@@ -7,7 +7,7 @@ gdal.UseExceptions()     # enable exceptions for gdal python bindings
 
 def extract_data(polygon_file, geom_sr = None):
     """Extracts pixels for each polygon in polygon_file.
-       The image reference for each polygon is found in the image_name
+       The image reference for each polygon is found in the image_id
        property of the polygon_file.
 
        Args:
@@ -36,7 +36,7 @@ def extract_data(polygon_file, geom_sr = None):
         feat = lyr.GetFeature(fid)
 
         # find raster identity
-        raster_file = feat.GetFieldAsString('image_name')
+        raster_file = feat.GetFieldAsString('image_id')
         # check if raster_file has .tif extension; if not, append
         if raster_file[-4:] != '.tif':
             raster_file += '.tif'
