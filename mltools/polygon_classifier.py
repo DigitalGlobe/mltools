@@ -92,6 +92,7 @@ class PolygonClassifier():
         '''
 
         class_names = self.classifier.classes_
+        print class_names
         test_labels, predicted_labels, scores, counter = [], [], [], 0 
         
         # for each polygon, compute feature vector and classify
