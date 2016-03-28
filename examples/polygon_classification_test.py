@@ -50,7 +50,7 @@ for i, class_entry in enumerate(classes):
                                            class_name = class_name,
                                            max_number = no_train_samples + no_test_samples)
     jt.write_to_geojson(data = data,
-                        property_names = ['feature_id', 'image_name', 'class_name'],
+                        property_names = ['feature_id', 'image_id', 'class_name'],
                         output_file = gt_filename)
 
     train_filenames.append('_'.join([class_name, catalog_id, 'train.geojson']))

@@ -49,7 +49,7 @@ for i, class_entry in enumerate(classes):
                                            class_name = class_name,
                                            max_number = no_train_samples)
     jt.write_to_geojson(data = data, 
-                        property_names = ['feature_id', 'image_name', 'class_name'],
+                        property_names = ['feature_id', 'image_id', 'class_name'],
                         output_file = train_filenames[i])
     
 # assemble final train file by joining constituent train files
@@ -63,7 +63,7 @@ data = tc.get_low_confidence_features(campaign_schema = schema,
                                       image_id = catalog_id, 
                                       max_number = no_polys_to_classify)
 jt.write_to_geojson(data = data,
-                    property_names = ['feature_id', 'image_name'],
+                    property_names = ['feature_id', 'image_id'],
                     output_file = target_filename)
 
 # instantiate polygon classifier
