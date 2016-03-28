@@ -89,9 +89,7 @@ Start a virtual environment::
    . venv/bin/activate
 
 
-Install the requirements:
-
-.. highlights::
+Install the requirements::
 
    pip install -r requirements.txt
 
