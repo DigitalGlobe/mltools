@@ -35,9 +35,7 @@ Example scripts can be found under /examples.
 Installation/Usage
 ------------------
 
-Start with a fresh Ubuntu EC2 instance:
-
-.. highlights::
+Start with a fresh Ubuntu EC2 instance::
 
    sudo apt-get update
 
@@ -45,25 +43,19 @@ Start with a fresh Ubuntu EC2 instance:
 
    sudo apt-get install git python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran libfreetype6-dev libpng-dev
    
-Install GDAL drivers:
-
-.. highlights::
+Install GDAL drivers::
    
    sudo apt-get install gdal-bin
    
    sudo apt-get install libgdal-dev
 
-Note: This should install gdal version 1.10.1 for which pygdal will work. Confirm that this is the case with the command:
-
-.. highlights::
+This should install gdal version 1.10.1 for which pygdal will work. Confirm that this is the case with the command::
 
    gdal-config --version
 
 If for whatever reason you have another version of gdal you might run into problems.   
 
-Create a python virtual environment in your project directory:
-
-.. highlights::
+Create a python virtual environment in your project directory::
 
    cd my_project
 
@@ -71,9 +63,7 @@ Create a python virtual environment in your project directory:
    
    . venv/bin/activate
  
-Install mltools:
-
-.. highlights::
+Install mltools::
 
    pip install mltools 
 
@@ -82,31 +72,21 @@ Keep in mind that the imagery has to be in your project folder and it should hav
 property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). 
  
 
-DevOps
-------
+Development
+-----------
 
-Clone the repo:
-
-.. highlights::
+Clone the repo::
 
    git clone git@github.com:kostasthebarbarian/mltools.git
    
    cd mltools
    
+
+Start a virtual environment::
+
    virtualenv venv
    
    . venv/bin/activate
- 
-
-Generate key:
-
-.. highlights::
-   
-   ssh-keygen -t rsa
-   
-   more .ssh/id_rsa.pub 
-
-Copy this key to github.com deploy keys for the mltools repo.
 
 
 Install the requirements:
@@ -114,6 +94,10 @@ Install the requirements:
 .. highlights::
 
    pip install -r requirements.txt
+
+
+Please follow this python style guide: https://google.github.io/styleguide/pyguide.html.
+80-90 columns is fine.
 
 
 Comments
