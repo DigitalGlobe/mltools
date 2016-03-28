@@ -110,7 +110,7 @@ def write_to_geojson(data, property_names, output_file):
 def write_properties_to_geojson(data, property_names, input_file, output_file):
     """Writes property data to polygon_file to create output_file.
        The length of data must be equal to the number of features in 
-       polygon_file. If some of the features in polygon_file already have 
+       input_file. If some of the features in polygon_file already have 
        values for the corresponding properties, the values are overwritten.
 
        Args:

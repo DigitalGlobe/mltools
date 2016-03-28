@@ -1,6 +1,5 @@
-# Writes the scores of the machine classifications back
-# to Tomnod. Features classified as swimming pools are given the 
-# highest priority (which is 0).
+# Writes machine classification results back to Tomnod.
+# For each classification, priority is the distance from 0.5.
 # This script was used in the adelaide_pools_2016 campaign.
 
 import json

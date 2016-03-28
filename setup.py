@@ -12,7 +12,7 @@ if sys.version_info > (3,):
       
 setup(name='mltools',
       version='1.0.3',
-      description='Handle exceptions in PolygonClassifier and data_extractors',
+      description='Classification performed over multiple images.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',

@@ -72,8 +72,8 @@ Keep in mind that the imagery has to be in your project folder and it should hav
 property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). 
  
 
-DevOps
-------
+Development
+-----------
 
 Clone the repo::
 
@@ -81,15 +81,18 @@ Clone the repo::
    
    cd mltools
    
-Create a virtual environment::
+Start a virtual environment::
 
    virtualenv venv
    
    . venv/bin/activate
- 
+
 Install the requirements::
 
    pip install -r requirements.txt
+
+Please follow this python style guide: https://google.github.io/styleguide/pyguide.html.
+80-90 columns is fine.
 
 
 Comments
