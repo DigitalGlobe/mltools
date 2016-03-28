@@ -75,10 +75,10 @@ class TomnodCommunicator():
                campaign_schema (str): Campaign campaign_schema.
                image_id (str): Image id. If '' (default) read from all campaign images.
                class_name (str): Feature class (type in Tomnod jargon) name.
-               max_number (int): Maximum number of features to be read.
-               min_score (float): Only features with score>=min_score will be read.
-               min_votes (int): Only features with votes>=min_votes will be read.
-               max_area (float): Only import features with (area in m2) <= max_area.
+               max_number (int): Maximum number of features to be read (def: 10000).
+               min_score (float): Only features with score>=min_score (def: 0.95).
+               min_votes (int): Only features with votes>=min_votes (def: 0).
+               max_area (float): Only features with (area in m2) <= max_area (def 1e06).
 
            Returns:
                A list of tuples (coords_in_hex, feature_id, image_id, class_name).    
@@ -138,9 +138,9 @@ class TomnodCommunicator():
                campaign_schema (str): Campaign campaign_schema.
                image_id (str): Image id. If '' (default) read from all campaign images.
                max_number (int): Maximum number of features to be read.
-               max_score (float): Only features with score<=max_score will be read.
-               max_votes (int): Only features with votes<=max_votes will be read.
-               max_area (float): Only import features with (area in m2) <= max_area.
+               max_score (float): Only features with score<=max_score (def: 1.0)
+               max_votes (int): Only features with votes<=max_votes (def: 100)
+               max_area (float): Only features with (area in m2) <= max_area (def: 1e06).
 
            Returns:
                A list of tuples (coords_in_hex, feature_id, image_id).    
@@ -198,9 +198,9 @@ class TomnodCommunicator():
                class_name (str): Feature class (type in Tomnod jargon) name.
                image_id (str): Image id. If '' (default) read from all campaign images.
                max_number (int): Maximum number of features to be read.
-               max_score (float): Only features with score<=max_score will be read.
-               max_votes (int): Only features with votes<=max_votes will be read.
-               max_area (float): Only import features with (area in m2) <= max_area.
+               max_score (float): Only features with score<=max_score (def: 1.0).
+               max_votes (int): Only features with votes<=max_votes (def: 100).
+               max_area (float): Only features with (area in m2) <= max_area (def: 1e06).
 
            Returns:
                A list of tuples (coords_in_hex, feature_id, image_id).    
