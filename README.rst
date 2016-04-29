@@ -41,28 +41,20 @@ Start with a fresh Ubuntu EC2 instance::
 
    sudo apt-get upgrade
 
-   sudo apt-get install git python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran libfreetype6-dev libpng-dev
+Install conda::
+
+   wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+   bash Miniconda2-latest-Linux-x86_64.sh
    
-Install GDAL drivers::
+Choose the default options. Then run::
 
-   sudo apt-get install gdal-bin
-   
-   sudo apt-get install libgdal-dev
+   bash
 
-This should install gdal version 1.10.1 for which pygdal will work. Confirm that this is the case with the command::
+so that modifications in your .bashrc take effect. Create a conda environment::
 
-   gdal-config --version
+   conda create -n env python ipython numpy scipy gdal scikit-learn scikit-image matplotlib
+   source activate env
 
-If for whatever reason you have another version of gdal you might run into problems.   
-
-Create a python virtual environment in your project directory::
-
-   cd my_project
-
-   virtualenv venv
-   
-   . venv/bin/activate
- 
 Install mltools::
 
    pip install mltools 
