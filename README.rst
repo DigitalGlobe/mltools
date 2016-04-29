@@ -44,7 +44,7 @@ Start with a fresh Ubuntu EC2 instance::
    sudo apt-get install git python-virtualenv libpq-dev python-dev libatlas-base-dev gfortran libfreetype6-dev libpng-dev
    
 Install GDAL drivers::
-   
+
    sudo apt-get install gdal-bin
    
    sudo apt-get install libgdal-dev
@@ -81,18 +81,15 @@ Clone the repo::
    
    cd mltools
    
-
 Start a virtual environment::
 
    virtualenv venv
    
    . venv/bin/activate
 
-
 Install the requirements::
 
    pip install -r requirements.txt
-
 
 Please follow this python style guide: https://google.github.io/styleguide/pyguide.html.
 80-90 columns is fine.

@@ -23,15 +23,16 @@ def extract_data(polygon_file, geom_sr = None):
  
     """
 
-    # if there is an error, then error is set to True
-    error = False
-
     # Get polygon data    
     shp = ogr.Open(polygon_file)
     lyr = shp.GetLayer()
     no_features = lyr.GetFeatureCount() 
 
     for fid in xrange(no_features):
+
+        # initialize error 
+        # if there is an error, then error is set to True
+        error = False
 
         feat = lyr.GetFeature(fid)
 
