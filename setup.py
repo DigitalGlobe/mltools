@@ -22,11 +22,8 @@ setup(name='mltools',
       packages=find_packages(exclude=['docs']),
       include_package_data=True,
       zip_safe=False,
-      install_requires=['numpy >= 1.10.4',
-                        'scipy >= 0.16.0',              
-                        'geojson >= 1.3.2',
+      install_requires=['geojson >= 1.3.2',
                         'psycopg2 >= 2.6.1',
                         'scikit-learn >= 0.17.1',
-                        'Shapely >= 1.5.13',
-                        'pygdal == 1.10.1.0']
+                        'Shapely >= 1.5.15']
       )

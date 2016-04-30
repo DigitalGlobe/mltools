@@ -1,7 +1,5 @@
 # Polygon classifier. Classifies a set of polygons on an image.
 
-import features
-import geojson
 import math 
 import numpy as np
 import os

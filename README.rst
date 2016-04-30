@@ -35,24 +35,25 @@ Example scripts can be found under /examples.
 Installation/Usage
 ------------------
 
-Start with a fresh Ubuntu EC2 instance::
-
-   sudo apt-get update
-
-   sudo apt-get upgrade
-
-Install conda::
+For Ubuntu, install conda with::
 
    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
    bash Miniconda2-latest-Linux-x86_64.sh
    
+For OS X, install conda with::
+
+   wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh
+   bash Miniconda2-latest-MacOSX-x86_64.sh
+
 Choose the default options. Then run::
 
    bash
 
-so that modifications in your .bashrc take effect. Create a conda environment::
+so that modifications in your .bashrc take effect. 
 
-   conda create -n env python ipython numpy scipy gdal scikit-learn scikit-image matplotlib
+Create a conda environment::
+
+   conda create -n env python ipython numpy scipy gdal git  
    source activate env
 
 Install mltools::
@@ -67,18 +68,12 @@ property in the geojson. Imagery in the format required by a MLA (e.g., pansharp
 Development
 -----------
 
-Clone the repo::
+Within the conda environment, clone the repo::
 
    git clone git@github.com:kostasthebarbarian/mltools.git
    
    cd mltools
    
-Start a virtual environment::
-
-   virtualenv venv
-   
-   . venv/bin/activate
-
 Install the requirements::
 
    pip install -r requirements.txt
