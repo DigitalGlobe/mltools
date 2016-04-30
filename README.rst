@@ -9,21 +9,24 @@ A collection of Machine Learning (ML) Tools for object detection and classificat
 
 mltools is MIT licenced.
 
-The purpose of this repository is to enable fast prototyping of object detection and classification solutions.
+The purpose of this repository is to enable fast prototyping of object detection and classification solutions
+using training data from DG Crowdsourcing (aka Tomnod).
 
-At the moment, there are four modules:
+There are four modules:
 
 - data_extractors: functions to get pixels from georeferenced imagery;
 - features: functions to derive features from pixels; 
 - crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
 - json_tools: functions to manipulate json and geojson files.
 
-A ML algorithm (MLA) is a class with train and classify/detect functions. At the moment, the repo contains 
-the PolygonClassifier MLA which can classify a set of polygon geometries associated with a DG image. 
+A ML algorithm (MLA) is a class with train and classify/detect functions. 
+Presently, the repo contains the PolygonClassifier MLA which can classify a set of polygon 
+geometries in a geojson. Each geometry should be associated with an image; images can be ordered, processed and downloaded
+with gbdxtools (github.com/digitalglobe/gbdxtools)
 
 An MLA is typically employed in a script which:
 
-- retrieves training data from Tomnod;
+- retrieves training data from the Tomnod database;
 - trains the MLA;
 - tests the MLA and computes accuracy metrics;
 - deploys the MLA for detection or classification;
@@ -35,17 +38,18 @@ Example scripts can be found under /examples.
 Installation/Usage
 ------------------
 
-For Ubuntu, install conda with::
+For Ubuntu, install conda with the following commands (choose default options at prompt)::
 
    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
    bash Miniconda2-latest-Linux-x86_64.sh
+
    
-For OS X, install conda with::
+For OS X, install conda with the following commands (choose default options at prompt)::
 
    wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh
    bash Miniconda2-latest-MacOSX-x86_64.sh
 
-Choose the default options. Then run::
+Then run::
 
    bash
 
@@ -54,6 +58,9 @@ so that modifications in your .bashrc take effect.
 Create a conda environment::
 
    conda create -n env python ipython numpy scipy gdal git  
+   
+Activate the environment::
+
    source activate env
 
 Install mltools::
@@ -68,7 +75,11 @@ property in the geojson. Imagery in the format required by a MLA (e.g., pansharp
 Development
 -----------
 
-Within the conda environment, clone the repo::
+Activate the conda environment::
+
+   source activate env
+
+Clone the repo::
 
    git clone git@github.com:kostasthebarbarian/mltools.git
    
