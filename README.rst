@@ -65,11 +65,15 @@ Activate the environment::
 
 Install mltools::
 
-   pip install mltools 
+   pip install mltools --ignore-installed
 
 You can now copy the scripts found in /examples in your project directory or create your own. 
 Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
-property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools). 
+property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools).
+
+To exit your conda virtual environment::
+
+   source deactivate 
  
 
 Development
@@ -91,6 +95,10 @@ Install the requirements::
 
 Please follow this python style guide: https://google.github.io/styleguide/pyguide.html.
 80-90 columns is fine.
+
+To exit your conda virtual environment::
+
+   source deactivate
 
 
 Comments
