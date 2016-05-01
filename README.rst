@@ -65,7 +65,7 @@ Activate the environment::
 
 Install mltools::
 
-   pip install mltools --ignore-installed
+   pip install git+https://github.com/kostasthebarbarian/mltools@dev
 
 You can now copy the scripts found in /examples in your project directory or create your own. 
 Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
