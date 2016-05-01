@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.3',
-      description='Classification performed over multiple images.',
+      version='1.0.4',
+      description='Pip+Conda based installation',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
