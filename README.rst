@@ -21,8 +21,7 @@ There are four modules:
 
 A ML algorithm (MLA) is a class with train and classify/detect functions. 
 Presently, the repo contains the PolygonClassifier MLA which can classify a set of polygon 
-geometries in a geojson. Each geometry should be associated with an image; images can be ordered, processed and downloaded
-with gbdxtools (github.com/digitalglobe/gbdxtools)
+geometries in a geojson. 
 
 An MLA is typically employed in a script which:
 
@@ -69,7 +68,7 @@ Install mltools::
 
 You can now copy the scripts found in /examples in your project directory or create your own. 
 Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
-property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/kostasthebarbarian/gbdxtools).
+property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/digitalglobe/gbdxtools).
 
 To exit your conda virtual environment::
 
