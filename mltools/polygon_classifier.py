@@ -90,7 +90,6 @@ class PolygonClassifier():
         '''
 
         class_names = self.classifier.classes_
-        print 'Classifier trained on ' + ', '.join(map(str, class_names))
         test_labels, predicted_labels, scores, counter = [], [], [], 0 
         
         # for each polygon, compute feature vector and classify
@@ -120,7 +119,6 @@ class PolygonClassifier():
             
         if return_confusion_matrix:
             C = confusion_matrix(test_labels, predicted_labels)
-            print 'Classes: ' + ', '.join(np.unique(list(test_labels) + list(predicted_labels)))
             return predicted_labels, scores, C
         else:
             return predicted_labels, scores
