@@ -84,7 +84,7 @@ Activate the conda environment::
 
 Clone the repo::
 
-   git clone git@github.com:kostasthebarbarian/mltools.git
+   git clone https://github.com/kostasthebarbarian/mltools
    
    cd mltools
    
