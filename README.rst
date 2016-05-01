@@ -66,6 +66,10 @@ Install mltools::
 
    pip install mltools
 
+If you had a previous version of mltools installed, then (try)::
+
+   pip install mltools --upgrade --ignore-install   
+
 You can now copy the scripts found in /examples in your project directory or create your own. 
 Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
 property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/digitalglobe/gbdxtools).
