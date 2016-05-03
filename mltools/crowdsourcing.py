@@ -58,12 +58,81 @@ class TomnodCommunicator():
         return       
 
 
+    def get_high_confidence_points(self,
+                                   campaign_schema, 
+                                   class_name,
+                                   image_id = '',
+                                   max_number = 10000, 
+                                   min_score = 0.9, 
+                                   min_agreement = 0):
+        '''Read high-confidence points from a Tomnod tagging campaign for 
+           given a given class. Points are read in decreasing score 
+           order for the last crowdrank job for that campaign. 
+           The purpose of this function is to create training/test 
+           data for a machine.
+           
+           Args:
+               campaign_schema (str): Campaign campaign_schema.
+               class_name (str): Point class (type in Tomnod jargon) name.
+               image_id (str): Image id. If '' (default) read from all campaign images.
+               max_number (int): Maximum number of points to be read (def: 10000).
+               min_score (float): Only points with score>=min_score (def: 0.95).
+               min_agreement (int): Only points with cluster size >= min_agreement (def: 0).
+
+           Returns:
+               A list of tuples (coords_in_hex, feature_id, image_id, class_name).    
+        '''
+    
+        if image_id is not '':
+            query = '''SELECT co.point, co.tag_id, overlay.catalogid, tag_type.name
+                       FROM {}.crowdrank_output co, tag_type, overlay
+                       WHERE co.type_id = tag_type.id
+                       AND co.overlay_id = overlay.id     
+                       AND overlay.catalogid = '{}'
+                       AND tag_type.name = '{}'
+                       AND co.cr_score >= {}
+                       AND co.agreement >= {}
+                       AND co.job_id = (SELECT MAX(id) 
+                                        FROM crowdrank_jobs cj, campaign cn 
+                                        WHERE cj.campaign_id = cn.id
+                                        AND cn.schema = {})
+                       ORDER BY co.cr_score DESC LIMIT {}'''.format(campaign_schema, 
+                                                                    image_id, 
+                                                                    class_name, 
+                                                                    min_score,
+                                                                    min_agreement,
+                                                                    campaign_schema,
+                                                                    max_number)
+        else:
+            query = '''SELECT co.point, co.tag_id, overlay.catalogid, tag_type.name
+                       FROM {}.crowdrank_output co, tag_type, overlay
+                       WHERE co.type_id = tag_type.id
+                       AND co.overlay_id = overlay.id     
+                       AND tag_type.name = '{}'
+                       AND co.cr_score >= {}
+                       AND co.agreement >= {}
+                       AND co.job_id = (SELECT MAX(id) 
+                                        FROM crowdrank_jobs cj, campaign cn 
+                                        WHERE cj.campaign_id = cn.id
+                                        AND cn.schema = {})
+                       ORDER BY co.cr_score DESC LIMIT {}'''.format(campaign_schema, 
+                                                                    class_name, 
+                                                                    min_score,
+                                                                    min_agreement,
+                                                                    campaign_schema,
+                                                                    max_number)
+                   
+        return self._fetch(query)
+   
+
+
+
     def get_high_confidence_features(self,
                                      campaign_schema, 
                                      class_name,
                                      image_id = '',
                                      max_number = 10000, 
-                                     min_score = 0.95, 
+                                     min_score = 0.9, 
                                      min_votes = 0,
                                      max_area = 1e06):
         '''Read high-confidence data from a Tomnod classification campaign for 
