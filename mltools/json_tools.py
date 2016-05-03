@@ -84,8 +84,7 @@ def write_to_geojson(data, property_names, output_file):
 
        Args:
            data: List of tuples.
-           property_names: List of strings. Should be same length as each 
-                           tuple in data.
+           property_names: List of strings. Should be same length as each tuple in data.
            output_file (str): File to write to (should be .geojson).
                            
     '''        
@@ -93,12 +92,16 @@ def write_to_geojson(data, property_names, output_file):
     geojson_features = [] 
     for entry in data:
         coords_in_hex, properties = entry[0], entry[1:]
-        polygon = loads(coords_in_hex, hex=True)
-        coords = [list(polygon.exterior.coords)]   # the brackets are dictated
-                                                   # by geojson format!!! 
+        geometry = loads(coords_in_hex, hex=True)
         property_dict = dict(zip(property_names, properties))
-        geojson_feature = geojson.Feature(geometry=geojson.Polygon(coords), 
-                                          properties=property_dict)
+        if geometry == 'Polygon':
+            coords = [list(geometry.exterior.coords)]   # brackets required
+            geojson_feature = geojson.Feature(geometry=geojson.Polygon(coords), 
+                                              properties=property_dict)
+        elif geometry == 'Point':    
+            coords = list(geometry.coords)[0]
+            geojson_feature = geojson.Feature(geometry=geojson.Point(coords), 
+                                              properties=property_dict)
         geojson_features.append(geojson_feature)
 
     feature_collection = geojson.FeatureCollection(geojson_features)    
