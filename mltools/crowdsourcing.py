@@ -95,7 +95,7 @@ class TomnodCommunicator():
                        AND co.job_id = (SELECT MAX(cj.id) 
                                         FROM crowdrank_jobs cj, campaign cn 
                                         WHERE cj.campaign_id = cn.id
-                                        AND cn.schema = {})
+                                        AND cn.schema = '{}')
                        ORDER BY co.cr_score DESC LIMIT {}'''.format(campaign_schema, 
                                                                     image_id, 
                                                                     class_name, 
@@ -111,10 +111,10 @@ class TomnodCommunicator():
                        AND tag_type.name = '{}'
                        AND co.cr_score >= {}
                        AND co.agreement >= {}
-                       AND co.job_id = (SELECT MAX(id) 
+                       AND co.job_id = (SELECT MAX(cj.id) 
                                         FROM crowdrank_jobs cj, campaign cn 
                                         WHERE cj.campaign_id = cn.id
-                                        AND cn.schema = {})
+                                        AND cn.schema = '{}')
                        ORDER BY co.cr_score DESC LIMIT {}'''.format(campaign_schema, 
                                                                     class_name, 
                                                                     min_score,

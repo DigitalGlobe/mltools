@@ -3,4 +3,5 @@ mltools.egg-info/
 dist/
 *.tif
 *.tiff
+*.json
 /venv
