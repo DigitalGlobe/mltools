@@ -94,11 +94,11 @@ def write_to_geojson(data, property_names, output_file):
         coords_in_hex, properties = entry[0], entry[1:]
         geometry = loads(coords_in_hex, hex=True)
         property_dict = dict(zip(property_names, properties))
-        if geometry == 'Polygon':
+        if geometry.geom_type == 'Polygon':
             coords = [list(geometry.exterior.coords)]   # brackets required
             geojson_feature = geojson.Feature(geometry=geojson.Polygon(coords), 
                                               properties=property_dict)
-        elif geometry == 'Point':    
+        elif geometry.geom_type == 'Point':    
             coords = list(geometry.coords)[0]
             geojson_feature = geojson.Feature(geometry=geojson.Point(coords), 
                                               properties=property_dict)
