@@ -92,7 +92,7 @@ class TomnodCommunicator():
                        AND tag_type.name = '{}'
                        AND co.cr_score >= {}
                        AND co.agreement >= {}
-                       AND co.job_id = (SELECT MAX(id) 
+                       AND co.job_id = (SELECT MAX(cj.id) 
                                         FROM crowdrank_jobs cj, campaign cn 
                                         WHERE cj.campaign_id = cn.id
                                         AND cn.schema = {})
