@@ -25,5 +25,6 @@ setup(name='mltools',
       install_requires=['geojson >= 1.3.2',
                         'psycopg2 >= 2.6.1',
                         'scikit-learn >= 0.17.1',
-                        'Shapely >= 1.5.15']
+                        'Shapely >= 1.5.15',
+                        'geoio >= 1.1.1']
       )

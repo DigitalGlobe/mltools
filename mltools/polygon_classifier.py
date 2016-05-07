@@ -56,11 +56,11 @@ class PolygonClassifier():
        
         # compute feature vector for each polygon
         features, labels = [], []
-        for data, label in extract_data(polygon_file = train_file):        
-            # if no data was extracted, skip
-            if len(data) == 0: continue    
-            feature_vector = self.feature_extractor(data)
-            # if there is something weird going on, skip
+        for pixels, label in extract_data(polygon_file = train_file):        
+            # if there is no data or label, skip since training is impossible
+            if pixels is None or label is None: continue    
+            feature_vector = self.feature_extractor(pixels)
+            # if for any reason the norm of the feature vector is not defined, skip
             if math.isnan(np.linalg.norm(feature_vector)): continue        
             
             features.append(feature_vector)
@@ -76,50 +76,70 @@ class PolygonClassifier():
                 pickle.dump(classifier, f)
               
 
-    def classify(self, target_file, return_confusion_matrix = False):
-        '''Deploy classifier on target_file and output estimated labels
-           and corresponding confidence scores. 
+    def test(self, test_file):
+        '''Deploy classifier on a test file and output confusion matrix. 
            Args:
-               target_file (str): Target filename (geojson).
-               return_confusion_matrix (bool): If true, a confusion matrix is returned.
-                                           This makes sense only when target_file includes 
-                                           known labels and can be used to estimate the 
-                                           classifier accuracy.            
+               test_file (str): Test filename (geojson).
            Returns:
-               Label list, numpy score vector and numpy confusion matrix (optional).   
+               List of test labels, list of predicted labels and numpy
+               confusion matrix.   
         '''
 
         class_names = self.classifier.classes_
-        test_labels, predicted_labels, scores, counter = [], [], [], 0 
+        test_labels, predicted_labels = [], []
+
+        # for each polygon, compute feature vector and classify
+        for pixels, test_label in extract_data(polygon_file = test_file):
+            if pixels is None or test_label not in class_names:
+                continue       
+            else:
+                feature_vector = self.feature_extractor(pixels)
+                # classifier prediction looks like array([]), 
+                # so we need the first entry: hence the [0] 
+                try:
+                    prob_distr = self.classifier.predict_proba(feature_vector)[0] 
+                    ind = np.argmax(prob_distr)    
+                    predicted_label, score = class_names[ind], prob_distr[ind]                
+                except ValueError:
+                    continue
+            test_labels.append(test_label)
+            predicted_labels.append(predicted_label)
+        
+        C = confusion_matrix(test_labels, predicted_labels)
+        return test_labels, predicted_labels, C
+
+
+    def deploy(self, target_file):
+        '''Deploy classifier on target_file with unknown labels. 
+           Args:
+               target_file (str): Target filename (geojson).
+           Returns:
+               List of predicted labels and list of scores.   
+        '''
+
+        class_names = self.classifier.classes_
+        predicted_labels, scores = [], [] 
         
         # for each polygon, compute feature vector and classify
-        for data, test_label in extract_data(polygon_file = target_file):       
-            # if no data was extracted
-            if len(data) == 0:
-                predicted_label, score = '', 0.0
+        # note that label is empty in this case
+        for pixels, label in extract_data(polygon_file=target_file):       
+            
+            if data is None:
+                predicted_label, score = None, None
             else:
                 feature_vector = self.feature_extractor(data)
                 # classifier prediction looks like array([]), 
                 # so we need the first entry: hence the [0] 
                 try:
-                    probability_distr = self.classifier.predict_proba(feature_vector)[0] 
-                    ind = np.argmax(probability_distr)    
-                    predicted_label, score = class_names[ind], probability_distr[ind]                
+                    prob_distr = self.classifier.predict_proba(feature_vector)[0] 
+                    ind = np.argmax(prob_distr)    
+                    predicted_label, score = class_names[ind], prob_distr[ind]                
                 except ValueError:
                     # if classification went wrong
-                    predicted_label, score = '', 0.0		
+                    predicted_label, score = None, None		
         
-            test_labels.append(test_label)
             predicted_labels.append(predicted_label)
             scores.append(score)
-            counter += 1
-            if counter % 1000 == 0: print counter, 'classified'
-
-        predicted_labels, scores = np.array(predicted_labels), np.array(scores)
             
-        if return_confusion_matrix:
-            C = confusion_matrix(test_labels, predicted_labels)
-            return predicted_labels, scores, C
-        else:
-            return predicted_labels, scores
+        return predicted_labels, scores
         

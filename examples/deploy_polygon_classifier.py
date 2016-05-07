@@ -1,6 +1,6 @@
-# Test PolygonClassifier on a set of classified polygons.
-# The script pulls a set of classified polygons from Tomnod, splits it
-# in train and test set and evaluates the confusion matrix. 
+# Deploy PolygonClassifier on a set of unclassified polygons.
+# The script pulls a set of classified polygons from Tomnod for training
+# and a set of unclassified polygons for classification. 
 # This script was used in the adelaide_pools_2016 campaign. 
 
 import json
@@ -9,7 +9,7 @@ import os
 import sys
 
 from mltools import features
-from mltools import json_tools as jt
+from mltools import geojson_tools as gt
 from mltools.polygon_classifier import PolygonClassifier
 from mltools.crowdsourcing import TomnodCommunicator
 
@@ -20,10 +20,11 @@ warnings.filterwarnings("ignore")
 # get job parameters
 with open('job.json', 'r') as f:
     job = json.load(f)
-    
+
 schema = job['schema']
 catalog_id = job['catalog_id']
 classes = job['classes']
+target_params = job['target_params']
 algorithm_params = job['algorithm_params']
 
 # get tomnod credentials
@@ -33,39 +34,37 @@ with open('credentials.json', 'r') as f:
 # initialize Tomnod communicator class
 tc = TomnodCommunicator(credentials)
 
-# fetch high confidence features and separate in train/test for each class
-train_filenames, test_filenames = [], []
+# fetch high confidence features for training
+train_filenames = []
 for i, class_entry in enumerate(classes):
     class_name = class_entry['name']
     no_train_samples = class_entry['no_train_samples']
-    no_test_samples = class_entry['no_test_samples']
-    print 'Collect {} {} samples from schema {} and image {}'.format(no_train_samples + no_test_samples, 
-                                                                     class_name, 
-                                                                     schema, 
-                                                                     catalog_id) 
-
-    gt_filename = '_'.join([class_name, catalog_id, 'gt.geojson'])
+    print 'Collect {} {} samples from schema {} and image {}'.format(no_train_samples,
+                                                                     class_name,
+                                                                     schema,
+                                                                     catalog_id)
+    train_filenames.append('_'.join([class_name, catalog_id, 'train.geojson']))
     data = tc.get_high_confidence_features(campaign_schema = schema, 
                                            image_id = catalog_id, 
                                            class_name = class_name,
-                                           max_number = no_train_samples + no_test_samples)
-    jt.write_to_geojson(data = data,
-                        property_names = ['feature_id', 'image_id', 'class_name'],
-                        output_file = gt_filename)
-
-    train_filenames.append('_'.join([class_name, catalog_id, 'train.geojson']))
-    test_filenames.append('_'.join([class_name, catalog_id, 'test.geojson']))
-    jt.split_geojson(gt_filename, 
-                     train_filenames[i], 
-                     test_filenames[i], 
-                     no_in_first_file = no_train_samples)
+                                           max_number = no_train_samples)
+    gt.write_to(data = data, 
+                property_names = ['feature_id', 'image_id', 'class_name'],
+                output_file = train_filenames[i])
     
-
-# assemble train and test files by joining constituent train and test files
+# assemble final train file by joining constituent train files
 train_filename = '_'.join([catalog_id, 'train.geojson'])
-test_filename = '_'.join([catalog_id, 'test.geojson'])
-jt.join_geojsons(train_filenames, train_filename)
-jt.join_geojsons(test_filenames, test_filename)
+gt.join(train_filenames, train_filename)
+
+# fetch unclassified features for classification
+target_filename = '_'.join([catalog_id, 'target.geojson'])
+no_polys_to_classify = target_params['no_polys_to_classify']
+data = tc.get_low_confidence_features(campaign_schema = schema, 
+                                      image_id = catalog_id, 
+                                      max_number = no_polys_to_classify)
+gt.write_to(data = data,
+            property_names = ['feature_id', 'image_id'],
+            output_file = target_filename)
 
 # instantiate polygon classifier
 c = PolygonClassifier(algorithm_params)
@@ -95,10 +94,12 @@ c.feature_extractor = feature_extractor
 print 'Train classifier'
 c.train(train_filename)
 
-print 'Test classifier'
-labels, scores, C = c.classify(test_filename, return_confusion_matrix=True)
+print 'Classify unknown polygons'
+labels, scores = c.deploy(target_filename)
 
-print 'Confusion matrix:'
-print C
-print 'Normalized confusion matrix:'
-print C.astype(float)/C.sum(1)[:, None]
+# write results to geojson
+out_filename = '_'.join([catalog_id, 'classified.geojson'])
+gt.write_properties_to(data = zip(labels, scores), 
+                       property_names = ['class_name', 'score'], 
+                       input_file = target_filename,
+                       output_file = out_filename)

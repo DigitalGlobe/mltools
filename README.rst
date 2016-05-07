@@ -14,24 +14,28 @@ using training data from DG Crowdsourcing (aka Tomnod).
 
 There are four modules:
 
-- data_extractors: functions to get pixels from georeferenced imagery;
+- data_extractors: functions to get pixels from georeferenced imagery; uses geoio (https://github.com/digitalglobe/geoio);
 - features: functions to derive features from pixels; 
 - crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
-- json_tools: functions to manipulate json and geojson files.
+- geojson_tools: functions to manipulate geojson files.
 
 A ML algorithm (MLA) is a class with train and classify/detect functions. 
 Presently, the repo contains the PolygonClassifier MLA which can classify a set of polygon 
-geometries in a geojson. 
+geometries in a geojson. The desired geojson format is found in /examples. 
 
 An MLA is typically employed in a script which:
 
-- retrieves training data from the Tomnod database;
-- trains the MLA;
-- tests the MLA and computes accuracy metrics;
-- deploys the MLA for detection or classification;
-- writes the MLA results back to the Tomnod database.
+1. retrieves training, test and target data from the Tomnod database;
+2. trains the MLA;
+3. tests the MLA on the test data and computes accuracy metrics;
+4. deploys the MLA on the target data for detection or classification;
+5. writes the MLA results back to the Tomnod database.
 
-Example scripts can be found under /examples.
+Step 1 can be omitted if data is available from another source than Tomnod. 
+Keep in mind though that the data must respect the geojson format found in /examples.
+Step 5 can also be omitted if we don't want to write the results back to Tomnod.
+
+Example scripts can be found under /examples. 
 
 
 Installation/Usage

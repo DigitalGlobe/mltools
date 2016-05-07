@@ -1,12 +1,16 @@
 # Contains functions for extracting pixels and metadata from georeferenced imagery.
 
-from osgeo import gdal, ogr, osr
+import geoio
+import geojson
 import numpy as np
+
+from osgeo import gdal, ogr, osr
 
 gdal.UseExceptions()     # enable exceptions for gdal python bindings
 
-def extract_data(polygon_file, geom_sr = None):
-    """Extracts pixels for each polygon in polygon_file.
+
+def extract_data(polygon_file):
+    """Extracts pixel intensities and class name for each polygon in polygon_file.
        The image reference for each polygon is found in the image_id
        property of the polygon_file.
 
@@ -17,7 +21,38 @@ def extract_data(polygon_file, geom_sr = None):
                                  If None, defaults to the polygon_file srs. 
        
        Yields:
-           Pixels as masked numpy array and class name. If the
+           Pixel intensities as masked numpy array and class name. 
+           If the pixels can not be extracted, then the function yields None.
+           If the class name does not exist, then the function yields None.
+    """
+
+    # go through polygon_file and unique image_id's
+    image_ids = geojson.find_unique_values(polygon_file, property_name='image_id')
+    print image_ids
+
+    for image_id in image_ids:
+
+        img = geoio.GeoImage(image_id + '.tif')
+
+        for polygon_raster, class_name in img.iter_vector(vector=polygon_file, 
+                                                          properties='class_name', 
+                                                          filter=[{'image_id':image_id}]):
+            yield polygon_raster, class_name                                                  
+
+
+def extract_data_custom(polygon_file, geom_sr = None):
+    """Extracts pixel intensities and class name for each polygon in polygon_file.
+       The image reference for each polygon is found in the image_id
+       property of the polygon_file.
+
+       Args:
+           polygon_file (str): Filename. Collection of geometries in 
+                               geojson or shp format.
+           geom_sr (osr object): Geometry spatial reference system (srs). 
+                                 If None, defaults to the polygon_file srs. 
+       
+       Yields:
+           Pixel intensities as masked numpy array and class name. If the
            pixels can not be extracted, then the function yields an empty array.
            If the class name does not exist, then the function yields an empty string.
  
@@ -38,9 +73,8 @@ def extract_data(polygon_file, geom_sr = None):
 
         # find raster identity
         raster_file = feat.GetFieldAsString('image_id')
-        # check if raster_file has .tif extension; if not, append
-        if raster_file[-4:] != '.tif':
-            raster_file += '.tif'
+        # add .tif extension
+        raster_file += '.tif'
 
         # Get raster info
         try:
@@ -147,9 +181,9 @@ def extract_data(polygon_file, geom_sr = None):
             try:
                 label = feat.GetField('class_name')
             except ValueError:
-                label = ''
+                label = None
 
         if error:
-            zone_raster, label = [], ''        
+            zone_raster, label = None, None        
 
         yield zone_raster, label

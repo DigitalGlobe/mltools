@@ -1,11 +1,12 @@
 # Contains functions for manipulating jsons and geojsons.
 
 import geojson
+import numpy as np
 
 from shapely.wkb import loads
 
 
-def join_geojsons(filenames, output_file):
+def join(filenames, output_file):
     """Join geojsons into one. The spatial reference system of the 
        output file is the same as the one of the last file in the list.
 
@@ -28,7 +29,7 @@ def join_geojsons(filenames, output_file):
         geojson.dump(feat_collection, f) 
 
     
-def split_geojson(input_file, file_1, file_2, no_in_first_file):
+def split(input_file, file_1, file_2, no_in_first_file):
     """Split a geojson in two separate files.
        
        Args:
@@ -54,7 +55,7 @@ def split_geojson(input_file, file_1, file_2, no_in_first_file):
         geojson.dump(feat_collection_2, f)  
 
 
-def get_from_geojson(filename, property_names):
+def get_from(filename, property_names):
     """Reads a geojson and returns a list of value tuples, each value
        corresponding to a property in property_names.
 
@@ -77,7 +78,7 @@ def get_from_geojson(filename, property_names):
     return values    
 
 
-def write_to_geojson(data, property_names, output_file):
+def write_to(data, property_names, output_file):
     '''Write list of tuples to geojson. 
        First entry of each tuple should be geometry in hex coordinates 
        and the rest properties.
@@ -110,7 +111,7 @@ def write_to_geojson(data, property_names, output_file):
         geojson.dump(feature_collection, f)
 
 
-def write_properties_to_geojson(data, property_names, input_file, output_file):
+def write_properties_to(data, property_names, input_file, output_file):
     """Writes property data to polygon_file to create output_file.
        The length of data must be equal to the number of features in 
        input_file. If some of the features in polygon_file already have 
@@ -137,4 +138,28 @@ def write_properties_to_geojson(data, property_names, input_file, output_file):
 
     with open(output_file, 'w') as f:
         geojson.dump(feature_collection, f)     
+
+
+def find_unique_values(filename, property_name):
+    """Find unique values of a given property in a geojson file.
+
+       Args:
+           filename (str): File name (has to be geojson)
+           property_name (str): Property name
+
+       Returns:
+           List of distinct values of property. 
+           If property does not exist, it returns None.      
+    """
+
+    with open(filename) as f:
+        feature_collection = geojson.load(f)
+
+    features = feature_collection['features']
+    values = np.array([ feat['properties'].get(property_name) for feat in features])
+    
+    return np.unique(values)
+
+    
+
   
