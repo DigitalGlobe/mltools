@@ -1,189 +1,52 @@
-# Contains functions for extracting pixels and metadata from georeferenced imagery.
+# Extract pixels and metadata from georeferenced imagery.
 
 import geoio
-import geojson
-import numpy as np
+import geojson_tools as gt
 
-from osgeo import gdal, ogr, osr
-
-gdal.UseExceptions()     # enable exceptions for gdal python bindings
-
-
-def extract_data(polygon_file):
+def extract(polygon_file, return_class=False):
     """Extracts pixel intensities and class name for each polygon in polygon_file.
        The image reference for each polygon is found in the image_id
        property of the polygon_file.
 
        Args:
            polygon_file (str): Filename. Collection of geometries in 
-                               geojson or shp format.
-           geom_sr (osr object): Geometry spatial reference system (srs). 
-                                 If None, defaults to the polygon_file srs. 
+                               mltools accepted geojson format.
+           return_class (bool): If True, then the iterator yields pixel
+                                intensities and class name. If False, 
+                                the iterator just yields pixel intensities.   
        
        Yields:
-           Pixel intensities as masked numpy array and class name. 
-           If the pixels can not be extracted, then the function yields None.
-           If the class name does not exist, then the function yields None.
+           Pixel intensities as masked numpy array and class name, 
+           if return_class is True. 
+           The iterator skips the entries of polygon_file where the pixels 
+           can not be extracted. 
+           If return_class=True, the iterator skips the entries of polygon_file
+           where the class_name does not exist.
     """
 
     # go through polygon_file and unique image_id's
-    image_ids = geojson.find_unique_values(polygon_file, property_name='image_id')
-    print image_ids
+    image_ids = gt.find_unique_values(polygon_file, property_name='image_id')
 
     for image_id in image_ids:
 
+        # add tif extension
         img = geoio.GeoImage(image_id + '.tif')
 
-        for polygon_raster, class_name in img.iter_vector(vector=polygon_file, 
-                                                          properties='class_name', 
-                                                          filter=[{'image_id':image_id}]):
-            yield polygon_raster, class_name                                                  
+        if return_class:
+             
+            for this_raster, this_class in img.iter_vector(vector=polygon_file, 
+                                                           properties='class_name', 
+                                                           filter=[{'image_id':image_id}]):   
+                if this_raster is None or this_class is None:
+                    continue
+                if this_class is not None:    # iter_vector returns {'class_name':'blah'}
+                    this_class = this_class['class_name']
+                yield this_raster, this_class
+             
+        else:
 
-
-def extract_data_custom(polygon_file, geom_sr = None):
-    """Extracts pixel intensities and class name for each polygon in polygon_file.
-       The image reference for each polygon is found in the image_id
-       property of the polygon_file.
-
-       Args:
-           polygon_file (str): Filename. Collection of geometries in 
-                               geojson or shp format.
-           geom_sr (osr object): Geometry spatial reference system (srs). 
-                                 If None, defaults to the polygon_file srs. 
-       
-       Yields:
-           Pixel intensities as masked numpy array and class name. If the
-           pixels can not be extracted, then the function yields an empty array.
-           If the class name does not exist, then the function yields an empty string.
- 
-    """
-
-    # Get polygon data    
-    shp = ogr.Open(polygon_file)
-    lyr = shp.GetLayer()
-    no_features = lyr.GetFeatureCount() 
-
-    for fid in xrange(no_features):
-
-        # initialize error 
-        # if there is an error, then error is set to True
-        error = False
-
-        feat = lyr.GetFeature(fid)
-
-        # find raster identity
-        raster_file = feat.GetFieldAsString('image_id')
-        # add .tif extension
-        raster_file += '.tif'
-
-        # Get raster info
-        try:
-            raster = gdal.Open(raster_file)    
-        except RuntimeError:
-            error = True
-            
-        if not error:
-                         
-            nbands = raster.RasterCount
-            proj = raster.GetProjectionRef()
-            transform = raster.GetGeoTransform()
-            xOrigin = transform[0]
-            yOrigin = transform[3]
-            pixelWidth = transform[1]
-            pixelHeight = transform[5]
-                
-            # Determine coordinate transformation from feature srs to raster srs
-            feature_sr = lyr.GetSpatialRef()
-            raster_sr = osr.SpatialReference()
-            raster_sr.ImportFromWkt(proj)
-            coord_trans = osr.CoordinateTransformation(feature_sr, raster_sr)
-
-            # Determine coordinate transformation from raster srs to geometry srs
-            # (this is why: the geometry is derived in the raster srs)
-            if geom_sr is None:
-                coord_trans_2 = osr.CoordinateTransformation(raster_sr, feature_sr)
-            else:
-                coord_trans_2 = osr.CoordinateTransformation(raster_sr, geom_sr)
-
-            # Reproject vector geometry to same projection as raster
-            geom = feat.GetGeometryRef()
-            geom.Transform(coord_trans)
-     
-            # Get extent of feat
-            geom = feat.GetGeometryRef()
-            if (geom.GetGeometryName() == 'MULTIPOLYGON'):
-                count = 0
-                pointsX = []; pointsY = []
-                for polygon in geom:
-                    geomInner = geom.GetGeometryRef(count)
-                    ring = geomInner.GetGeometryRef(0)
-                    numpoints = ring.GetPointCount()
-                    for p in range(numpoints):
-                        lon, lat, z = ring.GetPoint(p)
-                        pointsX.append(lon)
-                        pointsY.append(lat)
-                    count += 1
-            elif (geom.GetGeometryName() == 'POLYGON'):
-                ring = geom.GetGeometryRef(0)
-                numpoints = ring.GetPointCount()
-                pointsX = []; pointsY = []
-                for p in range(numpoints):
-                    lon, lat, z = ring.GetPoint(p)
-                    pointsX.append(lon)
-                    pointsY.append(lat)
-
-            # get polygon coordinates
-            poly = ogr.Geometry(ogr.wkbPolygon)
-            poly.AddGeometry(ring)
-            poly.Transform(coord_trans_2)
-            
-            xmin = min(pointsX)
-            xmax = max(pointsX)
-            ymin = min(pointsY)
-            ymax = max(pointsY)
-        
-            # Specify offset and rows and columns to read
-            xoff = int((xmin - xOrigin)/pixelWidth)
-            yoff = int((yOrigin - ymax)/pixelWidth)
-            xcount = int((xmax - xmin)/pixelWidth)+1
-            ycount = int((ymax - ymin)/pixelWidth)+1
-        
-            # Create memory target raster
-            target_ds = gdal.GetDriverByName('MEM').Create('', 
-                        xcount, ycount, 1, gdal.GDT_Byte)
-            target_ds.SetGeoTransform((
-                xmin, pixelWidth, 0,
-                ymax, 0, pixelHeight,
-            ))
-               
-            # Create target raster projection 
-            target_ds.SetProjection(raster_sr.ExportToWkt())
-
-            # Rasterize zone polygon to raster
-            gdal.RasterizeLayer(target_ds, [1], lyr, burn_values=[1])    
-        
-            # Read raster as arrays    
-            try:
-                dataraster = raster.ReadAsArray(xoff, yoff, xcount, ycount)
-                dataraster = dataraster.astype(np.float)
-        
-                data_mask = target_ds.ReadAsArray(0, 0, xcount, ycount).astype(np.float)
-        
-                # replicate mask for each band
-                data_mask = np.dstack([data_mask for i in range(nbands)])
-                data_mask = data_mask.transpose(2,0,1)
-            
-                # Mask zone of raster
-                zone_raster = np.ma.masked_array(dataraster, np.logical_not(data_mask))
-            except ValueError:
-                error = True
-
-            try:
-                label = feat.GetField('class_name')
-            except ValueError:
-                label = None
-
-        if error:
-            zone_raster, label = None, None        
-
-        yield zone_raster, label
+            for this_raster in img.iter_vector(vector=polygon_file,
+                                               filter=[{'image_id':image_id}]):
+                if this_raster is None:
+                    continue
+                yield this_raster                                                    

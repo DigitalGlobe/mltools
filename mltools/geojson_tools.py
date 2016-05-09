@@ -6,18 +6,18 @@ import numpy as np
 from shapely.wkb import loads
 
 
-def join(filenames, output_file):
+def join(input_files, output_file):
     """Join geojsons into one. The spatial reference system of the 
        output file is the same as the one of the last file in the list.
 
        Args:
-           filenames: List of filenames (have to be geojson).
-           output_file (str): Output filename (has to be geojson).
+           input_files (list): List of file name strings.
+           output_file (str): Output file name.
     """
 
     # get feature collections
     final_features  = []
-    for file in filenames:
+    for file in input_files:
         with open(file) as f:
            feat_collection = geojson.load(f)
            final_features += feat_collection['features']
@@ -33,11 +33,11 @@ def split(input_file, file_1, file_2, no_in_first_file):
     """Split a geojson in two separate files.
        
        Args:
-           input_file (str): Input filename (ext. geojson).
-           file_1 (str): Output filename 1 (ext. geojson).
-           file_2 (str): Output filename 2 (ext. geojson).
+           input_file (str): Input filename.
+           file_1 (str): Output file name 1.
+           file_2 (str): Output file name 2.
            no_features (int): Number of features in input_file to go to file_1.
-           output_file (str): Output filename (ext. geojson).
+           output_file (str): Output file name.
     """
 
     # get feature collection
@@ -55,20 +55,20 @@ def split(input_file, file_1, file_2, no_in_first_file):
         geojson.dump(feat_collection_2, f)  
 
 
-def get_from(filename, property_names):
+def get_from(input_file, property_names):
     """Reads a geojson and returns a list of value tuples, each value
        corresponding to a property in property_names.
 
        Args:
-           filename (str): File name (has to be geojson).
-           property_names: List of strings. Each string is a property name.
+           input_file (str): File name.
+           property_names: List of strings; each string is a property name.
 
        Returns:
            List of value tuples.     
     """
 
     # get feature collections
-    with open(filename) as f:
+    with open(input_file) as f:
         feature_collection = geojson.load(f)
 
     features = feature_collection['features']
@@ -86,7 +86,7 @@ def write_to(data, property_names, output_file):
        Args:
            data: List of tuples.
            property_names: List of strings. Should be same length as each tuple in data.
-           output_file (str): File to write to (should be .geojson).
+           output_file (str): Output file name.
                            
     '''        
 
@@ -121,8 +121,8 @@ def write_properties_to(data, property_names, input_file, output_file):
            data (list): List of tuples. Each entry is a tuple of dimension equal  
                         to property_names. 
            property_names (list): Property names.
-           input_file (str): Input filename (has to be .geojson)
-           output_file (str): Output filename (has to be .geojson)
+           input_file (str): Input file name.
+           output_file (str): Output file name.
     """
 
     with open(input_file) as f:
@@ -140,19 +140,19 @@ def write_properties_to(data, property_names, input_file, output_file):
         geojson.dump(feature_collection, f)     
 
 
-def find_unique_values(filename, property_name):
+def find_unique_values(input_file, property_name):
     """Find unique values of a given property in a geojson file.
 
        Args:
-           filename (str): File name (has to be geojson)
-           property_name (str): Property name
+           input_file (str): File name.
+           property_name (str): Property name.
 
        Returns:
            List of distinct values of property. 
            If property does not exist, it returns None.      
     """
 
-    with open(filename) as f:
+    with open(input_file) as f:
         feature_collection = geojson.load(f)
 
     features = feature_collection['features']
@@ -160,6 +160,4 @@ def find_unique_values(filename, property_name):
     
     return np.unique(values)
 
-    
-
-  
+   

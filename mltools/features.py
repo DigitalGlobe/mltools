@@ -1,5 +1,4 @@
-# Contains feature functions which can be used
-# to construct feature vectors.
+# Feature functions for feature vector construction.
 
 from __future__ import division
 import numpy as np
@@ -49,6 +48,25 @@ def band_ratios(data, band1, band2):
            band2 (int): band2 index (from 1 to n) 
       
     '''
+    data = np.array(data, dtype=float)
     return (data[band1-1,:,:] - data[band2-1,:,:])/(data[band1-1,:,:] + data[band2-1,:,:])
 
 
+def pool_basic(data):
+    '''Feature vector for swimming pool detection.
+       Args:
+           data (numpy array): Pixel data vector.          
+       Returns:
+           Feature numpy vector.
+    '''
+
+    # pool signatures from acomped imagery of adelaide, australia
+    pool_sig = np.array([1179, 2295, 2179, 759, 628, 186, 270, 110])
+    covered_pool_sig = np.array([1584, 1808, 1150, 1104, 1035, 995, 1659, 1741])
+
+    pool_data = spectral_angles(data, pool_sig)
+    covered_pool_data = spectral_angles(data, covered_pool_sig)
+    band26_ratio = band_ratios(data, 2, 6)
+    band36_ratio = band_ratios(data, 3, 6)
+
+    return [np.max(band26_ratio), np.max(band36_ratio), np.min(pool_data), np.min(covered_pool_data)]
