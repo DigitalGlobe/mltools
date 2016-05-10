@@ -1,6 +1,5 @@
 # Contains functions for reading from and writing to the Tomnod database.
 
-import os
 import psycopg2
 
 
@@ -12,9 +11,9 @@ class TomnodCommunicator():
 
 
     def __init__(self, credentials):
-        '''Args:
+        """Args:
                parameters (dict): Dictionary with Tomnod credentials.
-        '''                
+        """                
         self.host = credentials['host']
         self.db = credentials['db']
         self.user = credentials['user']
@@ -58,271 +57,169 @@ class TomnodCommunicator():
         return       
 
 
-    def get_high_confidence_points(self,
-                                   campaign_schema, 
-                                   class_name,
-                                   image_id = '',
-                                   max_number = 10000, 
-                                   min_score = 0.9, 
-                                   min_agreement = 0):
-        '''Read high-confidence points from a Tomnod tagging campaign for 
-           given a given class. Points are read in decreasing score 
-           order for the last crowdrank job for that campaign. 
-           The purpose of this function is to create training/test 
-           data for a machine.
-           
-           Args:
-               campaign_schema (str): Campaign campaign_schema.
-               class_name (str): Point class (type in Tomnod jargon) name.
-               image_id (str): Image id. If '' (default) read from all campaign images.
-               max_number (int): Maximum number of points to be read (def: 10000).
-               min_score (float): Only points with score>=min_score (def: 0.95).
-               min_agreement (int): Only points with cluster size >= min_agreement (def: 0).
+    def batch_execute(self, query, data, batch_size=1000):
+        """Execute query for each entry in data in batches.
 
-           Returns:
-               A list of tuples (coords_in_hex, feature_id, image_id, class_name).    
-        '''
-    
-        if image_id is not '':
-            query = '''SELECT co.point, co.tag_id, overlay.catalogid, tag_type.name
-                       FROM {}.crowdrank_output co, tag_type, overlay
-                       WHERE co.type_id = tag_type.id
-                       AND co.overlay_id = overlay.id     
-                       AND overlay.catalogid = '{}'
-                       AND tag_type.name = '{}'
-                       AND co.cr_score >= {}
-                       AND co.agreement >= {}
-                       AND co.job_id = (SELECT MAX(cj.id) 
-                                        FROM crowdrank_jobs cj, campaign cn 
-                                        WHERE cj.campaign_id = cn.id
-                                        AND cn.schema = '{}')
-                       ORDER BY co.cr_score DESC LIMIT {}'''.format(campaign_schema, 
-                                                                    image_id, 
-                                                                    class_name, 
-                                                                    min_score,
-                                                                    min_agreement,
-                                                                    campaign_schema,
-                                                                    max_number)
-        else:
-            query = '''SELECT co.point, co.tag_id, overlay.catalogid, tag_type.name
-                       FROM {}.crowdrank_output co, tag_type, overlay
-                       WHERE co.type_id = tag_type.id
-                       AND co.overlay_id = overlay.id     
-                       AND tag_type.name = '{}'
-                       AND co.cr_score >= {}
-                       AND co.agreement >= {}
-                       AND co.job_id = (SELECT MAX(cj.id) 
-                                        FROM crowdrank_jobs cj, campaign cn 
-                                        WHERE cj.campaign_id = cn.id
-                                        AND cn.schema = '{}')
-                       ORDER BY co.cr_score DESC LIMIT {}'''.format(campaign_schema, 
-                                                                    class_name, 
-                                                                    min_score,
-                                                                    min_agreement,
-                                                                    campaign_schema,
-                                                                    max_number)
-                   
-        return self._fetch(query)
-   
-
-
-
-    def get_high_confidence_features(self,
-                                     campaign_schema, 
-                                     class_name,
-                                     image_id = '',
-                                     max_number = 10000, 
-                                     min_score = 0.9, 
-                                     min_votes = 0,
-                                     max_area = 1e06):
-        '''Read high-confidence data from a Tomnod classification campaign for 
-           given a given class. Features are read in decreasing score 
-           order. The purpose of this function is to create training/test 
-           data for a machine.
-           
-           Args:
-               campaign_schema (str): Campaign campaign_schema.
-               image_id (str): Image id. If '' (default) read from all campaign images.
-               class_name (str): Feature class (type in Tomnod jargon) name.
-               max_number (int): Maximum number of features to be read (def: 10000).
-               min_score (float): Only features with score>=min_score (def: 0.95).
-               min_votes (int): Only features with votes>=min_votes (def: 0).
-               max_area (float): Only features with (area in m2) <= max_area (def 1e06).
-
-           Returns:
-               A list of tuples (coords_in_hex, feature_id, image_id, class_name).    
-        '''
-    
-        if image_id is not '':
-            query = '''SELECT f.feature, f.id, overlay.catalogid, tag_type.name
-                       FROM {}.feature f, tag_type, overlay
-                       WHERE f.type_id = tag_type.id
-                       AND f.overlay_id = overlay.id     
-                       AND overlay.catalogid = '{}'
-                       AND tag_type.name = '{}'
-                       AND f.score >= {}
-                       AND f.num_votes_total >= {}
-                       AND ST_Area(f.feature) <= {}
-                       ORDER BY f.score DESC LIMIT {}'''.format(campaign_schema, 
-                                                                image_id, 
-                                                                class_name, 
-                                                                min_score,
-                                                                min_votes,
-                                                                max_area,
-                                                                max_number)
-        else:
-            query = '''SELECT f.feature, f.id, overlay.catalogid, tag_type.name
-                       FROM {}.feature f, tag_type, overlay
-                       WHERE f.overlay_id = overlay.id 
-                       AND f.type_id = tag_type.id
-                       AND tag_type.name = '{}'
-                       AND f.score >= {}
-                       AND f.num_votes_total >= {}
-                       AND ST_Area(f.feature) <= {}
-                       ORDER BY f.score DESC LIMIT {}'''.format(campaign_schema,
-                                                                class_name,
-                                                                min_score,
-                                                                min_votes,
-                                                                max_area,
-                                                                max_number)
-        
-        return self._fetch(query)
-
-        
-    def get_low_confidence_features(self,
-                                    campaign_schema, 
-                                    image_id = '',
-                                    max_number = 10000,
-                                    max_score = 1.0,
-                                    max_votes = 100,
-                                    max_area = 1e06):
-
-        '''Read low-confidence data from a Tomnod classification campaign.
-           Features are read from the DB in increasing score order, 
-           nulls first. (A feature with null score has not had its score computed 
-           by crowdrank.) The purpose of this function is to create target data 
-           for a machine.
-       
-           Args:
-               campaign_schema (str): Campaign campaign_schema.
-               image_id (str): Image id. If '' (default) read from all campaign images.
-               max_number (int): Maximum number of features to be read.
-               max_score (float): Only features with score<=max_score (def: 1.0)
-               max_votes (int): Only features with votes<=max_votes (def: 100)
-               max_area (float): Only features with (area in m2) <= max_area (def: 1e06).
-
-           Returns:
-               A list of tuples (coords_in_hex, feature_id, image_id).    
-        '''
-
-        if image_id is not '':
-            query = '''SELECT f.feature, f.id, overlay.catalogid
-                       FROM {}.feature f, overlay
-                       WHERE f.overlay_id = overlay.id        
-                       AND overlay.catalogid = '{}'
-                       AND (f.score <= {} OR f.score IS NULL)
-                       AND f.num_votes_total <= {}
-                       AND ST_Area(f.feature) <= {}
-                       ORDER BY f.score ASC NULLS FIRST
-                       LIMIT {}'''.format(campaign_schema, 
-                                          image_id,  
-                                          max_score,
-                                          max_votes,
-                                          max_area, 
-                                          max_number)
-        else:
-            query = '''SELECT f.feature, f.id, overlay.catalogid
-                       FROM {}.feature f, overlay
-                       WHERE f.overlay_id = overlay.id
-                       AND (f.score <= {} OR f.score IS NULL)
-                       AND f.num_votes_total <= {}
-                       AND ST_Area(f.feature) <= {}
-                       ORDER BY f.score ASC NULLS FIRST
-                       LIMIT {}'''.format(campaign_schema, 
-                                          max_score,
-                                          max_votes,
-                                          max_area, 
-                                          max_number)                                        
-
-        return self._fetch(query)
-
-
-    def get_features_of_class(self,
-                              campaign_schema,
-                              class_name, 
-                              image_id = '',
-                              max_number = 10000,
-                              max_score = 1.0,
-                              max_votes = 100,
-                              max_area = 1e06):
-
-        '''Read data from a Tomnod classification campaign which belongs to a 
-           given class. Features are read from the DB in increasing score order, 
-           nulls first. (A feature with null score has not had its score computed 
-           by crowdrank.) The purpose of this function is to create target data 
-           for a machine.
-       
-           Args:
-               campaign_schema (str): Campaign campaign_schema.
-               class_name (str): Feature class (type in Tomnod jargon) name.
-               image_id (str): Image id. If '' (default) read from all campaign images.
-               max_number (int): Maximum number of features to be read.
-               max_score (float): Only features with score<=max_score (def: 1.0).
-               max_votes (int): Only features with votes<=max_votes (def: 100).
-               max_area (float): Only features with (area in m2) <= max_area (def: 1e06).
-
-           Returns:
-               A list of tuples (coords_in_hex, feature_id, image_id).    
-        '''
-
-        if image_id is not '':
-            query = '''SELECT f.feature, f.id, overlay.catalogid
-                       FROM {}.feature f, tag_type, overlay
-                       WHERE f.overlay_id = overlay.id        
-                       AND overlay.catalogid = '{}'
-                       AND f.type_id = tag_type.id
-                       AND tag_type.name = '{}'
-                       AND (f.score <= {} OR f.score IS NULL)
-                       AND f.num_votes_total <= {}
-                       AND ST_Area(f.feature) <= {}
-                       ORDER BY f.score ASC NULLS FIRST
-                       LIMIT {}'''.format(campaign_schema, 
-                                          image_id,
-                                          class_name,  
-                                          max_score,
-                                          max_votes,
-                                          max_area, 
-                                          max_number)
-        else:
-            query = '''SELECT f.feature, f.id, overlay.catalogid
-                       FROM {}.feature f, tag_type, overlay
-                       WHERE f.overlay_id = overlay.id 
-                       AND f.type_id = tag_type.id
-                       AND tag_type.name = '{}'
-                       AND (f.score <= {} OR f.score IS NULL)
-                       AND f.num_votes_total <= {}
-                       AND ST_Area(f.feature) <= {}
-                       ORDER BY f.score ASC NULLS FIRST
-                       LIMIT {}'''.format(campaign_schema, 
-                                          class_name,
-                                          max_score,
-                                          max_votes,
-                                          max_area, 
-                                          max_number)                                        
-
-        return self._fetch(query)
-
-
-    def execute(self, query, data, batch_size = 1000):
-        '''Execute query for each entry in data.
            Args:
                query (str): SQL query with {} for arguments.
                data (list): Data to format sql query. Each entry is a tuple.
                batch_size (int): Execute in batches of batch_size.  
-        '''
+        """
+        
         total_query, no_entries = '', len(data)
         for i, entry in enumerate(data):
             total_query += query.format(*entry)
             if (i%(batch_size-1)  == 0) or (i == no_entries-1):
                 self._execute(total_query)
                 total_query = ''
+
+
+    def get_tags(self,
+                 class_name,
+                 campaign_schema,
+                 most_confident_first=True,
+                 score_range=[0.0,1.0],
+                 agree_range=[1,10000],
+                 image_id=None,
+                 max_number=10000):
+        """Get tag info from Tomnod extraction campaign for a given class (tag type).
+           
+           Args:
+               class_name (str): Tag class name (tag type in Tomnod jargon).
+               campaign_schema (str): Campaign campaign_schema.
+               most_confident_first (bool): If True (False), order by decreasing 
+                                            (increasing) score, agreement.
+               image_id (str): Catalog id. If None, read from all campaign images.
+               score_range (list): Min score and max score.
+               agree_range (list): Min and max numbers of agreeing tags in cluster.
+               max_number (int): Maximum number of tags to be read.
+
+           Returns:
+               A list of tuples (coords_in_hex, tag_id, image_id, class_name).    
+        """
+        
+        if most_confident_first:
+            which_order = 'DESC'
+        else:
+            which_order = 'ASC'    
+
+        if image_id is None:
+            extra_query = ''
+        else:
+            extra_query = "AND overlay.catalogid = '{}' ".format(image_id)
+
+        query = ("""SELECT co.point, co.tag_id, overlay.catalogid, tag_type.name
+                    FROM {}.crowdrank_output co, tag_type, overlay
+                    WHERE co.type_id = tag_type.id
+                    AND co.overlay_id = overlay.id """.format(campaign_schema) +     
+                    extra_query +
+                 """AND tag_type.name = '{}'
+                    AND co.cr_score BETWEEN {} AND {}
+                    AND co.agreement BETWEEN {} AND {}
+                    AND co.job_id = (SELECT MAX(cj.id) 
+                                     FROM crowdrank_jobs cj, campaign cn 
+                                     WHERE cj.campaign_id = cn.id
+                                     AND cn.schema = '{}')
+                    ORDER BY co.cr_score {}, co.agreement {} 
+                    LIMIT {}""".format(class_name, 
+                                       score_range[0],
+                                       score_range[1],
+                                       agree_range[0],
+                                       agree_range[1],
+                                       campaign_schema,
+                                       which_order,
+                                       which_order,
+                                       max_number))
+        return self._fetch(query)
+
+   
+    def get_classified(self,
+                       class_name,
+                       campaign_schema,
+                       most_confident_first=True,
+                       score_range=[0.0,1.0],
+                       vote_range=[1,10000],
+                       image_id=None,
+                       max_number=10000,
+                       max_area=1e06):
+        """Get classified feature info from Tomnod classification campaign.
+        
+           Args:
+               class_name (str): Class (type in Tomnod jargon) name.
+               campaign_schema (str): Campaign campaign_schema.
+               most_confident_first (bool): If True (False), order by decreasing 
+                                            (increasing) score, votes.
+               score_range (list): Min score and max score.
+               vote_range (list): Min votes and max votes.
+               image_id (str): Catalog id. If None, read from all campaign images.
+               max_number (int): Maximum number of features to be read.
+               max_area (float): Only features with (area in m2) <= max_area.
+
+               Returns:
+                   A list of tuples (coords_in_hex, feature_id, image_id, class_name).                                  
+        """    
+
+        if most_confident_first:
+            which_order = 'DESC'
+        else:
+            which_order = 'ASC'    
+
+        if image_id is None:
+            extra_query = ''
+        else:
+            extra_query = "AND overlay.catalogid = '{}' ".format(image_id)
+
+        query = ("""SELECT f.feature, f.id, overlay.catalogid, tag_type.name
+                    FROM {}.feature f, tag_type, overlay
+                    WHERE f.overlay_id = overlay.id """.format(campaign_schema) +
+                 extra_query +
+                 """AND f.type_id = tag_type.id
+                    AND tag_type.name = '{}'
+                    AND ST_Area(f.feature) <= {}
+                    AND score BETWEEN {} AND {}
+                    AND num_votes_total BETWEEN {} AND {}
+                    ORDER BY score {}, num_votes_total {}
+                    LIMIT {}""".format(class_name,  
+                                       max_area, 
+                                       score_range[0],
+                                       score_range[1],
+                                       vote_range[0],
+                                       vote_range[1],
+                                       which_order,
+                                       which_order,
+                                       max_number))
+
+        return self._fetch(query)
+
+
+    def get_unclassified(self,
+                         campaign_schema,
+                         image_id=None,
+                         max_number=10000,
+                         max_area=1e06):
+        """Get unclassified feature info from Tomnod classification campaign.
+        
+           Args:
+               campaign_schema (str): Campaign campaign_schema.
+               image_id (str): Catalog id. If None, read from all campaign images.
+               max_number (int): Maximum number of features to be read.
+               max_area (float): Only features with (area in m2) <= max_area.
+
+               Returns:
+                   A list of tuples (coords_in_hex, feature_id, image_id).                                  
+        """    
+
+        if image_id is None:
+            extra_query = ''
+        else:
+            extra_query = "AND overlay.catalogid = '{}' ".format(image_id)
+
+        query = ("""SELECT f.feature, f.id, overlay.catalogid
+                   FROM {}.feature f, overlay
+                   WHERE f.overlay_id = overlay.id """.format(campaign_schema) + 
+                 extra_query +
+                 """AND type_id IS NULL
+                    AND ST_Area(f.feature) <= {}
+                    LIMIT {}""".format(max_area, max_number))
+
+        return self._fetch(query)                   

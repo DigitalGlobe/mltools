@@ -1,25 +1,23 @@
-import json
-import numpy as np
+# Train, test, deploy polygon classifier and write results to geojson
 
 from mltools import features
 from mltools import geojson_tools as gt
 from mltools.polygon_classifier import PolygonClassifier
-
 # suppress annoying warnings
 import warnings
 warnings.filterwarnings('ignore')
 
-train_file = 'train_small.geojson'
-test_file = 'test_small.geojson'
-target_file = 'target_small.geojson'
+train_file = 'train.geojson'
+test_file = 'test.geojson'
+target_file = 'target.geojson'
 
-# instantiate polygon classifier
-# n_estimators is the number of trees in the random forest
+# Create PolygonClassifier object.
+# n_estimators is the number of trees in the random forest.
 c = PolygonClassifier(n_estimators = 100)
 
-# override default feature extraction method
-# you can create your own feature extraction function here
-# and override the default class method
+# Override default PolygonClassifier compute_features.
+# You can create your own compute_features here
+# or use one of the available functions in mltools.features
 c.compute_features = features.pool_basic
 
 print 'Train classifier'
@@ -33,8 +31,8 @@ print 'Confusion matrix:', C
 print 'Classify unknown polygons'
 labels, scores = c.deploy(target_file, verbose=True)
 
-# write results to geojson
-out_file = 'classified_small.geojson'
+# Write results to geojson.
+out_file = 'classified.geojson'
 gt.write_properties_to(data = zip(labels, scores), 
                        property_names = ['class_name', 'score'], 
                        input_file = target_file,

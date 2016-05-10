@@ -14,7 +14,7 @@ using training data from DG Crowdsourcing (aka Tomnod).
 
 There are four modules:
 
-- data_extractor: get pixels and metadata from georeferenced imagery; uses geoio (https://github.com/digitalglobe/geoio);
+- data_extractors: get pixels and metadata from georeferenced imagery; uses geoio (https://github.com/digitalglobe/geoio);
 - features: functions to derive features from pixels; 
 - crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
 - geojson_tools: functions to manipulate geojson files.
