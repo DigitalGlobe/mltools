@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.4',
-      description='Pip+Conda based installation',
+      version='1.0.5',
+      description='Use geoio for pixel extraction. Refactor of polygon_classifier and crowdsourcing modules.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
