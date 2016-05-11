@@ -1,4 +1,9 @@
-# Classifies a set of polygons on an image.
+# Polygon Classifier.
+# Classifies a polygon geometry (e.g., 'Includes building', 'Does not include building')
+# overlaid on georeferenced imagery by computing a feature set which is then 
+# passed on to a Random Forest Classifier. 
+# Requires labeled polygon geometries for training.
+# Polygons can be of arbitrary shape.
 # Inherits from scikit-learn Random Forest Classifier. 
 
 import math 
@@ -14,8 +19,8 @@ class PolygonClassifier(RandomForestClassifier):
 
 
     def compute_features(self, data):
-        '''Computes a simple feature vector. This should be overriden 
-           based on use case when the class is instantiated.
+        '''Computes a simple feature vector. 
+           This should be overriden based on use case when the class is instantiated.
            Args:
                data (numpy array): Pixel data vector.
            Returns:
