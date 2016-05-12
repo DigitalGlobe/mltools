@@ -111,11 +111,11 @@ def write_to(data, property_names, output_file):
         geojson.dump(feature_collection, f)
 
 
-def write_properties_to(data, property_names, input_file, output_file):
-    """Writes property data to polygon_file to create output_file.
-       The length of data must be equal to the number of features in 
-       input_file. If some of the features in polygon_file already have 
-       values for the corresponding properties, the values are overwritten.
+def write_properties_to(data, property_names, input_file, output_file, filter=None):
+    """Writes property data to polygon_file for all 
+       geometries indicated in the filter, and creates output file.
+       The length of data must be equal to the number of geometries in 
+       the filter. Existing property values are overwritten. 
 
        Args:
            data (list): List of tuples. Each entry is a tuple of dimension equal  
@@ -123,6 +123,12 @@ def write_properties_to(data, property_names, input_file, output_file):
            property_names (list): Property names.
            input_file (str): Input file name.
            output_file (str): Output file name.
+           filter (dict): Filter format is {'property_name':[value1,value2,...]}.
+                          What this achieves is to write the first entry of data
+                          to the properties of the feature with 
+                          'property_name'=value1, and so on. This makes sense only
+                          if these values are unique. If Filter=None, then 
+                          data is written to all geometries in the input file. 
     """
 
     with open(input_file) as f:
@@ -130,10 +136,21 @@ def write_properties_to(data, property_names, input_file, output_file):
 
     features = feature_collection['features']
 
-    for i, feature in enumerate(features):
-        for j, property_value in enumerate(data[i]):
-            feature['properties'][property_names[j]] = property_value
+    if filter is None:
+        for i, feature in enumerate(features):
+            for j, property_value in enumerate(data[i]):
+                feature['properties'][property_names[j]] = property_value
+    else:
+        filter_name = filter.keys()[0]
+        filter_values = np.array(filter.values()[0])  
+        for feature in features:
+            compare_value = feature['properties'][filter_name]
+            ind = np.where(filter_values == compare_value)[0] 
+            if len(ind) > 0:
+                for j, property_value in enumerate(data[ind]):
+                    feature['properties'][property_names[j]] = property_value
 
+                    
     feature_collection['features'] = features    
 
     with open(output_file, 'w') as f:
@@ -159,5 +176,3 @@ def find_unique_values(input_file, property_name):
     values = np.array([ feat['properties'].get(property_name) for feat in features])
     
     return np.unique(values)
-
-   
