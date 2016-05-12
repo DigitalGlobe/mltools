@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.5',
-      description='Use geoio for pixel extraction. Refactor of polygon_classifier and crowdsourcing modules.',
+      version='1.0.6',
+      description='Removed polygon_classifier.py and instead introduced polygon_classify_rf.py in the examples. New version is much faster than previous.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
