@@ -5,7 +5,7 @@ mltools
 .. image:: https://badge.fury.io/py/mltools.svg
     :target: https://badge.fury.io/py/mltools
 
-A collection of tools for fast prototyping of object detection and classification solutions on DG imagery.
+Tools for fast prototyping of object detection and classification solutions on DG imagery.
 Relies heavily on popular open source machine learning (ML) toolkits such as scikit-learn. 
 It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. These are: 
 
