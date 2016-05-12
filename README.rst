@@ -101,12 +101,10 @@ To exit your conda virtual environment::
 Comments
 --------
 
-mltools is developed as part of an effort to standardize MLA design and implementation. 
-
-Here is a slide with some ideas:
+Here is a slide my initial ideas on mltools:
 
 https://docs.google.com/drawings/d/1tKSgFMp0lLd7Abne8CdOhb1PbdJfgCz5x9XkLwDeET0/edit?usp=sharing
 
-The vision is to employ MLA as part of a Crowd+Machine system along the lines of this document:
+The vision is to use the solutions created with mltools as part of a Crowd+Machine system along the lines of this document:
 
 https://docs.google.com/document/d/1hf82I_jDNGc0NdopXxW9RkbQjLOOGkV4lU5kdM5tqlA/edit?usp=sharing
