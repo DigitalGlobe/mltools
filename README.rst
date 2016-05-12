@@ -5,37 +5,27 @@ mltools
 .. image:: https://badge.fury.io/py/mltools.svg
     :target: https://badge.fury.io/py/mltools
 
-A collection of Machine Learning (ML) Tools for object detection and classification on DG imagery.
-
-mltools is MIT licenced.
-
-The purpose of this repository is to enable fast prototyping of object detection and classification solutions
-using training data from DG Crowdsourcing (aka Tomnod).
-
-There are four modules:
+A collection of tools for fast prototyping of object detection and classification solutions on DG imagery.
+Relies heavily on popular open source machine learning (ML) toolkits such as scikit-learn. 
+It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. These are: 
 
 - data_extractors: get pixels and metadata from georeferenced imagery; uses geoio (https://github.com/digitalglobe/geoio);
 - features: functions to derive features from pixels; 
 - crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
 - geojson_tools: functions to manipulate geojson files.
 
-A ML algorithm (MLA) is a class with train, test and classify/detect functions. 
-Presently, the repo contains the PolygonClassifier MLA which can classify a set of polygon 
-geometries in a geojson. The mltools acceptable geojson format is found in /examples. 
+Example scripts can be found in /examples. These can be used as a guideline to create object detection/classification 
+workflows which involve one or more of the following steps: 
 
-An MLA is typically employed in a script which:
-
-1. retrieves training, test and target data from the Tomnod database;
-2. trains the MLA;
-3. tests the MLA on the test data and computes accuracy metrics;
-4. deploys the MLA on the target data for detection or classification;
-5. writes the MLA results back to the Tomnod database.
+1. retrieve training, test and target data from the Tomnod database;
+2. train the algorithm;
+3. test the algorithm on the test data and compute accuracy metrics;
+4. deploy the algorithm on the target data for detection or classification;
+5. write results back to the Tomnod database.
 
 Step 1 can be omitted if data is available from a source other than Tomnod. 
 (However, the data must respect the geojson format found in /examples.)
 Step 5 can also be omitted if we don't want to write the results back to Tomnod.
-
-Example scripts can be found under /examples. 
 
 
 Installation/Usage
