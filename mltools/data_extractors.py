@@ -61,3 +61,46 @@ def get_data(shapefile, return_labels=False, buffer=[0,0]):
             data.append(this_data) 
 
     return zip(*data)
+
+
+def sliding_window(image, chip_size, stride, max_chips = 10000):
+    """Implement a sliding window on a georeferenced image.
+       
+       Args:
+           image (str): Image filename.
+           chip_size (list): Array of chip dimensions.
+           stride (list): Window stride.
+       
+       Returns:
+           List of chip rasters.
+    """   
+    img = geoio.GeoImage(image)
+    
+    # comprehension doesn't work?
+    #chips = [chip for i, chip in enumerate(img.iter_window(win_size=chip_size, stride=stride)) if i<= max_chips-1]
+
+    chips = []
+    for i, chip in enumerate(img.iter_window(win_size=chip_size, stride=stride)):
+        chips.append(chip)
+        if i == max_chips-1: break
+
+    return chips
+
+# TO DO --- geoio probably needs to implement this
+#def get_random_chips(image, no_chips, chip_size):
+#    """Return randomly selected chips from georeferenced image.
+#     
+#       Args:
+#           image (str): Image filename.
+#           no_chips (int): Number of chips.
+#           chip_size (list): Array of chip dimensions.
+#       
+#       Returns:
+#          List of chip rasters.
+#    """
+#    img = geoio.GeoImage(image)
+#    chips = []
+    
+    
+  
+ 

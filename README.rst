@@ -56,13 +56,17 @@ Activate the environment::
 
    source activate env
 
+Upgrade pip (if required)::
+
+   pip install pip --upgrade
+
 Install mltools::
 
    pip install mltools
 
-If you had a previous version of mltools installed, then (try)::
+If installation fails for some of the dependencies, (try to) install them with conda::
 
-   pip install mltools --upgrade --ignore-install   
+   conda install <dependency_name>
 
 You can now copy the scripts found in /examples in your project directory or create your own. 
 Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
