@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.5',
-      description='Removed polygon_classifier.py and instead introduced polygon_classify_rf.py in the examples. New version is much faster than previous.',
+      version='1.0.6',
+      description='Added keras to the requirements. Added example CNN classification script in examples.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
@@ -26,5 +26,6 @@ setup(name='mltools',
                         'psycopg2 >= 2.6.1',
                         'scikit-learn >= 0.17.1',
                         'Shapely >= 1.5.15',
-                        'geoio >= 1.1.1']
+                        'geoio >= 1.1.1',
+                        'keras >= 1.0.2']
       )
