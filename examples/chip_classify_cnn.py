@@ -59,8 +59,7 @@ model.compile(loss='binary_crossentropy',
 # get boat train data from a geojson with point coordinates by extracting
 # an image chip centered at each point 
 print 'Collect boat chips'
-boat_chips, _, _ = de.get_data(train_file, return_labels=True, 
-                               buffer=[x/2 for x in chip_size])
+boat_chips, _, _ = de.get_data(train_file, return_labels=True, buffer=[x/2 for x in chip_size])
 
 # split in train and test
 no_train = int(len(boat_chips)*0.8)

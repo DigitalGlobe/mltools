@@ -7,7 +7,7 @@ import geoio
 import geojson_tools as gt
 
 
-def get_data(shapefile, return_labels=False, buffer=[0,0], mask=True):
+def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
     """Return pixel intensity array for each geometry in shapefile.
        The image reference for each geometry is found in the image_id
        property of the shapefile.

@@ -33,7 +33,7 @@ compute_features = features.pool_basic
 # the point of returning target ids is that valid data can not be extracted
 # for all geometries in the target file
 print 'Read data'
-train_rasters, train_ids, train_labels = de.get_data(train_file, return_labels=True, mask=False)
+train_rasters, train_ids, train_labels = de.get_data(train_file, return_labels=True)
 target_rasters, target_ids = de.get_data(target_file)
 
 print 'Compute features'
