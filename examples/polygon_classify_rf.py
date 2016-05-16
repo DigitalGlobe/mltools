@@ -45,13 +45,13 @@ X = feature_vectors[:len(train_rasters)]
 Z = feature_vectors[len(train_rasters):]
 
 print 'Train classifier'
-X, y = np.array(X), np.array(train_labels)
+X, y = np.nan_to_num(np.array(X)), np.array(train_labels)    # make sure to replace NaN with finite numbers
 c.fit(X, y)
 class_names = c.classes_
 print class_names
 
-print 'Deploy classifier'
-Z = np.array(Z)
+print 'Deploy classifier' 
+Z = np.nan_to_num(np.array(Z))                               # make sure to replace NaN with finite numbers
 distributions = c.predict_proba(Z)
 inds = np.argmax(distributions, 1)
 predicted_labels, scores = class_names[inds], distributions[range(len(inds)),inds] 
