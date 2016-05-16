@@ -68,8 +68,7 @@ train_boat_chips, test_boat_chips = boat_chips[:no_train], boat_chips[no_train:]
 
 # collect random background chips --- this is the 'noise' class
 print 'Collect background chips'
-noise_chips = de.random_window(image, chip_size=chip_size, 
-                                      no_chips=len(boat_chips))
+noise_chips = de.random_window(image, chip_size=chip_size, no_chips=len(boat_chips))
 
 # split in train and test
 no_train = int(len(noise_chips)*0.8)

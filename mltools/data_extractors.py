@@ -81,6 +81,6 @@ def random_window(image, chip_size, no_chips=10000):
     chips = []
     for i, chip in enumerate(img.iter_window_random(win_size=chip_size, no_chips=no_chips)):
         chips.append(chip)
-        if i == max_chips-1: break
+        if i == no_chips-1: break
 
     return chips
