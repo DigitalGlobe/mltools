@@ -7,7 +7,7 @@ import geoio
 import geojson_tools as gt
 
 
-def get_data(shapefile, return_labels=False, buffer=[0,0]):
+def get_data(shapefile, return_labels=False, buffer=[0,0], mask=True):
     """Return pixel intensity array for each geometry in shapefile.
        The image reference for each geometry is found in the image_id
        property of the shapefile.
@@ -21,6 +21,7 @@ def get_data(shapefile, return_labels=False, buffer=[0,0]):
            return_labels (bool): If True, then a label vector is returned.
            buffer (list): 2-dim buffer in PIXELS. The size of the box in each 
                           dimension is TWICE the buffer size.
+           mask (bool): Return a masked array.
            
        Returns:
            chips (list): List of pixel intensity numpy arrays.
@@ -42,7 +43,8 @@ def get_data(shapefile, return_labels=False, buffer=[0,0]):
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
                                                 filter=[{'image_id':image_id}],
-                                                buffer=buffer):
+                                                buffer=buffer,
+                                                mask=mask):
             
             if chip is None or reduce(lambda x, y: x*y, chip.shape)==0:
                 continue
@@ -63,44 +65,22 @@ def get_data(shapefile, return_labels=False, buffer=[0,0]):
     return zip(*data)
 
 
-def sliding_window(image, chip_size, stride, max_chips = 10000):
-    """Implement a sliding window on a georeferenced image.
-       
+def random_window(image, chip_size, no_chips=10000):
+    """Implement a random chipper on a georeferenced image.
+
        Args:
            image (str): Image filename.
            chip_size (list): Array of chip dimensions.
-           stride (list): Window stride.
+           no_chips (int): Number of chips.
        
        Returns:
            List of chip rasters.
-    """   
+    """
     img = geoio.GeoImage(image)
-    
-    # comprehension doesn't work?
-    #chips = [chip for i, chip in enumerate(img.iter_window(win_size=chip_size, stride=stride)) if i<= max_chips-1]
 
     chips = []
-    for i, chip in enumerate(img.iter_window(win_size=chip_size, stride=stride)):
+    for i, chip in enumerate(img.iter_window_random(win_size=chip_size, no_chips=no_chips)):
         chips.append(chip)
         if i == max_chips-1: break
 
     return chips
-
-# TO DO --- geoio probably needs to implement this
-#def get_random_chips(image, no_chips, chip_size):
-#    """Return randomly selected chips from georeferenced image.
-#     
-#       Args:
-#           image (str): Image filename.
-#           no_chips (int): Number of chips.
-#           chip_size (list): Array of chip dimensions.
-#       
-#       Returns:
-#          List of chip rasters.
-#    """
-#    img = geoio.GeoImage(image)
-#    chips = []
-    
-    
-  
- 
