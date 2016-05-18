@@ -64,6 +64,12 @@ Install mltools::
 
    pip install mltools
 
+Optional: you can install the current version of the master branch with::
+
+   pip install git+https://github.com/kostasthebarbarian/mltools
+
+Keep in mind that the master branch is constantly under development.
+
 If installation fails for some of the dependencies, (try to) install them with conda::
 
    conda install <dependency_name>
