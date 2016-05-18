@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.6',
-      description='Added keras to the requirements. Added example CNN classification script in examples.',
+      version='1.0.7',
+      description='Added mask to data extractor.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
