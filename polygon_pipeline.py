@@ -1,10 +1,10 @@
 import numpy as np
-from mltools import data_extractors as de
+import data_extractors as de
 
 import warnings
 warnings.filterwarnings('ignore')
 
-def extract_polygons(train_file, target_file, min_polygon_hw = 20, max_polygon_hw = 150):
+def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 100):
     '''
     Create train data from shapefile, filter polygons according to acceptable side-lengths
 
