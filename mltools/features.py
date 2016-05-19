@@ -48,8 +48,9 @@ def band_ratios(data, band1, band2):
            band2 (int): band2 index (from 1 to n) 
       
     '''
+    eps = 1e-06    # for numeric purposes
     data = np.array(data, dtype=float)
-    return (data[band1-1,:,:] - data[band2-1,:,:])/(data[band1-1,:,:] + data[band2-1,:,:])
+    return (data[band1-1,:,:] - data[band2-1,:,:])/(data[band1-1,:,:] + data[band2-1,:,:] + eps)
 
 
 def pool_basic(data):
