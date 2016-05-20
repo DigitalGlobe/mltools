@@ -122,9 +122,9 @@ class PoolNet(object):
             print 'Epoch {}:'.format(epoch)
 
             for chips, ids, labels in get_iter_data(shapefile, batch_size=self.batch_size, return_labels=True, mask=True):
-                X_train = [chip.filled(0) for chip in chips]
-                y_train = [1 if label == 'Swimming pool' else 0 for label in labels]
-                Y_train = np_utils.to_categorical(y, self.nb_classes)
+                X = [chip.filled(0) for chip in chips]
+                y = [1 if label == 'Swimming pool' else 0 for label in labels]
+                Y = np_utils.to_categorical(y, self.nb_classes)
 
                 if self.fc:
                     mod = self.fc_model
