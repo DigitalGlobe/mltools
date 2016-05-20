@@ -1,3 +1,5 @@
 *.pyc
 *.geojson
 *.tif
+data_extractors.py
+geojson_tools.py
