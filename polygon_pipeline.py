@@ -1,10 +1,12 @@
+import geoio
 import numpy as np
+import geojson_tools as gt
 import data_extractors as de
 
 import warnings
 warnings.filterwarnings('ignore')
 
-def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 100):
+def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 224):
     '''
     Create train data from shapefile, filter polygons according to acceptable side-lengths
 
@@ -39,3 +41,41 @@ def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 100):
             X_labels.append(train_labels[i])
     print 'Done.'
     return X_train, X_ids, X_labels
+
+def get_iter_data(shapefile, batch_size=32, return_labels=False, buffer=[0,0], mask=False):
+
+    ct, data = 0, []
+    print 'Extracting image ids...'
+    img_ids = gt.find_unique_values(shapefile, property_name='image_id')
+
+    print 'Generating batch...'
+    for img_id in img_ids:
+        img = geoio.GeoImage(img_id + '.tif')
+
+        for chip, properties in img.iter_vector(vector=shapefile,
+                                                properties=True,
+                                                filter=[{'image_id':img_id}],
+                                                buffer=buffer,
+                                                mask=mask):
+
+            if chip is None or reduce(lambda x, y: x*y, chip.shape)==0:
+                continue
+
+            this_data = [chip, properties['feature_id']]
+
+            if return_labels:
+                try:
+                    label = properties['class_name']
+                    if label is None:
+                        continue
+                except (TypeError, KeyError):
+                    continue
+                this_data.append(label)
+            data.append(this_data)
+            ct += 1
+
+            if ct == batch_size:
+                yield zip(*data)
+                ct, data = 0, []
+
+    yield zip(*data)
