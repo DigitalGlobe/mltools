@@ -2,9 +2,11 @@
 # The purpose of this module is to generate train, test and target data
 # for machine learning algorithms.
 
-
 import geoio
 import geojson_tools as gt
+import numpy as np
+import osgeo.gdal as gdal
+from osgeo.gdalconst import *
 
 
 def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
@@ -84,3 +86,44 @@ def random_window(image, chip_size, no_chips=10000):
         if i == no_chips-1: break
 
     return chips
+
+
+def apply_mask(input_file, mask_file, output_file):
+    """Apply binary mask on image. Input image and mask must have the same 
+       (x,y) dimension and the same projection.
+
+       Args:
+           input_file (str): Input file name.
+           mask_file (str): Mask file name. 
+           output_file (str): Masked image file name.    
+    """
+
+    source_ds = gdal.Open(input_file, GA_ReadOnly)
+    nbands = source_ds.RasterCount
+    mask_ds = gdal.Open(mask_file, GA_ReadOnly)
+    
+    xsize, ysize = source_ds.RasterXSize, source_ds.RasterYSize
+    xmasksize, ymasksize = mask_ds.RasterXSize, mask_ds.RasterYSize
+
+    print 'Generating mask'
+
+    # Create target DS
+    driver = gdal.GetDriverByName('GTiff')
+    dst_ds = driver.Create(output_file, xsize, ysize, nbands, GDT_Byte)
+    dst_ds.SetGeoTransform(source_ds.GetGeoTransform())
+    dst_ds.SetProjection(source_ds.GetProjection())
+    
+    # Apply mask --- this is line by line at the moment, not so efficient
+    for i in range(ysize):
+        # read line from input image
+        line = source_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)        
+        # read line from mask
+        mask_line = mask_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)
+        # apply mask
+        masked_line = line*(mask_line>0)
+        # write 
+        for n in range(1, nbands+1):
+            dst_ds.GetRasterBand(n).WriteArray(masked_line[n-1].astype(np.uint8), 
+                                               xoff=0, yoff=i)       
+    # close datasets
+    source_ds, dst_ds = None, None
