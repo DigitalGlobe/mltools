@@ -104,23 +104,22 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             chip = chip.filled(0) # replace masked entries with zeros
             chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
 
-            # do not include image_id for fitting net
-            inputs.append(chip_patch)
-
             if return_labels:
                 try:
                     label = properties['class_name']
-                    labels.append(label)
                     if label is None:
                         continue
+                    labels.append(label)
                 except (TypeError, KeyError):
                     continue
-            ct += 1
 
+            # do not include image_id for fitting net
+            inputs.append(chip_patch)
+            ct += 1
             if ct == batch_size:
                 l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
                 labels = np_utils.to_categorical(l, 2)
-                yield (np.array(inputs), np.array(labels))
+                yield (np.array([i[:3] for i in inputs]), np.array(labels))
                 ct, inputs, labels = 0, [], []
 
     # return any remaining inputs
