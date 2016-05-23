@@ -162,12 +162,13 @@ class PoolNet(object):
         model_layers += [Convolution2D(self.n_dense_nodes, 1, 1)]
         model_layers += [Activation('relu')]
         model_layers += [Convolution2D(self.nb_classes, inp_shape[-1], inp_shape[-1])]
-        model_layers += [Reshape((1,self.nb_classes))]
+        model_layers += [Reshape((self.nb_classes, 1))] # must be same shape as targer vector (None, num_classes, 1)
         model_layers += [Activation('softmax')]
 
         print 'Compiling Fully Convolutional Model...'
         for process in model_layers:
             model.add(process)
+        sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
         model.compile(loss='categorical_crossentropy', optimizer='sgd')
         print 'Done.'
         return model
