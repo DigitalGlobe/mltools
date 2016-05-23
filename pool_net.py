@@ -18,11 +18,12 @@ class PoolNet(object):
             (4) int 'batch_size': amount of images to train for each batch. defaults to 32
             (5) list[int] 'input_shape': shape of input images (3-dims). defaults to (3,224,224)
             (6) int 'n_dense_nodes': number of nodes to use in dense layers. defaults to 2048.
-            (7) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to True
-            (8) int 'train_size': number of samples to train on per epoch. defaults to 5000
+            (7) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to False.
+            (8) bool 'vgg': True to use vggnet architecture. Defaults to True (currently better than original)
+            (9) int 'train_size': number of samples to train on per epoch. defaults to 5000
     '''
 
-    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=False, train_size=500):
+    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=True, train_size=500):
         self.nb_epoch = nb_epoch
         self.nb_chan = nb_chan
         self.nb_classes = nb_classes
@@ -32,12 +33,13 @@ class PoolNet(object):
         self.fc = fc
         self.vgg = vgg
         self.train_size = train_size
-        if self.fc:
-            self.model = self.make_fc_model()
-        elif self.vgg:
+        if self.vgg:
             self.model = self.VGG_16()
         else:
             self.model = self.compile_model()
+        self.model_layer_names = [self.model.layers[i].get_config()['name'] for i in range(len(self.model.layers))]
+        if self.fc:
+            self.model = self.make_fc_model()
 
     def compile_model(self):
         '''
@@ -77,20 +79,12 @@ class PoolNet(object):
 
         return model
 
-    def get_behead_index(self, layer_names):
-        '''
-        helper function to find index where net flattens
-        INPUT   (1) list 'layer_names': names of each layer in model
-        '''
-        for i, layer_name in enumerate(layer_names):
-            if i > 0 and layer_name[:7] == 'flatten':
-                if layer_names[i-1][:7] != 'dropout':
-                    behead_ix = i
-                else:
-                    behead_ix = i - 1
-        return behead_ix
-
     def VGG_16(self):
+        '''
+        Implementation of VGG 16-layer net
+        '''
+        print 'Compiling VGG Net...'
+
         model = Sequential()
         model.add(ZeroPadding2D((1,1),input_shape=(3,224,224)))
         model.add(Convolution2D(64, 3, 3, activation='relu'))
@@ -139,6 +133,19 @@ class PoolNet(object):
         model.compile(optimizer = 'sgd', loss = 'categorical_crossentropy')
         return model
 
+    def get_behead_index(self, layer_names):
+        '''
+        helper function to find index where net flattens
+        INPUT   (1) list 'layer_names': names of each layer in model
+        '''
+        for i, layer_name in enumerate(layer_names):
+            if i > 0 and layer_name[:7] == 'flatten':
+                if layer_names[i-1][:7] != 'dropout':
+                    behead_ix = i
+                else:
+                    behead_ix = i - 1
+        return behead_ix
+
     def make_fc_model(self):
         '''
         creates a fully convolutional model from self.model
@@ -154,8 +161,8 @@ class PoolNet(object):
         model_layers += [Activation('relu')]
         model_layers += [Convolution2D(self.n_dense_nodes, 1, 1)]
         model_layers += [Activation('relu')]
-        model_layers += [Convolution2D(self.nb_classes, inp_shape[0], inp_shape[0])]
-        model_layers += [Reshape((self.nb_classes,1))]
+        model_layers += [Convolution2D(self.nb_classes, inp_shape[-1], inp_shape[-1])]
+        model_layers += [Reshape((1,self.nb_classes))]
         model_layers += [Activation('softmax')]
 
         print 'Compiling Fully Convolutional Model...'
@@ -165,16 +172,15 @@ class PoolNet(object):
         print 'Done.'
         return model
 
-    def train_on_data(self, shapefile, fc_model=True):
+    def train_on_data(self, shapefile):
         '''
         Uses generator to train model from shapefile
 
         INPUT   (1) string 'shapefile': geojson file containing polygons to be trained on
-                (2) bool 'fc_model': True to use fully convolutional model
         OUTPUT  (1) trained model
         '''
-        print 'Training model on batches...'
 
+        print 'Training model on batches...'
 
         self.model.fit_generator(get_iter_data(shapefile, batch_size=self.batch_size, min_chip_hw=20, max_chip_hw=224), samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch)
 
