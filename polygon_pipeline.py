@@ -3,6 +3,7 @@ import geojson
 import random
 import numpy as np
 import geojson_tools as gt
+from keras.utils import np_utils
 # from mltools import geojson_tools as gt
 # from mltools import data_extractors as de
 
@@ -26,11 +27,10 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             (3) corresponding chip labels (if True)
     '''
 
-    ct, data = 0, []
+    ct, inputs, labels = 0, [], []
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
-    print 'Generating batch...'
     for img_id in img_ids:
         img = geoio.GeoImage(img_id + '.tif')
 
@@ -39,7 +39,6 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
                                                 filter=[{'image_id':img_id}],
                                                 buffer=buffer,
                                                 mask=mask):
-
 
             # check for adequate chip size
             chan, h, w = np.shape(chip)
@@ -50,24 +49,30 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             chip = chip.filled(0) # replace masked entries with zeros
             chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
 
-            this_data = [chip_patch, properties['feature_id']]
+            # do not include image_id for fitting net
+            inputs.append(chip_patch)
 
             if return_labels:
                 try:
                     label = properties['class_name']
+                    labels.append(label)
                     if label is None:
                         continue
                 except (TypeError, KeyError):
                     continue
-                this_data.append(label)
-            data.append(this_data)
             ct += 1
 
             if ct == batch_size:
-                yield zip(*data)
-                ct, data = 0, []
+                l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+                labels = np_utils.to_categorical(l, 2)
+                yield (np.array([i[:3] for i in inputs]), np.array(labels))
+                ct, inputs, labels = 0, [], []
 
-    yield zip(*data)
+    # return any remaining inputs
+    if len(inputs) != 0:
+        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+        labels = np_utils.to_categorical(l, 2)
+        yield (np.array([i[:3] for i  in inputs]), np.array(labels))
 
 def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool', 'No swimming pool'], samples_per_class = None):
     '''
@@ -119,7 +124,7 @@ def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool'
 
     with open(output_name + '.geojson', 'wb') as f:
         geojson.dump(balanced_json, f)
-    print 'File with {} polygons saved as {}.geojson'.format(len(final), output_name)
+    print '{} polygons saved as {}.geojson'.format(len(finalchips,), output_name)
 
 
 def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 224):
