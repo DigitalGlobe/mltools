@@ -135,37 +135,3 @@ class PoolNet(object):
                 print 'Training...'
                 import pdb; pdb.set_trace()
                 mod.train_on_batch(chips, Y)
-
-# input_size = (224,224,3)
-# nb_classes = 2
-#
-# model = Sequential()
-#
-# model.add(Convolution2D(96, 11, 11, border_mode = 'valid', dim_ordering = 'tf', input_shape = input_size, subsample = (4,4), activation = 'relu'))
-# model.add(BatchNormalization(mode=0, axis=-1))
-# model.add(MaxPooling2D(pool_size = (3,3), strides = (2,2)))
-#
-# model.add(Convolution2D(256, 5, 5, border_mode = 'valid', activation = 'relu'))
-# model.add(BatchNormalization(mode=0, axis=-1))
-# model.add(MaxPooling2D(pool_size = (3,3), strides = (2,2)))
-#
-# model.add(Convolution2D(256, 3, 3, border_mode = 'valid', activation = 'relu'))
-#
-# model.add(Convolution2D(256, 3, 3, border_mode = 'valid', activation = 'relu'))
-#
-# model.add(Convolution2D(256, 3, 3, border_mode = 'valid', activation = 'relu'))
-# model.add(MaxPooling2D(pool_size = (3,3), strides = (2,2)))
-#
-# model.add(Flatten())
-# model.add(Dense(2048))
-# model.add(Activation('relu'))
-# model.add(Dropout(0.5))
-# model.add(Dense(2048))
-# model.add(Activation('relu'))
-# model.add(Dropout(0.5))
-# model.add(Dense(nb_classes))
-# model.add(Activation('softmax'))
-#
-# sgd = SGD(lr=0.0001, decay=0.01, momentum=0.9)
-#
-# model.compile(loss = 'categorical_crossentropy', optimizer = 'sgd')
