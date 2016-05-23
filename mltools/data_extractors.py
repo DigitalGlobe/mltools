@@ -120,9 +120,14 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             if ct == batch_size:
                 l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
                 labels = np_utils.to_categorical(l, 2)
-                yield (np.array([i[:3] for i in inputs]), np.array(labels))
+                yield (np.array(inputs), np.array(labels))
                 ct, inputs, labels = 0, [], []
 
+    # return any remaining inputs
+    if len(inputs) != 0:
+        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+        labels = np_utils.to_categorical(l, 2)
+        yield (np.array([i[:3] for i  in inputs]), np.array(labels))
 
 def random_window(image, chip_size, no_chips=10000):
     """Implement a random chipper on a georeferenced image.
