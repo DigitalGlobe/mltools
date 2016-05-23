@@ -6,6 +6,7 @@ from keras.layers.core import Dense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.optimizers import SGD
+from keras.utils import np_utils
 from keras.layers.normalization import BatchNormalization
 
 class PoolNet(object):
@@ -106,6 +107,7 @@ class PoolNet(object):
         print 'Compiling Fully Convolutional Model...'
         for process in model_layers:
             model.add(process)
+        print 'Done.'
         return model
 
     def train_on_data(self, shapefile, fc_model=True):
@@ -116,22 +118,23 @@ class PoolNet(object):
                 (2) bool 'fc_model': True to use fully convolutional model
         OUTPUT  (1) trained model
         '''
-        print 'Training model on batches....'
+        print 'Training model on batches...'
+
+        if self.fc:
+            mod = self.fc_model
+        else:
+            mod = self.model
 
         for epoch in xrange(self.nb_epoch):
             print 'Epoch {}:'.format(epoch)
 
-            for chips, ids, labels in get_iter_data(shapefile, batch_size=self.batch_size, return_labels=True, mask=True):
-                X = [chip.filled(0) for chip in chips]
+            for chips, ids, labels in get_iter_data(shapefile, batch_size=self.batch_size, min_chip_hw=20, max_chip_hw=50, return_labels=True, mask=True):
                 y = [1 if label == 'Swimming pool' else 0 for label in labels]
                 Y = np_utils.to_categorical(y, self.nb_classes)
 
-                if self.fc:
-                    mod = self.fc_model
-                else:
-                    mod = self.model
-
-                mod.train_on_batch(X, Y)
+                print 'Training...'
+                import pdb; pdb.set_trace()
+                mod.train_on_batch(chips, Y)
 
 # input_size = (224,224,3)
 # nb_classes = 2
