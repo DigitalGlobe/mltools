@@ -82,11 +82,10 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             (3) corresponding chip labels (if True)
     '''
 
-    ct, data = 0, []
+    ct, inputs, labels = 0, [], []
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
-    print 'Generating batch...'
     for img_id in img_ids:
         img = geoio.GeoImage(img_id + '.tif')
 
@@ -95,7 +94,6 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
                                                 filter=[{'image_id':img_id}],
                                                 buffer=buffer,
                                                 mask=mask):
-
 
             # check for adequate chip size
             chan, h, w = np.shape(chip)
@@ -106,24 +104,24 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             chip = chip.filled(0) # replace masked entries with zeros
             chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
 
-            this_data = [chip_patch, properties['feature_id']]
+            # do not include image_id for fitting net
+            inputs.append(chip_patch)
 
             if return_labels:
                 try:
                     label = properties['class_name']
+                    labels.append(label)
                     if label is None:
                         continue
                 except (TypeError, KeyError):
                     continue
-                this_data.append(label)
-            data.append(this_data)
             ct += 1
 
             if ct == batch_size:
-                yield zip(*data)
-                ct, data = 0, []
-
-    yield zip(*data)
+                l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+                labels = np_utils.to_categorical(l, 2)
+                yield (np.array([i[:3] for i in inputs]), np.array(labels))
+                ct, inputs, labels = 0, [], []
 
 
 def random_window(image, chip_size, no_chips=10000):
