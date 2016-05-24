@@ -2,8 +2,9 @@ import geoio
 import geojson
 import random
 import numpy as np
-from itertools import cycle
 import geojson_tools as gt
+from skimage.transform import resize
+from itertools import cycle
 from keras.utils import np_utils
 # from mltools import geojson_tools as gt
 # from mltools import data_extractors as de
@@ -11,7 +12,7 @@ from keras.utils import np_utils
 import warnings
 warnings.filterwarnings('ignore')
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False, resize=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
 
@@ -23,6 +24,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
             (6) bool 'return_labels': return class label with chips. defaults to True
             (7) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
             (8) bool 'mask': if True returns a masked array. defaults to True
+            (9) bool 'fc': return appropriately shaped target vector for FCNN
+            (10) tuple(int) 'resize': size to downsample chips to (channels, height, width). Note that resizing takes place after padding the original polygon. Defaults to None (do not resize).
 
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
@@ -51,6 +54,10 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
             chip = chip.filled(0) # replace masked entries with zeros
             chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
 
+            # resize image
+            if resize:
+                chip_patch = resize(chip_patch, resize)
+
             if return_labels:
                 try:
                     label = properties['class_name']
@@ -67,7 +74,10 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
                 l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
                 labels = np_utils.to_categorical(l, nb_classes)
                 # reshape label vector to match output of FCNN
-                yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
+                if not fc:
+                    yield (np.array([i[:3] for i in inputs]), labels)
+                else:
+                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
     # # return any remaining inputs
