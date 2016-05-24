@@ -2,7 +2,7 @@
 # The purpose of this module is to generate train, test and target data
 # for machine learning algorithms.
 
-
+from itertools import cycle
 import geoio
 import geojson_tools as gt
 
@@ -65,17 +65,18 @@ def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
 
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
             (2) int 'batch_size': number of chips to generate per iteration. equal to batch-size of net, defaults to 32
-            (3) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon. defaults to 100
-            (4) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon. note that this will be the size of the height and width of input images to the net (default = 224)
-            (5) bool 'return_labels': return class label with chips. defaults to True
-            (6) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
-            (7) bool 'mask': if True returns a masked array. defaults to True
+            (3) int 'nb_classes': number of classes in which to categorize itmes
+            (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon. defaults to 100
+            (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon. note that this will be the size of the height and width of input images to the net (default = 224)
+            (6) bool 'return_labels': return class label with chips. defaults to True
+            (7) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
+            (8) bool 'mask': if True returns a masked array. defaults to True
 
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
@@ -86,7 +87,7 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
-    for img_id in img_ids:
+    for img_id in cycle(img_ids):
         img = geoio.GeoImage(img_id + '.tif')
 
         for chip, properties in img.iter_vector(vector=shapefile,
@@ -118,15 +119,16 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=100, max_chip_hw=224, re
             ct += 1
             if ct == batch_size:
                 l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-                labels = np_utils.to_categorical(l, 2)
-                yield (np.array([i[:3] for i in inputs]), np.array(labels))
+                labels = np_utils.to_categorical(l, nb_classes)
+                # reshape label vector to match output of FCNN
+                yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
-    # return any remaining inputs
-    if len(inputs) != 0:
-        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-        labels = np_utils.to_categorical(l, 2)
-        yield (np.array([i[:3] for i  in inputs]), np.array(labels))
+    # # return any remaining inputs
+    # if len(inputs) != 0:
+    #     l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+    #     labels = np_utils.to_categorical(l, 2)
+    #     yield (np.array([i[:3] for i  in inputs]), np.array(labels))
 
 def random_window(image, chip_size, no_chips=10000):
     """Implement a random chipper on a georeferenced image.
