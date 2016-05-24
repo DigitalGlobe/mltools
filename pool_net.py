@@ -137,6 +137,7 @@ class PoolNet(object):
         '''
         helper function to find index where net flattens
         INPUT   (1) list 'layer_names': names of each layer in model
+        OUTPUT  (1) int 'behead_ix': index of flatten layer
         '''
         for i, layer_name in enumerate(layer_names):
             if i > 0 and layer_name[:7] == 'flatten':
@@ -173,18 +174,36 @@ class PoolNet(object):
         print 'Done.'
         return model
 
-    def train_on_data(self, shapefile):
+    def train_on_data(self, train_shapefile, val_shapefile, min_chip_hw=100, max_chip_hw=224, validation_split=0.15):
         '''
         Uses generator to train model from shapefile
 
-        INPUT   (1) string 'shapefile': geojson file containing polygons to be trained on
+        INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
+                (2) string 'val_shapefile': geojson file containing polygons for validation
+                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
+                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
         OUTPUT  (1) trained model
         '''
 
         print 'Training model on batches...'
 
-        self.model.fit_generator(get_iter_data(shapefile, batch_size=self.batch_size, min_chip_hw=20, max_chip_hw=224), samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch)
+        # create generators for train and validation data
+        data_gen = get_iter_data(train_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
+        val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
 
+        # fit model
+        self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
+
+
+# TODO
+# save model
+# load model weights
+# evaluate w test data
+
+
+## GRAVEYARD ##
+        # in PoolNet.train_on_data:
         # for epoch in xrange(self.nb_epoch):
         #
         #     print 'Epoch {}:'.format(epoch)
