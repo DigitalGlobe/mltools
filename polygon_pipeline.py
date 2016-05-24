@@ -2,6 +2,7 @@ import geoio
 import geojson
 import random
 import numpy as np
+from itertools import cycle
 import geojson_tools as gt
 from keras.utils import np_utils
 # from mltools import geojson_tools as gt
@@ -32,7 +33,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
-    for img_id in img_ids:
+    for img_id in cycle(img_ids):
         img = geoio.GeoImage(img_id + '.tif')
 
         for chip, properties in img.iter_vector(vector=shapefile,
@@ -69,11 +70,11 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
                 yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
-    # return any remaining inputs
-    if len(inputs) != 0:
-        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-        labels = np_utils.to_categorical(l, 2)
-        yield (np.array([i[:3] for i  in inputs]), np.array(labels))
+    # # return any remaining inputs
+    # if len(inputs) != 0:
+    #     l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+    #     labels = np_utils.to_categorical(l, 2)
+    #     yield (np.array([i[:3] for i  in inputs]), np.array(labels))
 
 
 def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool', 'No swimming pool'], samples_per_class = None):
@@ -129,37 +130,40 @@ def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool'
     print '{} polygons saved as {}.geojson'.format(len(finalchips,), output_name)
 
 
-def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 224):
-    '''
-    Create train data from shapefile, filter polygons according to acceptable side-lengths
 
-    INPUT   (1) string 'train_file': name of shapefile containing polygon classifications
-            (2) string 'target_file': name of shapefile with test data (no classifications)
-            (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for polygons. Defaults to 50.
-            (4) int 'max_polygon_hw': maximun accpetable side length (in pixels) for polygons. Defaults to 1000
+## GRAVEYARD ##
 
-    OUTPUT  (1) list of training rasters, zero-padded to maximum acceptable size (c, l, w)
-            (2) list of ids corresponding to training rasters
-            (3) list of labels corresponding to training rasters
-    '''
-    X_train, X_ids, X_labels = [], [], []
-
-    # extract raw polygon rasters
-    print 'Extracting raw polygons...'
-    train_rasters, train_ids, train_labels = de.get_data(train_file, return_labels=True)
-
-    # filter polygons to acceptable size.
-    print 'Processing polygons...'
-    for i in xrange(len(train_labels)):
-        raster = train_rasters[i]
-        c,h,w = np.shape(raster)
-        if min(w, h) > min_polygon_hw and max(w, h) < max_polygon_hw:
-
-            # zero-pad to make polygons same size
-            raster = np.pad(raster, [(0,0), (0, max_polygon_hw - h), (0, max_polygon_hw - w)], 'constant', constant_values = 0)
-
-            X_train.append(raster)
-            X_ids.append(train_ids[i])
-            X_labels.append(train_labels[i])
-    print 'Done.'
-    return X_train, X_ids, X_labels
+# def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 224):
+#     '''
+#     Create train data from shapefile, filter polygons according to acceptable side-lengths
+#
+#     INPUT   (1) string 'train_file': name of shapefile containing polygon classifications
+#             (2) string 'target_file': name of shapefile with test data (no classifications)
+#             (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for polygons. Defaults to 50.
+#             (4) int 'max_polygon_hw': maximun accpetable side length (in pixels) for polygons. Defaults to 1000
+#
+#     OUTPUT  (1) list of training rasters, zero-padded to maximum acceptable size (c, l, w)
+#             (2) list of ids corresponding to training rasters
+#             (3) list of labels corresponding to training rasters
+#     '''
+#     X_train, X_ids, X_labels = [], [], []
+#
+#     # extract raw polygon rasters
+#     print 'Extracting raw polygons...'
+#     train_rasters, train_ids, train_labels = de.get_data(train_file, return_labels=True)
+#
+#     # filter polygons to acceptable size.
+#     print 'Processing polygons...'
+#     for i in xrange(len(train_labels)):
+#         raster = train_rasters[i]
+#         c,h,w = np.shape(raster)
+#         if min(w, h) > min_polygon_hw and max(w, h) < max_polygon_hw:
+#
+#             # zero-pad to make polygons same size
+#             raster = np.pad(raster, [(0,0), (0, max_polygon_hw - h), (0, max_polygon_hw - w)], 'constant', constant_values = 0)
+#
+#             X_train.append(raster)
+#             X_ids.append(train_ids[i])
+#             X_labels.append(train_labels[i])
+#     print 'Done.'
+#     return X_train, X_ids, X_labels
