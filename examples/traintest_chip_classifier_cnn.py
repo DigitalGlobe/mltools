@@ -37,14 +37,13 @@ image = '1030010038CD4D00.tif'
 batch_size = 32
 nb_classes = 2
 nb_epoch = 10
-img_rows, img_cols = 60, 60
-chip_size = [img_rows, img_cols]
 img_channels = 3  # RGB
+chipx, chipy = 60, 60   # chip size
 
 # construct CNN
 model = Sequential()
 model.add(Convolution2D(32, 3, 3, border_mode='same',
-                        input_shape=(img_channels, img_rows, img_cols)))
+                        input_shape=(img_channels, chipx, chipy)))
 model.add(Activation('relu'))
 model.add(Convolution2D(32, 3, 3))
 model.add(Activation('relu'))
@@ -69,14 +68,16 @@ model.compile(loss='binary_crossentropy',
 
 # get boat train data from a geojson with point coordinates by extracting
 # an image chip centered at each point
-# note that the returned chip has dimension chip_size + 1!!! 
 print 'Collect boat chips'
 boat_chips, _, _ = de.get_data(train_file, return_labels=True, 
-                               buffer=[x/2 for x in chip_size])
+                               buffer=[chipx/2, chipy/2])
+# note that the returned chip has dimension chip_size+1; we fix that
+boat_chips = [x[:-1, :-1] for x in boat_chips] 
 no_boats = len(boat_chips)
 
 # split in train and test
-no_train = int(no_boats*0.8)
+train_total_ratio = 0.8
+no_train = int(no_boats * train_total_ratio)
 train_boat_chips, test_boat_chips = boat_chips[:no_train], boat_chips[no_train:]
 
 # collect random background chips --- this is the 'noise' class
@@ -84,17 +85,17 @@ train_boat_chips, test_boat_chips = boat_chips[:no_train], boat_chips[no_train:]
 print 'Collect background chips'
 img = geoio.GeoImage(image)
 xs, ys = img.meta_geoimg.x, img.meta_geoimg.y   # extent of image
-xsize, ysize = [x+1 for x in chip_size]         # chip size 
 no_noise = no_boats                             # background chips = boat chips
 counter = no_noise                              
 noise_chips, locations = [], []
 while counter > 0:
     # select random offset
-    xoff, yoff = np.random.randint(xs-xsize+1), np.random.randint(ys-ysize+1)
+    xoff = np.random.randint(xs - chipx + 1) 
+    yoff = np.random.randint(ys - chipy + 1)
     # grab pixels
-    chip = img.get_data(window=[xoff, yoff, xsize, ysize])
+    chip = img.get_data(window=[xoff, yoff, chipx, chipy])
     # only keep if mostly includes water
-    if np.sum(chip == 0) < xsize*ysize/4:
+    if np.sum(chip == 0) < chipx * chipy / 4:
         noise_chips.append(chip)
         location = Point(img.raster_to_proj(xoff, yoff))  # location in (lng, lat)  
         locations.append(location.wkb.encode('hex'))      # encode in hex
@@ -106,7 +107,7 @@ gt.write_to(data=data, property_names=['feature_id','class_name'],
                        output_file='noise.geojson') 
 
 # split in train and test
-no_train = int(no_noise*0.8)
+no_train = int(no_noise * train_total_ratio)
 train_noise_chips, test_noise_chips = noise_chips[:no_train], noise_chips[no_train:]
 
 # prepare arrays
@@ -133,7 +134,7 @@ print('Test score:', score[0])
 print('Test accuracy:', score[1])
 
 # save model for future use
-name = 'boat_detector'
+name = 'boat_water_classifier'
 model_filename = '{}.json'.format(name)
 weight_filename = '{}.hdf5'.format(name)
 json_string = model.to_json()
