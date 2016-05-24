@@ -12,6 +12,7 @@ from keras.layers.normalization import BatchNormalization
 class PoolNet(object):
     '''
     Fully Convolutional model to classify polygons as pool/no pool
+
     INPUT   (1) int 'nb_chan': number of input channels. defaults to 3 (rgb)
             (2) int 'nb_epoch': number of epochs to train. defaults to 4
             (3) int 'nb_classes': number of different image classes. defaults to 2 (pool/no pool)
@@ -20,10 +21,12 @@ class PoolNet(object):
             (6) int 'n_dense_nodes': number of nodes to use in dense layers. defaults to 2048.
             (7) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to False.
             (8) bool 'vgg': True to use vggnet architecture. Defaults to True (currently better than original)
-            (9) int 'train_size': number of samples to train on per epoch. defaults to 5000
+            (9) bool 'load_model': Use a saved trained model (model_name) architecture and weights. Defaults to False
+            (10) string 'model_name': Only relevant if load_model is True. name of model (not including file extension) to load. Defaults to None
+            (11) int 'train_size': number of samples to train on per epoch. defaults to 5000
     '''
 
-    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=True, train_size=500):
+    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=True, load_model=False, model_name=None, train_size=500):
         self.nb_epoch = nb_epoch
         self.nb_chan = nb_chan
         self.nb_classes = nb_classes
@@ -32,9 +35,15 @@ class PoolNet(object):
         self.n_dense_nodes = n_dense_nodes
         self.fc = fc
         self.vgg = vgg
+        self.alexnet = alexnet
         self.train_size = train_size
         if self.vgg:
             self.model = self.VGG_16()
+        # elif self.alexnet:
+        #     self.model = self.AlexNet()
+        elif self.loaded_model:
+            self.model_name = model_name
+            self.model = self.load_model_weights()
         else:
             self.model = self.compile_model()
         self.model_layer_names = [self.model.layers[i].get_config()['name'] for i in range(len(self.model.layers))]
@@ -79,6 +88,7 @@ class PoolNet(object):
 
         return model
 
+
     def VGG_16(self):
         '''
         Implementation of VGG 16-layer net
@@ -86,7 +96,7 @@ class PoolNet(object):
         print 'Compiling VGG Net...'
 
         model = Sequential()
-        model.add(ZeroPadding2D((1,1),input_shape=(3,224,224)))
+        model.add(ZeroPadding2D((1,1),input_shape=self.input_shape))
         model.add(Convolution2D(64, 3, 3, activation='relu'))
         model.add(ZeroPadding2D((1,1)))
         model.add(Convolution2D(64, 3, 3, activation='relu'))
@@ -129,7 +139,7 @@ class PoolNet(object):
         model.add(Dropout(0.5))
         model.add(Dense(2, activation='softmax'))
 
-        sgd = SGD(lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=0.001, decay=0.01, momentum=0.9, nesterov=True)
         model.compile(optimizer = 'sgd', loss = 'categorical_crossentropy')
         return model
 
@@ -163,7 +173,7 @@ class PoolNet(object):
         model_layers += [Convolution2D(self.n_dense_nodes, 1, 1)]
         model_layers += [Activation('relu')]
         model_layers += [Convolution2D(self.nb_classes, inp_shape[-1], inp_shape[-1])]
-        model_layers += [Reshape((self.nb_classes, 1))] # must be same shape as targer vector (None, num_classes, 1)
+        model_layers += [Reshape((self.nb_classes-1,1))] # must be same shape as target vector (None, num_classes, 1)
         model_layers += [Activation('softmax')]
 
         print 'Compiling Fully Convolutional Model...'
@@ -174,12 +184,12 @@ class PoolNet(object):
         print 'Done.'
         return model
 
-    def train_on_data(self, train_shapefile, val_shapefile, min_chip_hw=100, max_chip_hw=224, validation_split=0.15):
+    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100, max_chip_hw=224, validation_split=0.15):
         '''
         Uses generator to train model from shapefile
 
         INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
-                (2) string 'val_shapefile': geojson file containing polygons for validation
+                (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
@@ -190,17 +200,93 @@ class PoolNet(object):
 
         # create generators for train and validation data
         data_gen = get_iter_data(train_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
-        val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
 
-        # fit model
-        self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
+        if val_shapefile:
+            val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
+
+            # fit model
+            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
+        else:
+            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch)
+
+    def save_model(self, model_name):
+        '''
+        INPUT string 'model_name': name to save model and weigths under, including filepath but not extension
+        Saves current model as json and weigts as h5df file
+        '''
+        model = '{}.json'.format(model_name)
+        weights = '{}.h5'.format(model_name)
+        json_string = self.model_comp.to_json()
+        self.model.save_weights(weights)
+        with open(model, 'w') as f:
+            json.dump(json_string, f)
+
+    def load_model_weights(self):
+        '''
+        INPUT  (1) string 'model_name': filepath to model and weights, not including extension
+        OUTPUT: Model with loaded weights. can fit on model using loaded_model=True in fit_model method
+        '''
+        print 'Loading model {}'.format(self.model_name)
+        model = '{}.json'.format(self.model_name)
+        weights = '{}.h5'.format(self.model_name)
+        with open(model) as f:
+            m = f.next()
+        mod = model_from_json(json.loads(m))
+        mod.load_weights(weights)
+        print 'Done.'
+        return mod
 
 
 # TODO
-# save model
-# load model weights
 # evaluate w test data
-
+    # def AlexNet(self):
+    #     '''
+    #     Implementation of AlexNet
+    #     '''
+    #     print 'Compiling AlexNet...'
+    #
+    #     inputs = Input(shape=(3,224,224))
+    #
+    #     conv_1 = Convolution2D(96, 11, 11,subsample=(4,4),activation='relu',
+    #                            name='conv_1')(inputs)
+    #
+    #     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
+    #     conv_2 = crosschannelnormalization(name="convpool_1")(conv_2)
+    #     conv_2 = ZeroPadding2D((2,2))(conv_2)
+    #     conv_2 = merge([Convolution2D(128,5,5,activation="relu",name='conv_2_'+str(i+1))(splittensor(ratio_split=2,id_split=i)(conv_2)) for i in range(2)], mode='concat',concat_axis=1,name="conv_2")
+    #
+    #     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
+    #     conv_3 = crosschannelnormalization()(conv_3)
+    #     conv_3 = ZeroPadding2D((1,1))(conv_3)
+    #     conv_3 = Convolution2D(384,3,3,activation='relu',name='conv_3')(conv_3)
+    #
+    #     conv_4 = ZeroPadding2D((1,1))(conv_3)
+    #     conv_4 = merge([
+    #         Convolution2D(192,3,3,activation="relu",name='conv_4_'+str(i+1))(
+    #             splittensor(ratio_split=2,id_split=i)(conv_4)
+    #         ) for i in range(2)], mode='concat',concat_axis=1,name="conv_4")
+    #
+    #     conv_5 = ZeroPadding2D((1,1))(conv_4)
+    #     conv_5 = merge([
+    #         Convolution2D(128,3,3,activation="relu",name='conv_5_'+str(i+1))(
+    #             splittensor(ratio_split=2,id_split=i)(conv_5)
+    #         ) for i in range(2)], mode='concat',concat_axis=1,name="conv_5")
+    #
+    #     dense_1 = MaxPooling2D((3, 3), strides=(2,2),name="convpool_5")(conv_5)
+    #
+    #     dense_1 = Flatten(name="flatten")(dense_1)
+    #     dense_1 = Dense(4096, activation='relu',name='dense_1')(dense_1)
+    #     dense_2 = Dropout(0.5)(dense_1)
+    #     dense_2 = Dense(4096, activation='relu',name='dense_2')(dense_2)
+    #     dense_3 = Dropout(0.5)(dense_2)
+    #     dense_3 = Dense(2,name='dense_3')(dense_3)
+    #     prediction = Activation("softmax",name="softmax")(dense_3)
+    #
+    #     model = Model(input=inputs, output=prediction)
+    #     sgd = SGD(lr=0.001, decay=0.01, momentum=0.9, nesterov=True)
+    #     model.compile(loss='categorical_crossentropy', optimizer='sgd')
+    #
+    #     return model
 
 ## GRAVEYARD ##
         # in PoolNet.train_on_data:
