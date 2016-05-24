@@ -184,7 +184,7 @@ class PoolNet(object):
         print 'Done.'
         return model
 
-    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100, max_chip_hw=224, validation_split=0.15):
+    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100, max_chip_hw=224, validation_split=0.15, resize_image=None):
         '''
         Uses generator to train model from shapefile
 
@@ -193,6 +193,7 @@ class PoolNet(object):
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
+                (6) tuple(int) 'resize': size to downsample chips to (channels, height, width). Note that resizing takes place after padding the original polygon. Defaults to None (do not resize).
         OUTPUT  (1) trained model
         '''
 
@@ -239,6 +240,7 @@ class PoolNet(object):
 
 # TODO
 # evaluate w test data
+
     # def AlexNet(self):
     #     '''
     #     Implementation of AlexNet

@@ -12,7 +12,7 @@ from keras.utils import np_utils
 import warnings
 warnings.filterwarnings('ignore')
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False, resize=None):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False, resize_dim=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
 
@@ -51,12 +51,12 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
                 continue
 
             # zero-pad chip to standard net input size
-            chip = chip.filled(0) # replace masked entries with zeros
+            chip = chip.filled(0)[:3] # replace masked entries with zeros
             chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
 
             # resize image
-            if resize:
-                chip_patch = resize(chip_patch, resize)
+            if resize_dim:
+                chip_patch = resize(chip_patch, resize_dim)
 
             if return_labels:
                 try:
@@ -79,12 +79,6 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
                 else:
                     yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
-
-    # # return any remaining inputs
-    # if len(inputs) != 0:
-    #     l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-    #     labels = np_utils.to_categorical(l, 2)
-    #     yield (np.array([i[:3] for i  in inputs]), np.array(labels))
 
 
 def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool', 'No swimming pool'], samples_per_class = None):
@@ -142,6 +136,14 @@ def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool'
 
 
 ## GRAVEYARD ##
+
+# in get_iter_data:
+    # # return any remaining inputs
+    # if len(inputs) != 0:
+    #     l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+    #     labels = np_utils.to_categorical(l, 2)
+    #     yield (np.array([i[:3] for i  in inputs]), np.array(labels))
+
 
 # def extract_polygons(train_file, min_polygon_hw = 20, max_polygon_hw = 224):
 #     '''
