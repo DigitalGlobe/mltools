@@ -253,7 +253,16 @@ class PoolNet(object):
                                     nb_epoch=self.nb_epoch, callbacks=[es])
 
     def retrain_output(self, train_shapefile, **kwargs):
-
+        '''
+        Retrains last dense layer of model. For use with unbalanced classes after
+        training on balanced data.
+        INPUT   (1) string 'train_shapefile': shapefile containing polygons to retrain model on
+                (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
+                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
+                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
+        OUTPUT  (1) retrained model
+        '''
         # freeze all layers except final dense
         for i in xrange(len(self.model.layers[:-2])):
             self.model.layers[i].trainable = False
@@ -262,7 +271,8 @@ class PoolNet(object):
         sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
-        self.train_on_data(**kwargs)
+        # train model
+        self.train_on_data(train_shapefile, **kwargs)
 
     def save_model(self, model_name):
         '''
@@ -294,18 +304,55 @@ class PoolNet(object):
         print 'Done.'
         return mod
 
-    def evaluate_model(self, X_test, y_test):
+    def evaluate_model(self, X_test, y_test, return_yhat=False):
         '''
         Predicts classes of X_test and evaluates precision, recall and f1 score
         INPUT   (1) array 'X_test': array of chips
                 (2) list 'y_test': labels corresponding to chips in X_test
+                (3) bool 'return_yhat': return the values of predicted classes for X_test
         OUTPUT  (1) classification report
         '''
         y_hat = self.model.predict_classes(X_test)
         print classification_report(y_test, y_hat)
 
-# TODO
-# evaluate w test data
+        if return_yhat:
+            return y_hat
+
+    def confusion_matrix_imgs(self, X_test, y_test, y_pred):
+        '''
+        Generate file with incorrectly classified polygons for inspection
+        INPUT   (1) array 'X_test': array of chips
+                (2) list 'y_test': labels corresponding to chips in X_test
+                (3) list 'y_pred': results of classification on X_test. if None, will classify X_test and generate y_pred.
+        OUTPUT  (1) true positives
+                (2) true negatives
+                (3) false positives
+                (4) false negatives
+        '''
+        wrong = X_test[[y_test!=y_pred]]
+        fp, fn = wrong[[y_test==0]], wrong[[y_test==1]]
+
+        right = X_test[[y_test==y_pred]]
+        tp, tn = right[[y_test==1]], right[[y_test==0]]
+
+        return tp, tn, fp, fn
+
+
+## GRAVEYARD ##
+        # in PoolNet.train_on_data:
+        # for epoch in xrange(self.nb_epoch):
+        #
+        #     print 'Epoch {}:'.format(epoch)
+        #     for chips, labels in get_iter_data(shapefile, batch_size=self.batch_size, min_chip_hw=20, max_chip_hw=224, return_labels=True, mask=True):
+        #         X = np.array([i[:3] for i in chips])
+        #         y = [1 if label == 'Swimming pool' else 0 for label in labels]
+        #         Y = np_utils.to_categorical(y, self.nb_classes)
+        #
+        #         print 'Training...'
+        #         import pdb; pdb.set_trace()
+        #         mod.train_on_batch(X, Y)
+
+
 
     # def AlexNet(self):
     #     '''
@@ -355,17 +402,3 @@ class PoolNet(object):
     #     model.compile(loss='categorical_crossentropy', optimizer='sgd')
     #
     #     return model
-
-## GRAVEYARD ##
-        # in PoolNet.train_on_data:
-        # for epoch in xrange(self.nb_epoch):
-        #
-        #     print 'Epoch {}:'.format(epoch)
-        #     for chips, labels in get_iter_data(shapefile, batch_size=self.batch_size, min_chip_hw=20, max_chip_hw=224, return_labels=True, mask=True):
-        #         X = np.array([i[:3] for i in chips])
-        #         y = [1 if label == 'Swimming pool' else 0 for label in labels]
-        #         Y = np_utils.to_categorical(y, self.nb_classes)
-        #
-        #         print 'Training...'
-        #         import pdb; pdb.set_trace()
-        #         mod.train_on_batch(X, Y)
