@@ -63,7 +63,7 @@ class PoolNet(object):
         print 'Compiling standard model...'
         model = Sequential()
 
-        model.add(Convolution2D(96, 7, 7,
+        model.add(Convolution2D(96, 6, 6,
                                 border_mode = 'valid',
                                 input_shape=self.input_shape,
                                 activation = 'relu'))
@@ -85,10 +85,10 @@ class PoolNet(object):
                                 strides=(2,2)))
         model.add(Dropout(0.5))
 
-        model.add(Convolution2D(256, 3, 3,
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(Dropout(0.5))
+        # model.add(Convolution2D(256, 3, 3,
+        #                         border_mode = 'valid',
+        #                         activation = 'relu'))
+        # model.add(Dropout(0.5))
 
         model.add(Convolution2D(256, 3, 3,
                                 border_mode = 'valid',
@@ -101,9 +101,9 @@ class PoolNet(object):
         model.add(Dense(self.n_dense_nodes))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(self.n_dense_nodes))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
+        # model.add(Dense(self.n_dense_nodes))
+        # model.add(Activation('relu'))
+        # model.add(Dropout(0.5))
         model.add(Dense(self.nb_classes))
         model.add(Activation('softmax'))
 
@@ -210,7 +210,7 @@ class PoolNet(object):
         return model
 
     def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100,
-                      max_chip_hw=224, validation_split=0.15):
+                      max_chip_hw=224, validation_split=0.15, save_model=None):
         '''
         Uses generator to train model from shapefile
 
@@ -219,6 +219,7 @@ class PoolNet(object):
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
+                (6) string 'save_model': name to save model as. If None, does not save model.
         OUTPUT  (1) trained model
         '''
 
@@ -251,6 +252,8 @@ class PoolNet(object):
             self.model.fit_generator(data_gen,
                                     samples_per_epoch=self.train_size,
                                     nb_epoch=self.nb_epoch, callbacks=[es])
+        if save_model:
+            self.save_model(save_model)
 
     def retrain_output(self, train_shapefile, **kwargs):
         '''
