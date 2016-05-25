@@ -8,9 +8,10 @@ import geojson_tools as gt
 import numpy as np
 import osgeo.gdal as gdal
 from osgeo.gdalconst import *
+from functools import reduce
 
 
-def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
+def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     """Return pixel intensity array for each geometry in shapefile.
        The image reference for each geometry is found in the image_id
        property of the shapefile.
@@ -45,14 +46,16 @@ def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
 
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
-                                                filter=[{'image_id':image_id}],
+                                                filter=[
+                                                    {'image_id': image_id}],
                                                 buffer=buffer,
                                                 mask=mask):
 
-            if chip is None or reduce(lambda x, y: x*y, chip.shape)==0:
+            if chip is None or reduce(lambda x, y: x * y, chip.shape) == 0:
                 continue
 
-            this_data = [chip, properties['feature_id']] # every geometry must have id
+            # every geometry must have id
+            this_data = [chip, properties['feature_id']]
 
             if return_labels:
                 try:
@@ -69,7 +72,7 @@ def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
 
 
 def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
-                  max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False,
+                  max_chip_hw=224, return_labels=True, buffer=[0, 0], mask=True, fc=False,
                   resize_dim=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
@@ -105,19 +108,20 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
 
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
-                                                filter=[{'image_id':img_id}],
+                                                filter=[{'image_id': img_id}],
                                                 buffer=buffer,
                                                 mask=mask):
 
             # check for adequate chip size
             chan, h, w = np.shape(chip)
-            if chip is None or min(h, w) < min_chip_hw or max(h, w) > max_chip_hw:
+            if chip is None or min(h, w) < min_chip_hw or max(
+                    h, w) > max_chip_hw:
                 continue
 
             # zero-pad chip to standard net input size
-            chip = chip.filled(0)[:3] # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
-                                'constant', constant_values = 0)
+            chip = chip.filled(0)[:3]  # replace masked entries with zeros
+            chip_patch = np.pad(chip, [(0, 0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
+                                'constant', constant_values=0)
 
             # resize image
             if resize_dim != chip_patch.shape:
@@ -143,7 +147,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
                     yield (np.array([i[:3] for i in inputs]), labels)
                 else:
                     yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size,
-                           nb_classes, 1))
+                                                                             nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
 
@@ -161,9 +165,11 @@ def random_window(image, chip_size, no_chips=10000):
     img = geoio.GeoImage(image)
 
     chips = []
-    for i, chip in enumerate(img.iter_window_random(win_size=chip_size, no_chips=no_chips)):
+    for i, chip in enumerate(img.iter_window_random(
+            win_size=chip_size, no_chips=no_chips)):
         chips.append(chip)
-        if i == no_chips-1: break
+        if i == no_chips - 1:
+            break
 
     return chips
 
@@ -200,10 +206,10 @@ def apply_mask(input_file, mask_file, output_file):
         # read line from mask
         mask_line = mask_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)
         # apply mask
-        masked_line = line*(mask_line>0)
+        masked_line = line * (mask_line > 0)
         # write
-        for n in range(1, nbands+1):
-            dst_ds.GetRasterBand(n).WriteArray(masked_line[n-1].astype(np.uint8),
+        for n in range(1, nbands + 1):
+            dst_ds.GetRasterBand(n).WriteArray(masked_line[n - 1].astype(np.uint8),
                                                xoff=0, yoff=i)
     # close datasets
     source_ds, dst_ds = None, None

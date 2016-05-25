@@ -16,11 +16,11 @@ def join(input_files, output_file):
     """
 
     # get feature collections
-    final_features  = []
+    final_features = []
     for file in input_files:
         with open(file) as f:
-           feat_collection = geojson.load(f)
-           final_features += feat_collection['features']
+            feat_collection = geojson.load(f)
+            final_features += feat_collection['features']
 
     feat_collection['features'] = final_features
 
@@ -73,7 +73,7 @@ def get_from(input_file, property_names):
 
     features = feature_collection['features']
     values = [tuple([feat['properties'].get(x)
-                    for x in property_names]) for feat in features]
+                     for x in property_names]) for feat in features]
 
     return values
 
@@ -112,7 +112,8 @@ def write_to(data, property_names, output_file):
         geojson.dump(feature_collection, f)
 
 
-def write_properties_to(data, property_names, input_file, output_file, filter=None):
+def write_properties_to(data, property_names, input_file,
+                        output_file, filter=None):
     """Writes property data to polygon_file for all
        geometries indicated in the filter, and creates output file.
        The length of data must be equal to the number of geometries in
@@ -151,7 +152,6 @@ def write_properties_to(data, property_names, input_file, output_file, filter=No
                 for j, property_value in enumerate(data[ind]):
                     feature['properties'][property_names[j]] = property_value
 
-
     feature_collection['features'] = features
 
     with open(output_file, 'w') as f:
@@ -174,13 +174,15 @@ def find_unique_values(input_file, property_name):
         feature_collection = geojson.load(f)
 
     features = feature_collection['features']
-    values = np.array([ feat['properties'].get(property_name) for feat in features])
+    values = np.array([feat['properties'].get(property_name)
+                       for feat in features])
 
     return np.unique(values)
 
+
 def create_balanced_geojson(shapefile, output_name,
                             class_names=['Swimming pool', 'No swimming pool'],
-                            samples_per_class = None, train_test = None):
+                            samples_per_class=None, train_test=None):
     '''
     Create a shapefile comprised of balanced classes for training net. Option to save a
     train and test file- each with distinct, randomly selected polygons.
@@ -200,7 +202,7 @@ def create_balanced_geojson(shapefile, output_name,
     '''
 
     with open(shapefile) as f:
-        data=geojson.load(f)
+        data = geojson.load(f)
 
     # sort classes into separate lists
     sorted_classes = []
@@ -240,8 +242,14 @@ def create_balanced_geojson(shapefile, output_name,
         test_out = 'test_{}'.format(output_name + '.geojson')
         train_out = 'train_{}'.format(output_name + '.geojson')
         test_size = int(train_test * len(final))
-        test = {data.keys()[0]: data.values()[0], data.keys()[1]: final[:test_size]}
-        train = {data.keys()[0]: data.values()[0], data.keys()[1]: final[test_size:]}
+        test = {
+            data.keys()[0]: data.values()[0],
+            data.keys()[1]: final[
+                :test_size]}
+        train = {
+            data.keys()[0]: data.values()[0],
+            data.keys()[1]: final[
+                test_size:]}
 
         # save train and test geojsons
         with open(test_out, 'wb') as f1:
@@ -252,8 +260,10 @@ def create_balanced_geojson(shapefile, output_name,
             geojson.dump(train, f2)
         print 'Train polygons saved as {}'.format(train_out)
 
-    else: # only save one file with balanced classes
-        balanced_json = {data.keys()[0]: data.values()[0], data.keys()[1]: final}
+    else:  # only save one file with balanced classes
+        balanced_json = {
+            data.keys()[0]: data.values()[0],
+            data.keys()[1]: final}
         with open(output_name + '.geojson', 'wb') as f:
             geojson.dump(balanced_json, f)
         print '{} polygons saved as {}.geojson'.format(len(final), output_name)
