@@ -12,21 +12,27 @@ from keras.utils import np_utils
 import warnings
 warnings.filterwarnings('ignore')
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False, resize_dim=None):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
+                  max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False,
+                  resize_dim=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
-
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
-            (2) int 'batch_size': number of chips to generate per iteration. equal to batch-size of net, defaults to 32
+            (2) int 'batch_size': number of chips to generate per iteration. equal to
+            batch-size of net, defaults to 32
             (3) int 'nb_classes': number of classes in which to categorize itmes
-            (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon. defaults to 100
-            (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon. note that this will be the size of the height and width of input images to the net (default = 224)
+            (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon.
+            defaults to 100
+            (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon.
+            note that this will be the size of the height and width of input images to the
+            net (default = 224)
             (6) bool 'return_labels': return class label with chips. defaults to True
             (7) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
             (8) bool 'mask': if True returns a masked array. defaults to True
             (9) bool 'fc': return appropriately shaped target vector for FCNN
-            (10) tuple(int) 'resize': size to downsample chips to (channels, height, width). Note that resizing takes place after padding the original polygon. Defaults to None (do not resize).
-
+            (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
+            width). Note that resizing takes place after padding the original polygon.
+            Defaults to None (do not resize).
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
             (3) corresponding chip labels (if True)
@@ -52,7 +58,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0)[:3] # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
+            chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
+                                'constant', constant_values = 0)
 
             # resize image
             if resize_dim != chip_patch.shape:
@@ -77,23 +84,32 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
                 if not fc:
                     yield (np.array([i[:3] for i in inputs]), labels)
                 else:
-                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
+                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size,
+                           nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
 
-def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool', 'No swimming pool'], samples_per_class = None, train_test = None):
+def create_balanced_geojson(shapefile, output_name,
+                            class_names=['Swimming pool', 'No swimming pool'],
+                            samples_per_class = None, train_test = None):
     '''
-    Create a shapefile comprised of balanced classes for training net. Option to save a train and test file- each with distinct, randomly selected polygons.
+    Create a shapefile comprised of balanced classes for training net. Option to save a
+    train and test file- each with distinct, randomly selected polygons.
 
     INPUT   (1) string 'shapefile': name of shapefile with original samples
-            (2) string 'output_file': name of file in which to save selected polygons (not including file extension)
-            (3) list[string] 'class_names': name of classes of interest as listed in properties['class_name']. defaults to pool classes.
-            (4) int or None 'samples_per_class': number of samples to select per class. if None, uses length of smallest class. Defaults to None
-            (5) float or None 'train_test': proportion of polygons to save in test file. if None, only saves one file (balanced data). otherwise saves a train and test file. Defaults to None.
+            (2) string 'output_file': name of file in which to save selected polygons
+            (not including file extension)
+            (3) list[string] 'class_names': name of classes of interest as listed in
+            properties['class_name']. defaults to pool classes.
+            (4) int or None 'samples_per_class': number of samples to select per class.
+            if None, uses length of smallest class. Defaults to None
+            (5) float or None 'train_test': proportion of polygons to save in test file.
+            if None, only saves one file (balanced data). otherwise saves a train and
+            test file. Defaults to None.
 
     OUTPUT  (1) geojson file with balanced classes in current directory
     '''
-    
+
     with open(shapefile) as f:
         data=geojson.load(f)
 
@@ -132,10 +148,11 @@ def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool'
 
     # split feature lists into train and test
     if train_test:
-        test_out, train_out = 'test_{}'.format(output_file), 'train_{}'.format(output_file)
-        test_size = int(train_test * len(data['features']))
-        test = {data.keys()[0]: data.values()[0], data.keys()[1]: data['features'][:test_size]}
-        train = {data.keys()[0]: data.values()[0], data.keys()[1]: data['features'][test_size:]}
+        test_out = 'test_{}'.format(output_name + '.geojson')
+        train_out = 'train_{}'.format(output_name + '.geojson')
+        test_size = int(train_test * len(final))
+        test = {data.keys()[0]: data.values()[0], data.keys()[1]: final[:test_size]}
+        train = {data.keys()[0]: data.values()[0], data.keys()[1]: final[test_size:]}
 
         # save train and test geojsons
         with open(test_out, 'wb') as f1:
