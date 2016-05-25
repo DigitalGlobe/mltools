@@ -26,7 +26,7 @@ class PoolNet(object):
             (11) int 'train_size': number of samples to train on per epoch. defaults to 5000
     '''
 
-    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=True, load_model=False, model_name=None, train_size=500):
+    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=False, load_model=False, model_name=None, train_size=500):
         self.nb_epoch = nb_epoch
         self.nb_chan = nb_chan
         self.nb_classes = nb_classes
@@ -35,13 +35,13 @@ class PoolNet(object):
         self.n_dense_nodes = n_dense_nodes
         self.fc = fc
         self.vgg = vgg
-        self.alexnet = alexnet
+        self.load_model = load_model
         self.train_size = train_size
         if self.vgg:
             self.model = self.VGG_16()
         # elif self.alexnet:
         #     self.model = self.AlexNet()
-        elif self.loaded_model:
+        elif self.load_model:
             self.model_name = model_name
             self.model = self.load_model_weights()
         else:
@@ -57,9 +57,9 @@ class PoolNet(object):
         print 'Compiling standard model...'
         model = Sequential()
 
-        model.add(Convolution2D(96, 11, 11, border_mode = 'valid', input_shape = self.input_shape, activation = 'relu'))
+        model.add(Convolution2D(96, 7, 7, border_mode = 'valid', input_shape=self.input_shape, activation = 'relu'))
 
-        model.add(Convolution2D(256, 5, 5, border_mode = 'valid', activation = 'relu'))
+        model.add(Convolution2D(128, 5, 5, border_mode = 'valid', activation = 'relu'))
         # model.add(BatchNormalization(mode=0, axis=-1))
         model.add(MaxPooling2D(pool_size = (3,3), strides = (2,2)))
 
@@ -91,13 +91,13 @@ class PoolNet(object):
 
     def VGG_16(self):
         '''
-        Implementation of VGG 16-layer net
+        Implementation of VGG 16-layer net. currently too large for memory on dg_gpu
         '''
         print 'Compiling VGG Net...'
 
         model = Sequential()
-        model.add(ZeroPadding2D((1,1),input_shape=self.input_shape))
-        model.add(Convolution2D(64, 3, 3, activation='relu'))
+        model.add(ZeroPadding2D((1,1)))
+        model.add(Convolution2D(64, 3, 3, activation='relu', input_shape=self.input_shape))
         model.add(ZeroPadding2D((1,1)))
         model.add(Convolution2D(64, 3, 3, activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
@@ -184,7 +184,7 @@ class PoolNet(object):
         print 'Done.'
         return model
 
-    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100, max_chip_hw=224, validation_split=0.15, resize_image=None):
+    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100, max_chip_hw=224, validation_split=0.15):
         '''
         Uses generator to train model from shapefile
 
@@ -193,17 +193,16 @@ class PoolNet(object):
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
-                (6) tuple(int) 'resize': size to downsample chips to (channels, height, width). Note that resizing takes place after padding the original polygon. Defaults to None (do not resize).
         OUTPUT  (1) trained model
         '''
 
         print 'Training model on batches...'
 
         # create generators for train and validation data
-        data_gen = get_iter_data(train_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
+        data_gen = get_iter_data(train_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw, resize_dim=self.input_shape)
 
         if val_shapefile:
-            val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw)
+            val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw, resize_dim=self.input_shape)
 
             # fit model
             self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
