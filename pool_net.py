@@ -5,9 +5,11 @@ from polygon_pipeline import get_iter_data
 from keras.layers.core import Dense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
+from keras.layers.normalization import BatchNormalization
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.optimizers import SGD
 from keras.utils import np_utils
-from keras.layers.normalization import BatchNormalization
+from sklearn.metrics import classification_report
 
 class PoolNet(object):
     '''
@@ -198,6 +200,9 @@ class PoolNet(object):
 
         print 'Training model on batches...'
 
+        # callback for early stopping
+        es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+
         # create generators for train and validation data
         data_gen = get_iter_data(train_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw, resize_dim=self.input_shape)
 
@@ -205,9 +210,9 @@ class PoolNet(object):
             val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw, resize_dim=self.input_shape)
 
             # fit model
-            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
+            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, callbacks=[es] validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
         else:
-            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch)
+            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, callbacks=[es])
 
     def save_model(self, model_name):
         '''
@@ -236,6 +241,12 @@ class PoolNet(object):
         print 'Done.'
         return mod
 
+    def evaluate_model(self, X_test, y_test):
+        '''
+        Predicts classes of X_test and evaluates precision, recall and f1 score
+        '''
+        y_hat = self.model.predict_classes(X_test)
+        print classification_report(y_test, y_hat)
 
 # TODO
 # evaluate w test data
