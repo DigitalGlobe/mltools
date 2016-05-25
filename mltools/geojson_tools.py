@@ -85,7 +85,8 @@ def write_to(data, property_names, output_file):
 
        Args:
            data: List of tuples.
-           property_names: List of strings. Should be same length as each tuple in data.
+           property_names: List of strings. Should be same length as the
+                           number of properties.
            output_file (str): Output file name.
 
     '''
