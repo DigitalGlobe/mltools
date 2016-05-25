@@ -155,12 +155,10 @@ def create_balanced_geojson(shapefile, output_name,
         test_size = int(train_test * len(final))
         test = {
             data.keys()[0]: data.values()[0],
-            data.keys()[1]: final[
-                :test_size]}
+            data.keys()[1]: final[:test_size]}
         train = {
             data.keys()[0]: data.values()[0],
-            data.keys()[1]: final[
-                test_size:]}
+            data.keys()[1]: final[test_size:]}
 
         # save train and test geojsons
         with open(test_out, 'wb') as f1:
