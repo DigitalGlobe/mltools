@@ -108,7 +108,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
             chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
 
             # resize image
-            if resize_dim:
+            if resize_dim != chip_patch.shape:
                 chip_patch = resize(chip_patch, resize_dim)
 
             if return_labels:
