@@ -177,10 +177,12 @@ def find_unique_values(input_file, property_name):
 
     return np.unique(values)
 
-def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool',
-                            'No swimming pool'], samples_per_class = None):
+def create_balanced_geojson(shapefile, output_name,
+                            class_names=['Swimming pool', 'No swimming pool'],
+                            samples_per_class = None, train_test = None):
     '''
-    Create a shapefile comprised of balanced classes for training net
+    Create a shapefile comprised of balanced classes for training net. Option to save a
+    train and test file- each with distinct, randomly selected polygons.
 
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
@@ -189,15 +191,19 @@ def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool'
             properties['class_name']. defaults to pool classes.
             (4) int or None 'samples_per_class': number of samples to select per class.
             if None, uses length of smallest class. Defaults to None
+            (5) float or None 'train_test': proportion of polygons to save in test file.
+            if None, only saves one file (balanced data). otherwise saves a train and
+            test file. Defaults to None.
 
     OUTPUT  (1) geojson file with balanced classes in current directory
     '''
-    sorted_classes = [] # put different classes in separate lists
 
     with open(shapefile) as f:
         data=geojson.load(f)
 
-    # separate different classes based on class_names
+    # sort classes into separate lists
+    sorted_classes = []
+
     for i in class_names:
         this_data = []
 
@@ -227,8 +233,26 @@ def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool'
 
     # shuffle classes for input to net
     np.random.shuffle(final)
-    balanced_json = {data.keys()[0]: data.values()[0], data.keys()[1]: final}
 
-    with open(output_name + '.geojson', 'wb') as f:
-        geojson.dump(balanced_json, f)
-    print '{} polygons saved as {}.geojson'.format(len(final), output_name)
+    # split feature lists into train and test
+    if train_test:
+        test_out = 'test_{}'.format(output_name + '.geojson')
+        train_out = 'train_{}'.format(output_name + '.geojson')
+        test_size = int(train_test * len(final))
+        test = {data.keys()[0]: data.values()[0], data.keys()[1]: final[:test_size]}
+        train = {data.keys()[0]: data.values()[0], data.keys()[1]: final[test_size:]}
+
+        # save train and test geojsons
+        with open(test_out, 'wb') as f1:
+            geojson.dump(test, f1)
+        print 'Test polygons saved as {}'.format(test_out)
+
+        with open(train_out, 'wb') as f2:
+            geojson.dump(train, f2)
+        print 'Train polygons saved as {}'.format(train_out)
+
+    else: # only save one file with balanced classes
+        balanced_json = {data.keys()[0]: data.values()[0], data.keys()[1]: final}
+        with open(output_name + '.geojson', 'wb') as f:
+            geojson.dump(balanced_json, f)
+        print '{} polygons saved as {}.geojson'.format(len(final), output_name)
