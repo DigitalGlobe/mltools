@@ -87,7 +87,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
             (7) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
             (8) bool 'mask': if True returns a masked array. defaults to True
             (9) bool 'fc': return appropriately shaped target vector for FCNN
-            (10) tuple(int) 'resize': size to downsample chips to (channels, height,
+            (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
             width). Note that resizing takes place after padding the original polygon.
             Defaults to None (do not resize).
 
