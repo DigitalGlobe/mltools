@@ -177,14 +177,18 @@ def find_unique_values(input_file, property_name):
 
     return np.unique(values)
 
-def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool', 'No swimming pool'], samples_per_class = None):
+def create_balanced_geojson(shapefile, output_name, class_names=['Swimming pool',
+                            'No swimming pool'], samples_per_class = None):
     '''
     Create a shapefile comprised of balanced classes for training net
 
     INPUT   (1) string 'shapefile': name of shapefile with original samples
-            (2) string 'output_file': name of file in which to save selected polygons (not including file extension)
-            (3) list[string] 'class_names': name of classes of interest as listed in properties['class_name']. defaults to pool classes.
-            (4) int or None 'samples_per_class': number of samples to select per class. if None, uses length of smallest class. Defaults to None
+            (2) string 'output_file': name of file in which to save selected polygons
+            (not including file extension)
+            (3) list[string] 'class_names': name of classes of interest as listed in
+            properties['class_name']. defaults to pool classes.
+            (4) int or None 'samples_per_class': number of samples to select per class.
+            if None, uses length of smallest class. Defaults to None
 
     OUTPUT  (1) geojson file with balanced classes in current directory
     '''

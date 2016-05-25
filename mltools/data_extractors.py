@@ -65,20 +65,28 @@ def get_data(shapefile, return_labels=False, buffer=[0,0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False, resize_dim=None):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
+                  max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False,
+                  resize_dim=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
 
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
-            (2) int 'batch_size': number of chips to generate per iteration. equal to batch-size of net, defaults to 32
+            (2) int 'batch_size': number of chips to generate per iteration. equal to
+            batch-size of net, defaults to 32
             (3) int 'nb_classes': number of classes in which to categorize itmes
-            (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon. defaults to 100
-            (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon. note that this will be the size of the height and width of input images to the net (default = 224)
+            (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon.
+            defaults to 100
+            (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon.
+            note that this will be the size of the height and width of input images to the
+            net (default = 224)
             (6) bool 'return_labels': return class label with chips. defaults to True
             (7) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
             (8) bool 'mask': if True returns a masked array. defaults to True
             (9) bool 'fc': return appropriately shaped target vector for FCNN
-            (10) tuple(int) 'resize': size to downsample chips to (channels, height, width). Note that resizing takes place after padding the original polygon. Defaults to None (do not resize).
+            (10) tuple(int) 'resize': size to downsample chips to (channels, height,
+            width). Note that resizing takes place after padding the original polygon.
+            Defaults to None (do not resize).
 
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
@@ -105,7 +113,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0)[:3] # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)], 'constant', constant_values = 0)
+            chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
+                                'constant', constant_values = 0)
 
             # resize image
             if resize_dim != chip_patch.shape:
@@ -130,7 +139,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100, max_c
                 if not fc:
                     yield (np.array([i[:3] for i in inputs]), labels)
                 else:
-                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
+                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size,
+                           nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
 
