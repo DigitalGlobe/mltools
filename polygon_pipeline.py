@@ -12,8 +12,9 @@ from keras.utils import np_utils
 import warnings
 warnings.filterwarnings('ignore')
 
+
 def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
-                  max_chip_hw=224, return_labels=True, buffer=[0,0], mask=True, fc=False,
+                  max_chip_hw=224, return_labels=True, buffer=[0, 0], mask=True, fc=False,
                   resize_dim=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
@@ -47,19 +48,20 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
 
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
-                                                filter=[{'image_id':img_id}],
+                                                filter=[{'image_id': img_id}],
                                                 buffer=buffer,
                                                 mask=mask):
 
             # check for adequate chip size
             chan, h, w = np.shape(chip)
-            if chip is None or min(h, w) < min_chip_hw or max(h, w) > max_chip_hw:
+            if chip is None or min(h, w) < min_chip_hw or max(
+                    h, w) > max_chip_hw:
                 continue
 
             # zero-pad chip to standard net input size
-            chip = chip.filled(0)[:3] # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0,0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
-                                'constant', constant_values = 0)
+            chip = chip.filled(0)[:3]  # replace masked entries with zeros
+            chip_patch = np.pad(chip, [(0, 0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
+                                'constant', constant_values=0)
 
             # resize image
             if resize_dim != chip_patch.shape:
@@ -85,13 +87,13 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
                     yield (np.array([i[:3] for i in inputs]), labels)
                 else:
                     yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size,
-                           nb_classes, 1))
+                                                                             nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
 
 def create_balanced_geojson(shapefile, output_name,
                             class_names=['Swimming pool', 'No swimming pool'],
-                            samples_per_class = None, train_test = None):
+                            samples_per_class=None, train_test=None):
     '''
     Create a shapefile comprised of balanced classes for training net. Option to save a
     train and test file- each with distinct, randomly selected polygons.
@@ -111,7 +113,7 @@ def create_balanced_geojson(shapefile, output_name,
     '''
 
     with open(shapefile) as f:
-        data=geojson.load(f)
+        data = geojson.load(f)
 
     # sort classes into separate lists
     sorted_classes = []
@@ -151,8 +153,14 @@ def create_balanced_geojson(shapefile, output_name,
         test_out = 'test_{}'.format(output_name + '.geojson')
         train_out = 'train_{}'.format(output_name + '.geojson')
         test_size = int(train_test * len(final))
-        test = {data.keys()[0]: data.values()[0], data.keys()[1]: final[:test_size]}
-        train = {data.keys()[0]: data.values()[0], data.keys()[1]: final[test_size:]}
+        test = {
+            data.keys()[0]: data.values()[0],
+            data.keys()[1]: final[
+                :test_size]}
+        train = {
+            data.keys()[0]: data.values()[0],
+            data.keys()[1]: final[
+                test_size:]}
 
         # save train and test geojsons
         with open(test_out, 'wb') as f1:
@@ -163,8 +171,10 @@ def create_balanced_geojson(shapefile, output_name,
             geojson.dump(train, f2)
         print 'Train polygons saved as {}'.format(train_out)
 
-    else: # only save one file with balanced classes
-        balanced_json = {data.keys()[0]: data.values()[0], data.keys()[1]: final}
+    else:  # only save one file with balanced classes
+        balanced_json = {
+            data.keys()[0]: data.values()[0],
+            data.keys()[1]: final}
         with open(output_name + '.geojson', 'wb') as f:
             geojson.dump(balanced_json, f)
         print '{} polygons saved as {}.geojson'.format(len(final), output_name)
