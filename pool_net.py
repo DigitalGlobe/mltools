@@ -264,6 +264,7 @@ class PoolNet(object):
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
+                (6) string 'save_model': name to save model as. If None, does not save model.
         OUTPUT  (1) retrained model
         '''
         # freeze all layers except final dense
