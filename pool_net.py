@@ -28,7 +28,10 @@ class PoolNet(object):
             (11) int 'train_size': number of samples to train on per epoch. defaults to 5000
     '''
 
-    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False, vgg=False, load_model=False, model_name=None, train_size=500):
+    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32,
+                input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False,
+                vgg=False, load_model=False, model_name=None, train_size=500):
+
         self.nb_epoch = nb_epoch
         self.nb_chan = nb_chan
         self.nb_classes = nb_classes
@@ -48,7 +51,8 @@ class PoolNet(object):
             self.model = self.load_model_weights()
         else:
             self.model = self.compile_model()
-        self.model_layer_names = [self.model.layers[i].get_config()['name'] for i in range(len(self.model.layers))]
+        self.model_layer_names = [self.model.layers[i].get_config()['name']
+                                    for i in range(len(self.model.layers))]
         if self.fc:
             self.model = self.make_fc_model()
 
@@ -59,20 +63,39 @@ class PoolNet(object):
         print 'Compiling standard model...'
         model = Sequential()
 
-        model.add(Convolution2D(96, 7, 7, border_mode = 'valid', input_shape=self.input_shape, activation = 'relu'))
+        model.add(Convolution2D(96, 7, 7,
+                                border_mode = 'valid',
+                                input_shape=self.input_shape,
+                                activation = 'relu'))
+        model.add(Dropout(0.75))
 
-        model.add(Convolution2D(128, 5, 5, border_mode = 'valid', activation = 'relu'))
+        model.add(Convolution2D(128, 5, 5,
+                                border_mode = 'valid',
+                                activation = 'relu'))
         # model.add(BatchNormalization(mode=0, axis=-1))
-        model.add(MaxPooling2D(pool_size = (3,3), strides = (2,2)))
+        model.add(MaxPooling2D(pool_size = (3,3),
+                                strides = (2,2)))
+        model.add(Dropout(0.5))
 
-        model.add(Convolution2D(256, 3, 3, border_mode = 'valid', activation = 'relu'))
+        model.add(Convolution2D(256, 3, 3,
+                                border_mode = 'valid',
+                                activation = 'relu'))
         # model.add(BatchNormalization(mode=0, axis=-1))
-        model.add(MaxPooling2D(pool_size = (3,3), strides=(2,2)))
+        model.add(MaxPooling2D(pool_size = (3,3),
+                                strides=(2,2)))
+        model.add(Dropout(0.5))
 
-        model.add(Convolution2D(256, 3, 3, border_mode = 'valid', activation = 'relu'))
+        model.add(Convolution2D(256, 3, 3,
+                                border_mode = 'valid',
+                                activation = 'relu'))
+        model.add(Dropout(0.5))
 
-        model.add(Convolution2D(256, 3, 3, border_mode = 'valid', activation = 'relu'))
-        model.add(MaxPooling2D(pool_size = (3,3), strides = (2,2)))
+        model.add(Convolution2D(256, 3, 3,
+                                border_mode = 'valid',
+                                activation = 'relu'))
+        model.add(MaxPooling2D(pool_size = (3,3),
+                                strides = (2,2)))
+        model.add(Dropout(0.5))
 
         model.add(Flatten())
         model.add(Dense(self.n_dense_nodes))
@@ -186,7 +209,8 @@ class PoolNet(object):
         print 'Done.'
         return model
 
-    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100, max_chip_hw=224, validation_split=0.15):
+    def train_on_data(self, train_shapefile, val_shapefile=None, min_chip_hw=100,
+                      max_chip_hw=224, validation_split=0.15):
         '''
         Uses generator to train model from shapefile
 
@@ -204,32 +228,61 @@ class PoolNet(object):
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
 
         # create generators for train and validation data
-        data_gen = get_iter_data(train_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw, resize_dim=self.input_shape)
+        data_gen = get_iter_data(train_shapefile,
+                                batch_size=self.batch_size,
+                                min_chip_hw=min_chip_hw,
+                                max_chip_hw=max_chip_hw,
+                                resize_dim=self.input_shape)
 
         if val_shapefile:
-            val_gen = get_iter_data(val_shapefile, batch_size=self.batch_size, min_chip_hw=min_chip_hw, max_chip_hw=max_chip_hw, resize_dim=self.input_shape)
+            val_gen = get_iter_data(val_shapefile,
+                                    batch_size=self.batch_size,
+                                    min_chip_hw=min_chip_hw,
+                                    max_chip_hw=max_chip_hw,
+                                    resize_dim=self.input_shape)
 
             # fit model
-            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, callbacks=[es] validation_data=val_gen, nb_val_samples=int(self.train_size * validation_split))
+            self.model.fit_generator(data_gen,
+                                    samples_per_epoch=self.train_size,
+                                    nb_epoch=self.nb_epoch,
+                                    callbacks=[es], validation_data=val_gen,
+                                    nb_val_samples=int(self.train_size * validation_split))
         else:
-            self.model.fit_generator(data_gen, samples_per_epoch=self.train_size, nb_epoch=self.nb_epoch, callbacks=[es])
+            self.model.fit_generator(data_gen,
+                                    samples_per_epoch=self.train_size,
+                                    nb_epoch=self.nb_epoch, callbacks=[es])
+
+    def retrain_output(self, train_shapefile, **kwargs):
+
+        # freeze all layers except final dense
+        for i in xrange(len(self.model.layers[:-2])):
+            self.model.layers[i].trainable = False
+
+        # recompile model
+        sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
+        self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+
+        self.train_on_data(**kwargs)
 
     def save_model(self, model_name):
         '''
-        INPUT string 'model_name': name to save model and weigths under, including filepath but not extension
+        INPUT string 'model_name': name to save model and weigths under, including
+        filepath but not extension
         Saves current model as json and weigts as h5df file
         '''
         model = '{}.json'.format(model_name)
         weights = '{}.h5'.format(model_name)
-        json_string = self.model_comp.to_json()
+        json_string = self.model.to_json()
         self.model.save_weights(weights)
         with open(model, 'w') as f:
             json.dump(json_string, f)
 
-    def load_model_weights(self):
+    def load_model_weights(self, model_name):
         '''
-        INPUT  (1) string 'model_name': filepath to model and weights, not including extension
-        OUTPUT: Model with loaded weights. can fit on model using loaded_model=True in fit_model method
+        INPUT  (1) string 'model_name': filepath to model and weights, not including
+        extension
+        OUTPUT: Model with loaded weights. can fit on model using loaded_model=True in
+        fit_model method
         '''
         print 'Loading model {}'.format(self.model_name)
         model = '{}.json'.format(self.model_name)
@@ -244,6 +297,9 @@ class PoolNet(object):
     def evaluate_model(self, X_test, y_test):
         '''
         Predicts classes of X_test and evaluates precision, recall and f1 score
+        INPUT   (1) array 'X_test': array of chips
+                (2) list 'y_test': labels corresponding to chips in X_test
+        OUTPUT  (1) classification report
         '''
         y_hat = self.model.predict_classes(X_test)
         print classification_report(y_test, y_hat)
