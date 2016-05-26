@@ -2,7 +2,7 @@ import numpy as np
 import random
 import json
 from polygon_pipeline import get_iter_data
-from keras.layers.core import Dense, Dropout, Activation, Flatten, Reshape
+from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
@@ -48,7 +48,7 @@ class PoolNet(object):
         #     self.model = self.AlexNet()
         elif self.load_model:
             self.model_name = model_name
-            self.model = self.load_model_weights()
+            self.model = self.load_model_weights(model_name)
         else:
             self.model = self.compile_model()
         self.model_layer_names = [self.model.layers[i].get_config()['name']
@@ -63,11 +63,10 @@ class PoolNet(object):
         print 'Compiling standard model...'
         model = Sequential()
 
-        model.add(Convolution2D(96, 5, 5,
+        model.add(Convolution2D(64, 5, 5,
                                 border_mode = 'valid',
                                 input_shape=self.input_shape,
                                 activation = 'relu'))
-        model.add(Dropout(0.75))
 
         model.add(Convolution2D(128, 5, 5,
                                 border_mode = 'valid',
@@ -76,7 +75,7 @@ class PoolNet(object):
         model.add(MaxPooling2D(pool_size = (2,2)))
         model.add(Dropout(0.5))
 
-        model.add(Convolution2D(256, 3, 3,
+        model.add(Convolution2D(128, 3, 3,
                                 border_mode = 'valid',
                                 activation = 'relu'))
         model.add(BatchNormalization(mode=0, axis=1))
@@ -88,7 +87,7 @@ class PoolNet(object):
         #                         activation = 'relu'))
         # model.add(Dropout(0.5))
 
-        model.add(Convolution2D(256, 3, 3,
+        model.add(Convolution2D(128, 3, 3,
                                 border_mode = 'valid',
                                 activation = 'relu'))
         model.add(MaxPooling2D(pool_size = (2,2)))
@@ -98,13 +97,13 @@ class PoolNet(object):
         model.add(Dense(self.n_dense_nodes))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
-        # model.add(Dense(self.n_dense_nodes))
-        # model.add(Activation('relu'))
-        # model.add(Dropout(0.5))
+        model.add(Dense(self.n_dense_nodes))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.5))
         model.add(Dense(self.nb_classes))
         model.add(Activation('softmax'))
 
-        sgd = SGD(lr=0.001, decay=0.01, momentum=0.9)
+        sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9)
 
         model.compile(loss = 'categorical_crossentropy', optimizer = 'sgd')
 
@@ -338,69 +337,3 @@ class PoolNet(object):
         tp, tn = right[[y_test==1]], right[[y_test==0]]
 
         return tp, tn, fp, fn
-
-
-## GRAVEYARD ##
-        # in PoolNet.train_on_data:
-        # for epoch in xrange(self.nb_epoch):
-        #
-        #     print 'Epoch {}:'.format(epoch)
-        #     for chips, labels in get_iter_data(shapefile, batch_size=self.batch_size, min_chip_hw=20, max_chip_hw=224, return_labels=True, mask=True):
-        #         X = np.array([i[:3] for i in chips])
-        #         y = [1 if label == 'Swimming pool' else 0 for label in labels]
-        #         Y = np_utils.to_categorical(y, self.nb_classes)
-        #
-        #         print 'Training...'
-        #         import pdb; pdb.set_trace()
-        #         mod.train_on_batch(X, Y)
-
-
-
-    # def AlexNet(self):
-    #     '''
-    #     Implementation of AlexNet
-    #     '''
-    #     print 'Compiling AlexNet...'
-    #
-    #     inputs = Input(shape=(3,224,224))
-    #
-    #     conv_1 = Convolution2D(96, 11, 11,subsample=(4,4),activation='relu',
-    #                            name='conv_1')(inputs)
-    #
-    #     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
-    #     conv_2 = crosschannelnormalization(name="convpool_1")(conv_2)
-    #     conv_2 = ZeroPadding2D((2,2))(conv_2)
-    #     conv_2 = merge([Convolution2D(128,5,5,activation="relu",name='conv_2_'+str(i+1))(splittensor(ratio_split=2,id_split=i)(conv_2)) for i in range(2)], mode='concat',concat_axis=1,name="conv_2")
-    #
-    #     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
-    #     conv_3 = crosschannelnormalization()(conv_3)
-    #     conv_3 = ZeroPadding2D((1,1))(conv_3)
-    #     conv_3 = Convolution2D(384,3,3,activation='relu',name='conv_3')(conv_3)
-    #
-    #     conv_4 = ZeroPadding2D((1,1))(conv_3)
-    #     conv_4 = merge([
-    #         Convolution2D(192,3,3,activation="relu",name='conv_4_'+str(i+1))(
-    #             splittensor(ratio_split=2,id_split=i)(conv_4)
-    #         ) for i in range(2)], mode='concat',concat_axis=1,name="conv_4")
-    #
-    #     conv_5 = ZeroPadding2D((1,1))(conv_4)
-    #     conv_5 = merge([
-    #         Convolution2D(128,3,3,activation="relu",name='conv_5_'+str(i+1))(
-    #             splittensor(ratio_split=2,id_split=i)(conv_5)
-    #         ) for i in range(2)], mode='concat',concat_axis=1,name="conv_5")
-    #
-    #     dense_1 = MaxPooling2D((3, 3), strides=(2,2),name="convpool_5")(conv_5)
-    #
-    #     dense_1 = Flatten(name="flatten")(dense_1)
-    #     dense_1 = Dense(4096, activation='relu',name='dense_1')(dense_1)
-    #     dense_2 = Dropout(0.5)(dense_1)
-    #     dense_2 = Dense(4096, activation='relu',name='dense_2')(dense_2)
-    #     dense_3 = Dropout(0.5)(dense_2)
-    #     dense_3 = Dense(2,name='dense_3')(dense_3)
-    #     prediction = Activation("softmax",name="softmax")(dense_3)
-    #
-    #     model = Model(input=inputs, output=prediction)
-    #     sgd = SGD(lr=0.001, decay=0.01, momentum=0.9, nesterov=True)
-    #     model.compile(loss='categorical_crossentropy', optimizer='sgd')
-    #
-    #     return model
