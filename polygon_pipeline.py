@@ -13,7 +13,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                   max_chip_hw=224, return_labels=True, buffer=[0, 0], mask=True, fc=False,
                   resize_dim=None):
     '''
@@ -90,7 +90,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
                                                                              nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
-def filter_polygon_size(shapefile, output_file, min_polygon_hw=50, max_polygon_hw=224):
+def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
