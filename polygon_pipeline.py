@@ -90,6 +90,44 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
                                                                              nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
+def filer_polygon_size(shapefile, output_file, min_polygon_hw=100, max_polygon_hw=224):
+    '''
+    Creates a geojson file containing only acceptable side dimensions for polygons.
+    INPUT   (1) string 'shapefile': name of shapefile with original samples
+            (2) string 'output_file': name of file in which to save selected polygons
+            (not including file extension)
+            (3) int 'min_polygon_hw': minimum acceptable side length for given polygon
+            (4) int 'max_polygon_hw': maximum acceptable side length for given polygon
+    OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of acceptable side dimensions
+    '''
+    # load polygons
+    with open(shapefile) as f:
+        data = geojson.load(f)
+
+    # find indicies of acceptable polygons
+    ix_ok, ix = [], 0
+    for chip, properties in img.iter_vector(vector=shapefile,
+                                            properties=True,
+                                            filter=[{'image_id': img_id}],
+                                            buffer=buffer,
+                                            mask=mask):
+        chan,h,w = np.shape(chip)
+        if chip is None or min(h, w) < min_chip_hw or max(h, w) > max_chip_hw::
+            ix += 1
+            continue
+
+        ix_ok.apend(ix)
+        ix += 1
+
+    ok_polygons = [data['features'][i] for i in ix_ok]
+    filtrate = {data.keys()[0]: data.values()[0],
+                data.keys()[1]: ok_polygons}
+
+    # save new geojson
+    with open('{}.geojson'.format(output_file), 'wb') as f:
+        geojson.dump(filtrate, f)
+
+
 
 def create_balanced_geojson(shapefile, output_name,
                             class_names=['Swimming pool', 'No swimming pool'],
