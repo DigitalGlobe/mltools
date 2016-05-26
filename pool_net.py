@@ -73,16 +73,14 @@ class PoolNet(object):
                                 border_mode = 'valid',
                                 activation = 'relu'))
         model.add(BatchNormalization(mode=0, axis=1))
-        model.add(MaxPooling2D(pool_size = (3,3),
-                                strides = (2,2)))
+        model.add(MaxPooling2D(pool_size = (2,2)))
         model.add(Dropout(0.5))
 
         model.add(Convolution2D(256, 3, 3,
                                 border_mode = 'valid',
                                 activation = 'relu'))
         model.add(BatchNormalization(mode=0, axis=1))
-        model.add(MaxPooling2D(pool_size = (3,3),
-                                strides=(2,2)))
+        model.add(MaxPooling2D(pool_size = (2,2)))
         model.add(Dropout(0.5))
 
         # model.add(Convolution2D(256, 3, 3,
@@ -93,8 +91,7 @@ class PoolNet(object):
         model.add(Convolution2D(256, 3, 3,
                                 border_mode = 'valid',
                                 activation = 'relu'))
-        model.add(MaxPooling2D(pool_size = (3,3),
-                                strides = (2,2)))
+        model.add(MaxPooling2D(pool_size = (2,2)))
         model.add(Dropout(0.5))
 
         model.add(Flatten())
