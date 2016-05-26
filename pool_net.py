@@ -244,7 +244,7 @@ class PoolNet(object):
             self.model.fit_generator(data_gen,
                                     samples_per_epoch=self.train_size,
                                     nb_epoch=self.nb_epoch,
-                                    callbacks=[es, checkpointer], validation_data=val_gen,
+                                    callbacks=[checkpointer], validation_data=val_gen,
                                     nb_val_samples=int(self.train_size * validation_split))
         else:
             self.model.fit_generator(data_gen,
