@@ -63,7 +63,7 @@ class PoolNet(object):
         print 'Compiling standard model...'
         model = Sequential()
 
-        model.add(Convolution2D(96, 6, 6,
+        model.add(Convolution2D(96, 5, 5,
                                 border_mode = 'valid',
                                 input_shape=self.input_shape,
                                 activation = 'relu'))
