@@ -227,6 +227,7 @@ class PoolNet(object):
 
         # callback for early stopping
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
 
         # create generators for train and validation data
         data_gen = get_iter_data(train_shapefile,
@@ -246,12 +247,12 @@ class PoolNet(object):
             self.model.fit_generator(data_gen,
                                     samples_per_epoch=self.train_size,
                                     nb_epoch=self.nb_epoch,
-                                    callbacks=[es], validation_data=val_gen,
+                                    callbacks=[es, checkpointer], validation_data=val_gen,
                                     nb_val_samples=int(self.train_size * validation_split))
         else:
             self.model.fit_generator(data_gen,
                                     samples_per_epoch=self.train_size,
-                                    nb_epoch=self.nb_epoch, callbacks=[es])
+                                    nb_epoch=self.nb_epoch, callbacks=[es, checkpointer])
         if save_model:
             self.save_model(save_model)
 
