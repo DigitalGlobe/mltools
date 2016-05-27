@@ -206,19 +206,56 @@ class PoolNet(object):
         print 'Done.'
         return model
 
+
     def fit_xy(self, X_train, Y_train, validation_split=0.1, save_model = None):
+        '''
+        Fit model on pre-loaded training data. Only for sizes small enough to fit in memory (~ 10000 3x100x100 chips on dg_gpu)
+        INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
+                (2) list 'Y_train': one-hot associated labels to X_train. shape = (train_size, n_classes)
+                (3) float 'validation_split': proportion of X_train to validate on.
+                #TODO: add X_test and Y_test, set val_split to None
+                (4) string 'save_model': name of model for saving. if None, does not save model.
+        OUTPUT  (1) trained model.
+        '''
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
 
-        self.model.fit(X_train, Y_train, validation_split = validation_split, callbacks=[es, checkpointer])
+        self.model.fit(X_train, Y_train, validation_split=validation_split, callbacks=[es, checkpointer], nb_epoch=self.nb_epoch)
 
         if save_model:
             self.save_model(save_model)
 
-    def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=100,
+
+    def fit_generator(self, train_shapefile, batches = 10000, min_chip_hw=40,
+                      max_chip_hw=224, validation_split=0.1, save_model=None):
+        '''
+        Fit a model using a generator that yields a large batch of chips to train on.
+        INPUT   (1) string 'train_shapefile': filename for the training data (must be a geojson)
+                (2) int 'batches': number of chips to yield. must be small enough to fit into memory.
+                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
+                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (5) float 'validation_split': proportion of chips to use as validation data.
+                (6) string 'save_model': name of model for saving. if None, does not save model.
+        OUTPUT  (1) trained model.
+        '''
+        es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
+
+        for e in range(self.nb_epoch):
+            print 'epoch {}'.format(e)
+            for X_train, Y_train in get_iter_data(train_shapefile,
+                                                  batch_size = batches,
+                                                  min_chip_hw = min_chip_hw,
+                                                  max_chip_hw = max_chip_hw,
+                                                  resize_dim = self.input_shape)
+                self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1)
+
+
+    def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=40,
                       max_chip_hw=224, validation_split=0.15, save_model=None):
         '''
         Uses generator to train model from shapefile
+        Note- this is extremely slow!!!
 
         INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
                 (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
