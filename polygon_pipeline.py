@@ -64,8 +64,9 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                                 'constant', constant_values=0)
 
             # resize image
-            if resize_dim != chip_patch.shape:
-                chip_patch = resize(chip_patch, resize_dim)
+            if resize_dim:
+                if resize_dim != chip_patch.shape:
+                    chip_patch = resize(chip_patch, resize_dim)
 
             if return_labels:
                 try:
@@ -86,8 +87,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 if not fc:
                     yield (np.array([i[:3] for i in inputs]), labels)
                 else:
-                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size,
-                                                                             nb_classes, 1))
+                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
 def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
