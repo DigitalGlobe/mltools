@@ -2,7 +2,6 @@
 # The purpose of this module is to generate train, test and target data
 # for machine learning algorithms.
 
-from itertools import cycle
 import geoio
 import geojson_tools as gt
 import numpy as np
@@ -71,12 +70,11 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                   max_chip_hw=224, return_labels=True, buffer=[0, 0], mask=True, fc=False,
                   resize_dim=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
-
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
             (2) int 'batch_size': number of chips to generate per iteration. equal to
             batch-size of net, defaults to 32
@@ -93,7 +91,6 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
             (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
             width). Note that resizing takes place after padding the original polygon.
             Defaults to None (do not resize).
-
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
             (3) corresponding chip labels (if True)
@@ -103,7 +100,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
-    for img_id in cycle(img_ids):
+    for img_id in img_ids:
         img = geoio.GeoImage(img_id + '.tif')
 
         for chip, properties in img.iter_vector(vector=shapefile,
@@ -124,8 +121,9 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
                                 'constant', constant_values=0)
 
             # resize image
-            if resize_dim != chip_patch.shape:
-                chip_patch = resize(chip_patch, resize_dim)
+            if resize_dim:
+                if resize_dim != chip_patch.shape:
+                    chip_patch = resize(chip_patch, resize_dim)
 
             if return_labels:
                 try:
@@ -146,10 +144,14 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=100,
                 if not fc:
                     yield (np.array([i[:3] for i in inputs]), labels)
                 else:
-                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size,
-                                                                             nb_classes, 1))
+                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
+    # return any remaining inputs
+    if len(inputs) != 0:
+        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+        labels = np_utils.to_categorical(l, 2)
+        yield (np.array([i[:3] for i  in inputs]), np.array(labels))g
 
 def random_window(image, chip_size, no_chips=10000):
     """Implement a random chipper on a georeferenced image.
