@@ -247,7 +247,7 @@ class PoolNet(object):
                                                   batch_size = batches,
                                                   min_chip_hw = min_chip_hw,
                                                   max_chip_hw = max_chip_hw,
-                                                  resize_dim = self.input_shape)
+                                                  resize_dim = self.input_shape):
                 self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1)
 
 
@@ -259,8 +259,8 @@ class PoolNet(object):
 
         INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
                 (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
-                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
-                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (3) int 'min_chip_hw': minimum acceptable side dimension (in pixels) for polygons
+                (4) int 'max_chip_hw': maximum acceptable side dimension (in pixels) for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
                 (6) string 'save_model': name to save model as. If None, does not save model.
         OUTPUT  (1) trained model
@@ -305,8 +305,8 @@ class PoolNet(object):
         training on balanced data.
         INPUT   (1) string 'train_shapefile': shapefile containing polygons to retrain model on
                 (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
-                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
-                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (3) int 'min_chip_hw': minimum acceptable side dimension (in pixels) for polygons
+                (4) int 'max_chip_hw': maximum acceptable side dimension (in pixels) for polygons
                 (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
                 (6) string 'save_model': name to save model as. If None, does not save model.
         OUTPUT  (1) retrained model
