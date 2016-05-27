@@ -244,12 +244,10 @@ def create_balanced_geojson(shapefile, output_name,
         test_size = int(train_test * len(final))
         test = {
             data.keys()[0]: data.values()[0],
-            data.keys()[1]: final[
-                :test_size]}
+            data.keys()[1]: final[:test_size]}
         train = {
             data.keys()[0]: data.values()[0],
-            data.keys()[1]: final[
-                test_size:]}
+            data.keys()[1]: final[test_size:]}
 
         # save train and test geojsons
         with open(test_out, 'wb') as f1:
@@ -268,16 +266,16 @@ def create_balanced_geojson(shapefile, output_name,
             geojson.dump(balanced_json, f)
         print '{} polygons saved as {}.geojson'.format(len(final), output_name)
 
+
 def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
             (not including file extension)
-            (3) int 'min_polygon_hw': minimum acceptable side length for given polygon
-            (4) int 'max_polygon_hw': maximum acceptable side length for given polygon
-    OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of
-            acceptable side dimensions
+            (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for given polygon
+            (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for given polygon
+    OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of acceptable side dimensions
     '''
     # load polygons
     with open(shapefile) as f:
@@ -305,6 +303,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
             ix += 1
 
     ok_polygons = [data['features'][i] for i in ix_ok]
+    np.random.shuffle(ok_polygons)
     filtrate = {data.keys()[0]: data.values()[0],
                 data.keys()[1]: ok_polygons}
 
