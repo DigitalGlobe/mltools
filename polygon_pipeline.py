@@ -43,7 +43,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
-    for img_id in cycle(img_ids):
+    for img_id in img_ids:
         img = geoio.GeoImage(img_id + '.tif')
 
         for chip, properties in img.iter_vector(vector=shapefile,
@@ -90,14 +90,21 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                     yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
+    # return any remaining inputs
+    if len(inputs) != 0:
+        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
+        labels = np_utils.to_categorical(l, 2)
+        yield (np.array([i[:3] for i  in inputs]), np.array(labels))
+
+
 def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
             (not including file extension)
-            (3) int 'min_polygon_hw': minimum acceptable side length for given polygon
-            (4) int 'max_polygon_hw': maximum acceptable side length for given polygon
+            (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for given polygon
+            (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for given polygon
     OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of acceptable side dimensions
     '''
     # load polygons
