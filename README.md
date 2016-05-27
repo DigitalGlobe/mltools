@@ -1,16 +1,24 @@
 # Pool Detection Using Deep Learning
 
 ## Table of Contents
-1. [PoolNet Workflow](#poolnet-workflow)
-2. [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
+1. [Setting up a Virtual Environment](#setting-up-an-environment)
+2. [PoolNet Workflow](#poolnet-workflow)
+3. [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
+
+## Setting up an environment
+
+    conda create -n geo python ipython numpy scipy gdal git libgdal=2
 
 ## PoolNet Workflow
 
 Start with a geojson shapefile and associated tif images.
 
-1. create train and test geojsons with balanced classes (mltools.geojson_tools.create_balanced_geojson)
-2. create iterators of polygons of appropriate size zero-padded to input shape (mltools.data_extractors.get_iter_data)
-3. train PoolNet on training data generator
+1. Filter shapefile for legitimate polygons (mltools.geojson_tools.filter_polygon_size). Use resolution to determing minimum and maximum acceptable side dimensions for polygons (generally between 40 and 224 pixels for pansharpened images).
+
+
+2. create train and test geojsons with balanced classes (mltools.geojson_tools.create_balanced_geojson)
+3. create iterators of polygons of appropriate size zero-padded to input shape (mltools.data_extractors.get_iter_data)
+4. train PoolNet on training data generator
 
 
 ## Setting up an EC2 Instance With Theano  
