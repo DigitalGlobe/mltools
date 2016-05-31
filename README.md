@@ -2,14 +2,30 @@
 
 ## Table of Contents
 
-1. [Getting Started](#getting-started)
+1. [About PoolNet](#about-poolnet)
+2. [Getting Started](#getting-started)
     * [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
     * [Setting up a Virtual Environment](#setting-up-an-environment)
-2. [PoolNet Workflow](#poolnet-workflow)
+3. [PoolNet Workflow](#poolnet-workflow)
+
+## About PoolNet
+
+PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network architecture, a 16-layer convolutional neural network, the top-scoring submission for the 2014 [ImageNet](http://www.image-net.org/challenges/LSVRC/2014/) classification challenge.
+
+(show vggnet architecture img)
+
+This network is trained on satellite images of various property polygons in order to classify these properties as ones with or without pools (see image below). This model provides an efficient and reliable way to determine which homes have pools, information that is useful to insurance companies. With appropriate training data this model can be extended to applications beyond pools, such as vehicles, solar panels and buldings.
+
+(show samples of housing polygons)
+
+### The challenge:
+
+Pools turn out to be very diverse in satellite images
+
 
 ## Getting Started  
 
-PoolNet needs to run on a GPU to prevent training from being prohibitively slow. Before getting started you will need to set up an EC2 instance with Theano. See the [setting up an environement](#setting-up-an-environment) for details on how this is done
+PoolNet requires a GPU to prevent training from being prohibitively slow. Before getting started you will need to set up an EC2 instance with Theano.
 
 ### Setting up an environment
 
@@ -90,16 +106,22 @@ In short:
 
 ## PoolNet Workflow
 
-Start with a geojson shapefile and associated tif images.
 
-1. Filter shapefile for legitimate polygons (mltools.geojson_tools.filter_polygon_size). Use resolution to determine minimum and maximum acceptable side dimensions for polygons (generally between 40 and 224 pixels for pansharpened images).
+Start with a geojson shapefile and associated tif images:  
 
-(Image of polygons over image)
+<img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=400>   
+<sub> Pansharpened tif image with associated polygons overlayed. Green polygons indicate there is a pool in the property. </sub>
+
+### Prepare materials and train net
+
+1. Filter shapefile for legitimate polygons (mltools.geojson_tools.filter_polygon_size). Use resolution to determine minimum and maximum acceptable side dimensions for polygons (generally between 30 and 150 pixels for pansharpened images).
+
+    (Image of polygons over image)
 
 2. create train and test geojsons with balanced classes (mltools.geojson_tools.create_balanced_geojson)
 
 3. create iterators of polygons of appropriate size zero-padded to input shape (mltools.data_extractors.get_iter_data)
 
-(show polygon processing imgs)
+    (show polygon processing imgs)
 
-4. train PoolNet on training data generator
+4. train PoolNet on training data generators
