@@ -55,13 +55,15 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
 
             # check for adequate chip size
             chan, h, w = np.shape(chip)
+            pad_h, pad_w = max_chip_hw - h, max_chip_hw - w
             if chip is None or min(h, w) < min_chip_hw or max(
                     h, w) > max_chip_hw:
                 continue
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0).astype(float)  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (1 - ((max_chip_hw - h)/2)), ((max_chip_hw - h)/2), (1 - ((max_chip_hw - w)/2)), ((max_chip_hw - w)/2)], 'constant', constant_values=0)
+            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2, (pad_w - pad_w/2))], 'constant', constant_values=0)
+            # chip_patch = np.pad(chip, [(0, 0), (0, pad_h), (0, pad_w)], 'constant', constant_values=0)
 
             # resize image
             if resize_dim:
@@ -83,6 +85,9 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
             # do not include image_id for fitting net
             inputs.append(chip_patch)
             ct += 1
+            sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch_size)) + ' ' * 5)
+            sys.stdout.flush()
+
             if ct == batch_size:
                 l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
                 labels = np_utils.to_categorical(l, nb_classes)
@@ -138,7 +143,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
 
             ix_ok.append(ix)
             ix += 1
-            sys.stdout.write('\r%' + str(100 * ix / total) + ' ' * 20)
+            sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 5)
             sys.stdout.flush()
 
     print 'Saving...'
