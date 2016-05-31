@@ -274,9 +274,12 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
             (not including file extension)
-            (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for given polygon
-            (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for given polygon
-    OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of acceptable side dimensions
+            (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for
+            given polygon
+            (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for
+            given polygon
+    OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of
+            acceptable side dimensions
     '''
     # load polygons
     with open(shapefile) as f:

@@ -91,7 +91,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
             (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
             width). Note that resizing takes place after padding the original polygon.
             Defaults to None (do not resize).
-            (11) bool 'normalize': divide all chips by max pixel intensity (normalize net input)
+            (11) bool 'normalize': divide all chips by max pixel intensity (normalize
+            net input)
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
             (3) corresponding chip labels (if True)
@@ -119,7 +120,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0).astype(float)  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2, (pad_w - pad_w/2))], 'constant', constant_values=0)
+            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
+                                (pad_w - pad_w/2))], 'constant', constant_values=0)
 
             # resize image
             if resize_dim:
@@ -152,7 +154,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 if not fc:
                     yield (np.array([i for i in inputs]), labels)
                 else:
-                    yield (np.array([i for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
+                    yield (np.array([i for i in inputs]), labels.reshape(batch_size,
+                    nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
     # return any remaining inputs
