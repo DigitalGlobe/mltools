@@ -11,6 +11,7 @@ from keras.regularizers import l1l2
 from keras.optimizers import SGD
 from keras.utils import np_utils
 from sklearn.metrics import classification_report
+from time import localtime
 
 class PoolNet(object):
     '''
@@ -333,10 +334,19 @@ class PoolNet(object):
         '''
         model = '{}.json'.format(model_name)
         weights = '{}.h5'.format(model_name)
+        log = '{}.txt'.format(model_name)
         json_string = self.model.to_json()
         self.model.save_weights(weights)
         with open(model, 'w') as f:
             json.dump(json_string, f)
+
+        # make log for model train
+        time = localtime()
+        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' +
+            str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
+        layers = str(solf.model.layers)
+        with open(log, 'w') as l:
+            l.write(date + layers)
 
     def load_model_weights(self, model_name):
         '''

@@ -60,7 +60,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0)[:3].astype(float)  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (1 - (max_chip_hw - h)/2), ((max_chip_hw - h)/2), ((1 - (max_chip_hw - w)/2)), ((max_chip_hw - w)/2)], 'constant', constant_values=0)
+            chip_patch = np.pad(chip, [(0, 0), (1 - ((max_chip_hw - h)/2)), ((max_chip_hw - h)/2), (1 - ((max_chip_hw - w)/2)), ((max_chip_hw - w)/2)], 'constant', constant_values=0)
 
             # resize image
             if resize_dim:
@@ -134,7 +134,6 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
 
             ix_ok.append(ix)
             ix += 1
-            print '.'
     print 'Saving...'
     ok_polygons = [data['features'][i] for i in ix_ok]
     np.random.shuffle(ok_polygons)
