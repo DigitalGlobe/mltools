@@ -2,11 +2,10 @@ import geoio
 import geojson
 import random
 import numpy as np
-import geojson_tools as gt
+# import geojson_tools as gt
 from skimage.transform import resize
-from itertools import cycle
 from keras.utils import np_utils
-# from mltools import geojson_tools as gt
+from mltools import geojson_tools as gt
 # from mltools import data_extractors as de
 
 import warnings
@@ -15,7 +14,7 @@ warnings.filterwarnings('ignore')
 
 def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                   max_chip_hw=224, return_labels=True, buffer=[0, 0], mask=True, fc=False,
-                  resize_dim=None):
+                  resize_dim=None, normalize=False):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
@@ -34,6 +33,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
             (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
             width). Note that resizing takes place after padding the original polygon.
             Defaults to None (do not resize).
+            (11) bool 'normalize': divide all chips by max pixel intensity (normalize net input)
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
             (3) corresponding chip labels (if True)
@@ -59,14 +59,16 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 continue
 
             # zero-pad chip to standard net input size
-            chip = chip.filled(0)[:3]  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (0, max_chip_hw - h), (0, max_chip_hw - w)],
-                                'constant', constant_values=0)
+            chip = chip.filled(0)[:3].astype(float)  # replace masked entries with zeros
+            chip_patch = np.pad(chip, [(0, 0), ((1 - (max_chip_hw - h)/2), (max_chip_hw - h)/2), ((1 - (max_chip_hw - w)/2)), (max_chip_hw - w)/2)], 'constant', constant_values=0)
 
             # resize image
             if resize_dim:
                 if resize_dim != chip_patch.shape:
                     chip_patch = resize(chip_patch, resize_dim)
+
+            if normalize:
+                chip_patch /= np.max(chip_patch)
 
             if return_labels:
                 try:
@@ -133,6 +135,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
             ix += 1
 
     ok_polygons = [data['features'][i] for i in ix_ok]
+    np.random.shuffle(ok_polygons)
     filtrate = {data.keys()[0]: data.values()[0],
                 data.keys()[1]: ok_polygons}
 
