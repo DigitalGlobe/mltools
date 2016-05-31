@@ -60,7 +60,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 continue
 
             # zero-pad chip to standard net input size
-            chip = chip.filled(0)[:3].astype(float)  # replace masked entries with zeros
+            chip = chip.filled(0).astype(float)  # replace masked entries with zeros
             chip_patch = np.pad(chip, [(0, 0), (1 - ((max_chip_hw - h)/2)), ((max_chip_hw - h)/2), (1 - ((max_chip_hw - w)/2)), ((max_chip_hw - w)/2)], 'constant', constant_values=0)
 
             # resize image
@@ -88,16 +88,16 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 labels = np_utils.to_categorical(l, nb_classes)
                 # reshape label vector to match output of FCNN
                 if not fc:
-                    yield (np.array([i[:3] for i in inputs]), labels)
+                    yield (np.array([i for i in inputs]), labels)
                 else:
-                    yield (np.array([i[:3] for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
+                    yield (np.array([i for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
                 ct, inputs, labels = 0, [], []
 
     # return any remaining inputs
     if len(inputs) != 0:
         l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
         labels = np_utils.to_categorical(l, 2)
-        yield (np.array([i[:3] for i  in inputs]), np.array(labels))
+        yield (np.array([i for i  in inputs]), np.array(labels))
 
 
 def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
