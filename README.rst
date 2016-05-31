@@ -50,7 +50,7 @@ so that modifications in your .bashrc take effect.
 
 Create a conda environment::
 
-   conda create -n env python ipython numpy scipy gdal git  
+   conda create -n env python ipython numpy scipy gdal libgdal=2 git  
    
 Activate the environment::
 
