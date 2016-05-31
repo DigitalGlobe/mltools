@@ -64,49 +64,52 @@ class PoolNet(object):
         print 'Compiling standard model...'
         model = Sequential()
 
-        model.add(Convolution2D(64, 7, 7, W_regularizer = l1l2(l1=0.01, l2=0.01),
+        model.add(Convolution2D(64, 5, 5, W_regularizer = l1l2(l1=0.01, l2=0.01),
                                 border_mode = 'valid',
                                 input_shape=self.input_shape,
                                 activation = 'relu'))
+        model.add(MaxPooling2D(pool_size=(2,2), strides=(1,1)))
+        model.add(Dropout(0.75))
 
-        model.add(Convolution2D(128, 5, 5, W_regularizer = l1l2(l1=0.01, l2=0.01),
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(BatchNormalization(mode=0, axis=1))
-        model.add(MaxPooling2D(pool_size = (2,2)))
-        model.add(Dropout(0.5))
-
-        model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(BatchNormalization(mode=0, axis=1))
-        model.add(MaxPooling2D(pool_size = (2,2)))
-        model.add(Dropout(0.5))
-
-        model.add(Convolution2D(256, 3, 3,
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(Dropout(0.5))
+        # model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
+        #                         border_mode = 'valid',
+        #                         activation = 'relu'))
+        # model.add(BatchNormalization(mode=0, axis=1))
+        # model.add(MaxPooling2D(pool_size = (2,2)))
 
         model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
                                 border_mode = 'valid',
                                 activation = 'relu'))
         model.add(MaxPooling2D(pool_size = (2,2)))
         model.add(Dropout(0.5))
+
+        model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
+                                border_mode = 'valid',
+                                activation = 'relu'))
+        model.add(MaxPooling2D(pool_size = (2,2), strides=(1,1)))
+        model.add(Dropout(0.5))
+
+        model.add(Convolution2D(128, 3, 3,
+                                border_mode = 'valid',
+                                activation = 'relu'))
+        model.add(Dropout(0.25))
 
         model.add(Flatten())
-        model.add(Dense(self.n_dense_nodes, W_regularizer = l1l2(l1=0.01, l2=0.01)))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(self.n_dense_nodes, W_regularizer = l1l2(l1=0.01, l2=0.01)))
+        # model.add(Dense(self.n_dense_nodes))
+        # model.add(Activation('relu'))
+        # model.add(Dropout(0.5))
+        # model.add(Dense(self.n_dense_nodes))
+        # model.add(Activation('relu'))
+        # model.add(Dropout(0.5))
+        model.add(Dense(self.n_dense_nodes))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
         model.add(Dense(self.nb_classes))
         model.add(Activation('softmax'))
 
-        sgd = SGD(lr=0.001, decay=1e-6, momentum=0.9)
+        sgd = SGD(lr=0.0001, decay=0.01)
 
-        model.compile(loss = 'binary_crossentropy', optimizer = 'sgd')
+        model.compile(loss = 'categorical_crossentropy', optimizer = 'sgd')
 
         return model
 
@@ -118,7 +121,7 @@ class PoolNet(object):
         print 'Compiling VGG Net...'
 
         model = Sequential()
-        model.add(ZeroPadding2D((1,1)))
+        model.add(ZeroPadding2D((1,1), input_shape=self.input_shape))
         model.add(Convolution2D(64, 3, 3, activation='relu', input_shape=self.input_shape))
         model.add(ZeroPadding2D((1,1)))
         model.add(Convolution2D(64, 3, 3, activation='relu'))
