@@ -59,6 +59,7 @@ class PoolNet(object):
     def compile_model(self):
         '''
         compiles standard convolutional netowrk (not FCNN)
+        currently not a good model. use VGGnet.
         '''
         print 'Compiling standard model...'
         model = Sequential()
