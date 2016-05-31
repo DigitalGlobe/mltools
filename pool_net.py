@@ -302,20 +302,19 @@ class PoolNet(object):
         if save_model:
             self.save_model(save_model)
 
-    def retrain_output(self, train_shapefile, **kwargs):
+    def retrain_output(self, X_train, Y_train, **kwargs):
         '''
         Retrains last dense layer of model. For use with unbalanced classes after
         training on balanced data.
-        INPUT   (1) string 'train_shapefile': shapefile containing polygons to retrain model on
-                (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
-                (3) int 'min_chip_hw': minimum acceptable side dimension (in pixels) for polygons
-                (4) int 'max_chip_hw': maximum acceptable side dimension (in pixels) for polygons
-                (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
-                (6) string 'save_model': name to save model as. If None, does not save model.
+        INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
+                (2) list 'Y_train': one-hot associated labels to X_train. shape = (train_size, n_classes)
+                (3) float 'validation_split': proportion of X_train to validate on.
+                #TODO: add X_test and Y_test, set val_split to None
+                (4) string 'save_model': name of model for saving. if None, does not save model.
         OUTPUT  (1) retrained model
         '''
         # freeze all layers except final dense
-        for i in xrange(len(self.model.layers[:-2])):
+        for i in xrange(len(self.model.layers[:-1])):
             self.model.layers[i].trainable = False
 
         # recompile model
@@ -323,7 +322,7 @@ class PoolNet(object):
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # train model
-        self.train_on_data(train_shapefile, **kwargs)
+        self.fit_xy(X_train, Y_train, **kwargs)
 
     def save_model(self, model_name):
         '''
