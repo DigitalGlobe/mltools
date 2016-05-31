@@ -32,7 +32,7 @@ class PoolNet(object):
 
     def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32,
                 input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False,
-                vgg=False, load_model=False, model_name=None, train_size=500):
+                vgg=True, load_model=False, model_name=None, train_size=500):
 
         self.nb_epoch = nb_epoch
         self.nb_chan = nb_chan
@@ -46,8 +46,6 @@ class PoolNet(object):
         self.train_size = train_size
         if self.vgg:
             self.model = self.VGG_16()
-        # elif self.alexnet:
-        #     self.model = self.AlexNet()
         elif self.load_model:
             self.model_name = model_name
             self.model = self.load_model_weights(model_name)
@@ -72,11 +70,11 @@ class PoolNet(object):
         model.add(MaxPooling2D(pool_size=(2,2), strides=(1,1)))
         model.add(Dropout(0.75))
 
-        # model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
-        #                         border_mode = 'valid',
-        #                         activation = 'relu'))
-        # model.add(BatchNormalization(mode=0, axis=1))
-        # model.add(MaxPooling2D(pool_size = (2,2)))
+        model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
+                                border_mode = 'valid',
+                                activation = 'relu'))
+        model.add(BatchNormalization(mode=0, axis=1))
+        model.add(MaxPooling2D(pool_size = (2,2)))
 
         model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
                                 border_mode = 'valid',
@@ -96,12 +94,12 @@ class PoolNet(object):
         model.add(Dropout(0.25))
 
         model.add(Flatten())
-        # model.add(Dense(self.n_dense_nodes))
-        # model.add(Activation('relu'))
-        # model.add(Dropout(0.5))
-        # model.add(Dense(self.n_dense_nodes))
-        # model.add(Activation('relu'))
-        # model.add(Dropout(0.5))
+        model.add(Dense(self.n_dense_nodes))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(self.n_dense_nodes))
+        model.add(Activation('relu'))
+        model.add(Dropout(0.5))
         model.add(Dense(self.n_dense_nodes))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
@@ -117,7 +115,7 @@ class PoolNet(object):
 
     def VGG_16(self):
         '''
-        Implementation of VGG 16-layer net. currently too large for memory on dg_gpu
+        Implementation of VGG 16-layer net.
         '''
         print 'Compiling VGG Net...'
 
