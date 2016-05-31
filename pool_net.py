@@ -373,7 +373,8 @@ class PoolNet(object):
         OUTPUT  (1) classification report
         '''
         y_hat = self.model.predict_classes(X_test)
-        print classification_report(y_test, y_hat)
+        y_true = [int(i[1]) for i in y_test]
+        print classification_report(y_truea, y_hat)
 
         if return_yhat:
             return y_hat
