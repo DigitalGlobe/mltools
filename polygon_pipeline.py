@@ -2,6 +2,7 @@ import geoio
 import geojson
 import random
 import numpy as np
+import sys
 # import geojson_tools as gt
 from skimage.transform import resize
 from keras.utils import np_utils
@@ -112,6 +113,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
     # load polygons
     with open(shapefile) as f:
         data = geojson.load(f)
+    total = float(len(data['features']))
 
     # find indicies of acceptable polygons
     ix_ok, ix = [], 0
@@ -130,10 +132,15 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
             chan,h,w = np.shape(chip)
             if chip is None or min(h, w) < min_polygon_hw or max(h, w) > max_polygon_hw:
                 ix += 1
+                sys.stdout.write('\r%' + str(100 * ix / total) + ' ' * 20)
+                sys.stdout.flush()
                 continue
 
             ix_ok.append(ix)
             ix += 1
+            sys.stdout.write('\r%' + str(100 * ix / total) + ' ' * 20)
+            sys.stdout.flush()
+
     print 'Saving...'
     ok_polygons = [data['features'][i] for i in ix_ok]
     np.random.shuffle(ok_polygons)
