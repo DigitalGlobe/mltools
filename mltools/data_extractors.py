@@ -70,9 +70,9 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
-                  max_chip_hw=224, return_labels=True, buffer=[0, 0], mask=True, fc=False,
-                  resize_dim=None, normalize=False):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
+                  max_chip_hw=125, return_labels=True, return_id = False, buffer=[0, 0],
+                  mask=True, fc=False, resize_dim=None, normalize=True):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
@@ -84,21 +84,23 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
             (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon.
             note that this will be the size of the height and width of input images to the
             net (default = 224)
-            (6) bool 'return_labels': return class label with chips. defaults to True
-            (7) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
-            (8) bool 'mask': if True returns a masked array. defaults to True
-            (9) bool 'fc': return appropriately shaped target vector for FCNN
-            (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
+            (6) bool 'return_labels': return class label with chips. defaults to True8
+            (7) bool 'return_id': return the geometry id with each chip. don't use with
+            generator.
+            (8) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
+            (9) bool 'mask': if True returns a masked array. defaults to True
+            (10) bool 'fc': return appropriately shaped target vector for FCNN
+            (11) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
             width). Note that resizing takes place after padding the original polygon.
             Defaults to None (do not resize).
-            (11) bool 'normalize': divide all chips by max pixel intensity (normalize
-            net input)
+            (12) bool 'normalize': divide all chips by max pixel intensity
+            (normalize net input)
     OUTPUT  (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips
             (3) corresponding chip labels (if True)
     '''
 
-    ct, inputs, labels = 0, [], []
+    ct, inputs, labels, ids = 0, [], [], []
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
@@ -120,8 +122,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0).astype(float)  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
-                                (pad_w - pad_w/2))], 'constant', constant_values=0)
+            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2, (pad_w - pad_w/2))], 'constant', constant_values=0)
+            # chip_patch = np.pad(chip, [(0, 0), (0, pad_h), (0, pad_w)], 'constant', constant_values=0)
 
             # resize image
             if resize_dim:
@@ -140,10 +142,13 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 except (TypeError, KeyError):
                     continue
 
+            if return_id:
+                id = properties['feature_id']
+                ids.append(id)
+
             # do not include image_id for fitting net
             inputs.append(chip_patch)
             ct += 1
-            # print percent complete to stdout
             sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch_size)) + ' ' * 5)
             sys.stdout.flush()
 
@@ -152,17 +157,25 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=40,
                 labels = np_utils.to_categorical(l, nb_classes)
                 # reshape label vector to match output of FCNN
                 if not fc:
-                    yield (np.array([i for i in inputs]), labels)
+                    if return_id:
+                        yield (np.array([i for i in inputs]), ids, labels)
+                    else:
+                        yield (np.array([i for i in inputs]), labels)
                 else:
-                    yield (np.array([i for i in inputs]), labels.reshape(batch_size,
-                    nb_classes, 1))
-                ct, inputs, labels = 0, [], []
+                    if return_id:
+                        yield (np.array([i for i in inputs]), ids, labels.reshape(batch_size, nb_classes, 1))
+                    else:
+                        yield (np.array([i for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
+                ct, inputs, labels, ids = 0, [], [], []
 
     # return any remaining inputs
     if len(inputs) != 0:
         l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
         labels = np_utils.to_categorical(l, 2)
-        yield (np.array([i for i  in inputs]), np.array(labels))
+        if return_id:
+            yield (np.array([i for i in inputs]), ids, np.array(labels))
+        else:
+            yield (np.array([i for i in inputs]), np.array(labels))
 
 def random_window(image, chip_size, no_chips=10000):
     """Implement a random chipper on a georeferenced image.
