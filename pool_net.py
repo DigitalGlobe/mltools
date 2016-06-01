@@ -18,46 +18,42 @@ class PoolNet(object):
     '''
     Fully Convolutional model to classify polygons as pool/no pool
 
-    INPUT   (1) int 'nb_chan': number of input channels. defaults to 3 (rgb)
-            (2) int 'nb_epoch': number of epochs to train. defaults to 4
-            (3) int 'nb_classes': number of different image classes. defaults to 2 (pool/no pool)
-            (4) int 'batch_size': amount of images to train for each batch. defaults to 32
-            (5) list[int] 'input_shape': shape of input images (3-dims). defaults to (3,125,125)
-            (6) int 'n_dense_nodes': number of nodes to use in dense layers. defaults to 2048.
-            (7) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to False.
-            (8) bool 'vgg': True to use vggnet architecture. Defaults to True (currently better than original)
-            (9) bool 'load_model': Use a saved trained model (model_name) architecture and weights. Defaults to False
-            (10) string 'model_name': Only relevant if load_model is True. name of model (not including file extension) to load. Defaults to None
-            (11) int 'train_size': number of samples to train on per epoch. defaults to 5000
+    INPUT   (1) int 'nb_epoch': number of epochs to train. defaults to 4
+            (2) int 'nb_classes': number of different image classes. defaults to 2 (pool/no pool)
+            (3) int 'batch_size': amount of images to train for each batch. defaults to 32
+            (4) tuple[int] 'input_shape': shape of input images (3-dims). defaults to (3,125,125)
+            (5) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to False.
+            (6) bool 'vgg': True to use vggnet architecture. Defaults to True (currently better than original)
+            (7) bool 'load_model': Use a saved trained model (model_name) architecture and weights. Defaults to False
+            (8) string 'model_name': Only relevant if load_model is True. name of model (not including file extension) to load. Defaults to None
+            (9) int 'train_size': number of samples to train on per epoch. defaults to 10000
     '''
 
-    def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32,
-                input_shape=(3, 125, 125), n_dense_nodes = 2048, fc = False,
-                vgg=True, load_model=False, model_name=None, train_size=500):
+    def __init__(self, nb_epoch=4, nb_classes=2, batch_size=32,
+                input_shape=(3, 125, 125), fc = False,
+                vgg=True, load_model=False, model_name=None, train_size=10000):
 
         self.nb_epoch = nb_epoch
-        self.nb_chan = nb_chan
         self.nb_classes = nb_classes
         self.batch_size = batch_size
         self.input_shape = input_shape
-        self.n_dense_nodes = n_dense_nodes
         self.fc = fc
         self.vgg = vgg
         self.load_model = load_model
         self.train_size = train_size
         if self.vgg:
-            self.model = self.VGG_16()
+            self.model = self._VGG_16()
         elif self.load_model:
             self.model_name = model_name
             self.model = self.load_model_weights(model_name)
         else:
-            self.model = self.compile_model()
+            self.model = self._compile_model()
         self.model_layer_names = [self.model.layers[i].get_config()['name']
                                     for i in range(len(self.model.layers))]
         if self.fc:
             self.model = self.make_fc_model()
 
-    def compile_model(self):
+    def _compile_model(self):
         '''
         compiles standard convolutional netowrk (not FCNN)
         currently not a good model. use VGGnet.
@@ -96,13 +92,13 @@ class PoolNet(object):
         model.add(Dropout(0.25))
 
         model.add(Flatten())
-        model.add(Dense(self.n_dense_nodes))
+        model.add(Dense(2048))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(self.n_dense_nodes))
+        model.add(Dense(2048))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(self.n_dense_nodes))
+        model.add(Dense(2048))
         model.add(Activation('relu'))
         model.add(Dropout(0.5))
         model.add(Dense(self.nb_classes))
@@ -115,7 +111,7 @@ class PoolNet(object):
         return model
 
 
-    def VGG_16(self):
+    def _VGG_16(self):
         '''
         Implementation of VGG 16-layer net.
         '''
@@ -169,7 +165,7 @@ class PoolNet(object):
         model.compile(optimizer = 'sgd', loss = 'categorical_crossentropy')
         return model
 
-    def get_behead_index(self, layer_names):
+    def _get_behead_index(self, layer_names):
         '''
         helper function to find index where net flattens
         INPUT   (1) list 'layer_names': names of each layer in model
@@ -188,15 +184,15 @@ class PoolNet(object):
         creates a fully convolutional model from self.model
         '''
         # get index of first dense layer in model
-        behead_ix = self.get_behead_index(self.model_layer_names)
+        behead_ix = self._get_behead_index(self.model_layer_names)
         model_layers = self.model.layers[:behead_ix]
         inp_shape = self.model.layers[behead_ix - 1].get_output_shape_at(-1) # shape of image entering FC layers
 
         # replace dense layers with convolutions
         model = Sequential()
-        model_layers += [Convolution2D(self.n_dense_nodes, 1, 1)]
+        model_layers += [Convolution2D(2048, 1, 1)]
         model_layers += [Activation('relu')]
-        model_layers += [Convolution2D(self.n_dense_nodes, 1, 1)]
+        model_layers += [Convolution2D(2048, 1, 1)]
         model_layers += [Activation('relu')]
         model_layers += [Convolution2D(self.nb_classes, inp_shape[-1], inp_shape[-1])]
         model_layers += [Reshape((self.nb_classes-1,1))] # must be same shape as target vector (None, num_classes, 1)
@@ -350,7 +346,7 @@ class PoolNet(object):
         # make log for model train
         time = localtime()
         date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
-        layers = str(solf.model.layers)
+        layers = str(self.model.layers)
         with open(log, 'w') as l:
             l.write(date + layers)
 
