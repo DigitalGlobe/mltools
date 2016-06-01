@@ -7,6 +7,7 @@
     * [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
     * [Setting up a Virtual Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
+4. [Docs](#docs)
 
 ## About PoolNet
 
@@ -119,6 +120,7 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
     <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' width=200>
 
         import mltools.geojson_tools as gt
+        import mltools.data_extractors as de
 
         gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
         # creates filtered_shapefile.geojson
@@ -132,18 +134,57 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
         gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
         # creates training data (train_balanced.geojson) with balanced classes for first round of training  
 
-    Notice that we now have the following shapefiles:  
+    <b>Notice that we now have the following shapefiles</b>:  
 
     <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
 
     a. <b>shapefile.geojson</b>: original file with all polygons  
     b. <b>filtered_shapefile.geojson</b>: file with all polygons with side dimensions between 30 and 125 pixels  
     c. <b>test_filtered.geojson</b>: test data with filtered polygons and unbalanced classes. don't touch it until testing the model!  
-    d. <b>train_filtered.geojson</b>: unbalanced training data, which we will be using in the second round of training (if applicable).  
+    d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used in the second round of training.  
     e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.  
 
-3. Create iterators of polygons of appropriate size zero-padded to input shape (mltools.data_extractors.get_iter_data)
+3. Create standardized polygons as uniformly-sized chips for input into the net. Use a batch size that will fit into memory if you will not be training on a generator.  
 
-    (show polygon processing imgs)
+        data_generator = de.get_iter_data('train_balanced.geojson' batch_size=10000, max_chip_hw=125, normalize=True)
+        x, y = data_generator.next()  
 
-4. train PoolNet on training data generators
+    This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.
+
+    <sample images of chips>
+
+4. Train PoolNet on training data:
+
+        from pool_net import PoolNet
+        p = PoolNet(input_shape = (3,125,125), batch_size = 32, nb_epoch = 20)
+        p.fit_xy(X_train = x, Y_train = y, save_model = model_name)
+        # saves model architecture and weights to model_name.json and model_name.h5 (respectively)
+
+## Docs  
+### mltools.pool_net.PoolNet  
+<i> class </i> mltools.pool_net. **PoolNet** ( <i> nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3,125,125), n_dense_nodes=2048, fc=False, vgg=True, load_model=False, model_name=None, train_size=10000 </i> ) [[source](github.com/poolnet_class)]  
+__________________________________________________________________________________________
+#### About  
+A convolutional neural network for pool detection in polygons.  
+
+This classifier can be trained on polygons to detect pools in the property. This model uses [stochastic gradient descent](http://ufldl.stanford.edu/tutorial/supervised/OptimizationStochasticGradientDescent/) to optimize [categorical crossentropy](http://neuralnetworksanddeeplearning.com/chap3.html#the_cross-entropy_cost_function).  
+
+| **Parameter:**  | Description:                                                     |
+|-----------------|------------------------------------------------------------------|
+| nb_epoch   | int, Number of epochs to train for. Defaults to 4. |
+| nb_classes | int, Number of different image classes. Use 2 for pools. |
+| batch_size | int, Number of chips per batch. Defaults to 32. |
+| input_shape | tuple(ints), Shape of three-dim input image. Defaults to (3,125,125). Use Theano dimensional ordering. |
+| n_dense_nodes | int, Number of nodes to use in dense layers of net. Only applicable if using basic net (not recommended). |
+| fc   | bool, Use a fully convolutional model, instead of classic convolutional model. Defaults to False. |
+| vgg       | bool, Use VGGNet architecture. Currently gives the best results, defaults to True. |
+| load_model | bool, Use a saved trained model (model_name) architecture and weights. Defaults to False. |
+| model_name | string, Only relevant if load_model is True. Name of model (not including file extension) to load. Defaults to None (will not load a model) |
+| train_size | int, Number of samples to train on per epoch if training on a generator. Defaults to 10000. |  
+
+#### Methods  
+
+[make_fc_model()](#make_fc_model)
+
+##### make_fc_model()  
+Re-compile current model as [fully convolutional]. Beheads the standard convolutional model and adds three 2D convolutional layers. 
