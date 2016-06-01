@@ -12,16 +12,14 @@
 
 PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network architecture, a 16-layer convolutional neural network, the top-scoring submission for the 2014 [ImageNet](http://www.image-net.org/challenges/LSVRC/2014/) classification challenge.
 
-(show vggnet architecture img)
-
-This network is trained on satellite images of various property polygons in order to classify these properties as ones with or without pools (see image below). This model provides an efficient and reliable way to determine which homes have pools, information that is useful to insurance companies. With appropriate training data this model can be extended to applications beyond pools, such as vehicles, solar panels and buldings.
+This network is trained on satellite images of various property polygons in order to classify these properties as ones with or without pools (see image below). This model provides an efficient and reliable way to determine which homes have pools, information that is useful to insurance companies. With appropriate training data this model can be extended to applications such as vehicles, solar panels and buildings.
 
 <img alt='Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon.' src='images/sample_polygons.png' width=300>  
 <sub> Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon. </sub>
 
 ### The challenge:
 
-Pools turn out to be very diverse in satellite images
+Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for learning to detect pools, providing the flexibility of learning common abstract qualities of the item of interest independent of location in the input image. The large amount of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques may overlook.
 
 
 ## Getting Started  
