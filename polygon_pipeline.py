@@ -47,6 +47,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
+    # Iterate through all images in shapefile
     for img_id in img_ids:
         img = geoio.GeoImage(img_id + '.tif')
 
@@ -59,14 +60,14 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
             # check for adequate chip size
             chan, h, w = np.shape(chip)
             pad_h, pad_w = max_chip_hw - h, max_chip_hw - w
-            if chip is None or min(h, w) < min_chip_hw or max(
-                    h, w) > max_chip_hw:
+            if chip is None or min(h, w) < min_chip_hw or max(h, w) > max_chip_hw:
                 continue
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0).astype(float)  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2, (pad_w - pad_w/2))], 'constant', constant_values=0)
-            # chip_patch = np.pad(chip, [(0, 0), (0, pad_h), (0, pad_w)], 'constant', constant_values=0)
+            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)),
+                                (pad_w/2, (pad_w - pad_w/2))], 'constant',
+                                constant_values=0)
 
             # resize image
             if resize_dim:
@@ -98,13 +99,14 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
             if ct == batch_size:
                 l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
                 labels = np_utils.to_categorical(l, nb_classes)
-                # reshape label vector to match output of FCNN
+
                 if not fc:
                     if return_id:
                         yield (np.array([i for i in inputs]), ids, labels)
                     else:
                         yield (np.array([i for i in inputs]), labels)
-                else:
+
+                else: # reshape label vector to match output of FCNN
                     if return_id:
                         yield (np.array([i for i in inputs]), ids, labels.reshape(batch_size, nb_classes, 1))
                     else:
@@ -121,7 +123,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
             yield (np.array([i for i in inputs]), np.array(labels))
 
 
-def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
+def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=125):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
@@ -175,7 +177,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
     print 'Saved {} polygons to {}.geojson'.format(len(ok_polygons), output_file)
 
 
-def create_balanced_geojson(shapefile, output_name,
+def create_balanced_geojson(shapefile, output_name, balanced = True,
                             class_names=['Swimming pool', 'No swimming pool'],
                             samples_per_class=None, train_test=None):
     '''
@@ -185,11 +187,13 @@ def create_balanced_geojson(shapefile, output_name,
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
             (not including file extension)
-            (3) list[string] 'class_names': name of classes of interest as listed in
+            (3) bool 'balanced': put equal amounts of each class in the output shapefile.
+            Otherwise simply outputs shuffled version of original dataself.
+            (4) list[string] 'class_names': name of classes of interest as listed in
             properties['class_name']. defaults to pool classes.
-            (4) int or None 'samples_per_class': number of samples to select per class.
+            (5) int or None 'samples_per_class': number of samples to select per class.
             if None, uses length of smallest class. Defaults to None
-            (5) float or None 'train_test': proportion of polygons to save in test file.
+            (6) float or None 'train_test': proportion of polygons to save in test file.
             if None, only saves one file (balanced data). otherwise saves a train and
             test file. Defaults to None.
 
@@ -199,35 +203,39 @@ def create_balanced_geojson(shapefile, output_name,
     with open(shapefile) as f:
         data = geojson.load(f)
 
-    # sort classes into separate lists
-    sorted_classes = []
+    if balanced_classes:
+        # sort classes into separate lists
+        sorted_classes = []
 
-    for i in class_names:
-        this_data = []
+        for i in class_names:
+            this_data = []
 
-        for feat in data['features']:
-            if feat['properties']['class_name'] == i:
-                this_data.append(feat)
+            for feat in data['features']:
+                if feat['properties']['class_name'] == i:
+                    this_data.append(feat)
 
-        sorted_classes.append(this_data)
+            sorted_classes.append(this_data)
 
-    # randomly select given number of samples per class
-    if samples_per_class:
-        samples = [random.sample(i, samples_per_class) for i in sorted_classes]
-        final = [s for sample in samples for s in sample]
+        # randomly select given number of samples per class
+        if samples_per_class:
+            samples = [random.sample(i, samples_per_class) for i in sorted_classes]
+            final = [s for sample in samples for s in sample]
 
-    else:
-        # determine smallest class-size
-        small_class_ix = np.argmin([len(clss) for clss in sorted_classes])
-        class_sizes = len(sorted_classes[small_class_ix])
-        final = sorted_classes[small_class_ix]
+        else:
+            # determine smallest class-size
+            small_class_ix = np.argmin([len(clss) for clss in sorted_classes])
+            class_sizes = len(sorted_classes[small_class_ix])
+            final = sorted_classes[small_class_ix]
 
-        # randomly sample from larger classes to balance class sizes
-        for i in xrange(len(class_names)):
-            if i == small_class_ix:
-                continue
-            else:
-                final += random.sample(sorted_classes[i], class_sizes)
+            # randomly sample from larger classes to balance class sizes
+            for i in xrange(len(class_names)):
+                if i == small_class_ix:
+                    continue
+                else:
+                    final += random.sample(sorted_classes[i], class_sizes)
+
+    else: # dont need to ensure balanced classes
+        final = data['features']
 
     # shuffle classes for input to net
     np.random.shuffle(final)
