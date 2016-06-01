@@ -1,7 +1,8 @@
 import numpy as np
 import random
 import json
-from polygon_pipeline import get_iter_data
+from mltools.data_extractors import get_iter_data
+from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
@@ -21,7 +22,7 @@ class PoolNet(object):
             (2) int 'nb_epoch': number of epochs to train. defaults to 4
             (3) int 'nb_classes': number of different image classes. defaults to 2 (pool/no pool)
             (4) int 'batch_size': amount of images to train for each batch. defaults to 32
-            (5) list[int] 'input_shape': shape of input images (3-dims). defaults to (3,224,224)
+            (5) list[int] 'input_shape': shape of input images (3-dims). defaults to (3,125,125)
             (6) int 'n_dense_nodes': number of nodes to use in dense layers. defaults to 2048.
             (7) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to False.
             (8) bool 'vgg': True to use vggnet architecture. Defaults to True (currently better than original)
@@ -31,7 +32,7 @@ class PoolNet(object):
     '''
 
     def __init__(self, nb_chan=3, nb_epoch=4, nb_classes=2, batch_size=32,
-                input_shape=(3, 224, 224), n_dense_nodes = 2048, fc = False,
+                input_shape=(3, 125, 125), n_dense_nodes = 2048, fc = False,
                 vgg=True, load_model=False, model_name=None, train_size=500):
 
         self.nb_epoch = nb_epoch
@@ -243,10 +244,10 @@ class PoolNet(object):
         '''
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
-        ct = 1
+        ct = 0
 
         for e in range(self.nb_epoch):
-            print 'Epoch {}'.format(e)
+            print 'Epoch {}/{}'.format(e + 1, self.nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = batches,
                                                   min_chip_hw = min_chip_hw,
@@ -384,6 +385,25 @@ class PoolNet(object):
 
         if return_yhat:
             return y_hat
+
+    def classify_shapefile(self, shapefile, output_name):
+        yhat, ytrue = [], []
+
+        # Classify all chips in input shapefile
+        print 'Classifying test data...'
+        for x, y in get_iter_data(shapefile, batch_size = 5000,
+                                      max_chip_hw=self.input_shape[1]):
+            yhat += self.model.predict_classes(x) # use model to predict classes
+            ytrue += [int(i[1]) for i in y] # put ytest in same format as ypred
+
+        # find misclassfied chips
+        missed = [0 if ytrue[i] == yhat[i] else 1 for i in xrange(len(yhat))]
+
+        # Update shapefile, save as output_name
+        data = zip(yhat, missed)
+        property_names = ['PoolNet_class', 'missed']
+        write_properties_to(data, property_names, shapefile, output_name)
+
 
 # Evaluation methods
 
