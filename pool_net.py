@@ -223,14 +223,14 @@ class PoolNet(object):
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
 
-        self.model.fit(X_train, Y_train, validation_split=validation_split, callbacks=[es, checkpointer], nb_epoch=self.nb_epoch)
+        self.model.fit(X_train, Y_train, validation_split=validation_split, callbacks=[checkpointer], nb_epoch=self.nb_epoch)
 
         if save_model:
             self.save_model(save_model)
 
 
-    def fit_generator(self, train_shapefile, batches = 10000, min_chip_hw=40,
-                      max_chip_hw=224, validation_split=0.1, save_model=None):
+    def fit_generator(self, train_shapefile, batches = 10000, batches_per_epoch=5, min_chip_hw=30,
+                      max_chip_hw=125, validation_split=0.1, save_model=None):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a geojson)
@@ -243,19 +243,27 @@ class PoolNet(object):
         '''
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
+        ct = 1
 
         for e in range(self.nb_epoch):
-            print 'epoch {}'.format(e)
+            print 'Epoch {}'.format(e)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = batches,
                                                   min_chip_hw = min_chip_hw,
                                                   max_chip_hw = max_chip_hw,
                                                   resize_dim = self.input_shape):
-                self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1)
+                self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1,
+                               validation_split=validation_split, callbacks=[checkpointer])
+                ct += 1
+                if ct == batches_per_epoch:
+                    break
+
+        if save_model:
+            self.save_model(save_model)
 
 
-    def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=40,
-                      max_chip_hw=224, validation_split=0.15, save_model=None):
+    def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=30,
+                      max_chip_hw=125, validation_split=0.15, save_model=None):
         '''
         Uses generator to train model from shapefile
         Note- this is extremely slow!!!
@@ -340,8 +348,7 @@ class PoolNet(object):
 
         # make log for model train
         time = localtime()
-        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' +
-            str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
+        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
         layers = str(solf.model.layers)
         with open(log, 'w') as l:
             l.write(date + layers)
@@ -373,26 +380,43 @@ class PoolNet(object):
         '''
         y_hat = self.model.predict_classes(X_test)
         y_true = [int(i[1]) for i in y_test]
-        print classification_report(y_truea, y_hat)
+        print classification_report(y_true, y_hat)
 
         if return_yhat:
             return y_hat
 
-    def confusion_matrix_imgs(self, X_test, y_test, y_pred):
-        '''
-        Generate file with incorrectly classified polygons for inspection
-        INPUT   (1) array 'X_test': array of chips
-                (2) list 'y_test': labels corresponding to chips in X_test
-                (3) list 'y_pred': results of classification on X_test. if None, will classify X_test and generate y_pred.
-        OUTPUT  (1) true positives
-                (2) true negatives
-                (3) false positives
-                (4) false negatives
-        '''
-        wrong = X_test[[y_test!=y_pred]]
-        fp, fn = wrong[[y_test==0]], wrong[[y_test==1]]
+# Evaluation methods
 
-        right = X_test[[y_test==y_pred]]
-        tp, tn = right[[y_test==1]], right[[y_test==0]]
+def confusion_matrix_imgs(X_test, y_test, y_pred):
+    '''
+    Generate file with incorrectly classified polygons for inspection
+    INPUT   (1) array 'X_test': array of chips
+            (2) list 'y_test': labels corresponding to chips in X_test
+            (3) list 'y_pred': results of classification on X_test. if None, will classify X_test and generate y_pred.
+    OUTPUT  (1) true positives
+            (2) true negatives
+            (3) false positives
+            (4) false negatives
+    '''
+    wrong = X_test[[y_test!=y_pred]]
+    fp, fn = wrong[[y_test==0]], wrong[[y_test==1]]
 
-        return tp, tn, fp, fn
+    right = X_test[[y_test==y_pred]]
+    tp, tn = right[[y_test==1]], right[[y_test==0]]
+
+    return tp, tn, fp, fn
+
+
+def x_to_rgb(X):
+    '''
+    Transform a normalized (3,h,w) image (theano ordering) to a (h,w,3) rgb image (tensor flow).
+    Use this when viewing polygons as a color image in matplotlib.
+
+    INPUT   (1) 3d array 'X': originial chip with theano dimensional ordering (3, h, w)
+    OUTPUT  (1) 3d array: rgb image in tensor flow dim-prdering (h,w,3)
+    '''
+    rgb_array = np.zeros((X.shape[1], X.shape[2], 3), 'uint8')
+    rgb_array[...,0] = X[2] * 255
+    rgb_array[...,1] = X[1] * 255
+    rgb_array[...,2] = X[0] * 255
+    return rgb_array
