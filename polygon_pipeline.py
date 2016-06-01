@@ -181,8 +181,8 @@ def create_balanced_geojson(shapefile, output_name, balanced = True,
                             class_names=['Swimming pool', 'No swimming pool'],
                             samples_per_class=None, train_test=None):
     '''
-    Create a shapefile comprised of balanced classes for training net. Option to save a
-    train and test file- each with distinct, randomly selected polygons.
+    Create a shapefile comprised of balanced classes for training net, and/or split
+    shapefile into train and test data, each with distinct, randomly selected polygons.
 
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
