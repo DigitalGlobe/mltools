@@ -109,13 +109,16 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
                         yield (np.array([i for i in inputs]), ids, labels.reshape(batch_size, nb_classes, 1))
                     else:
                         yield (np.array([i for i in inputs]), labels.reshape(batch_size, nb_classes, 1))
-                ct, inputs, labels = 0, [], []
+                ct, inputs, labels, ids = 0, [], [], []
 
     # return any remaining inputs
     if len(inputs) != 0:
         l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
         labels = np_utils.to_categorical(l, 2)
-        yield (np.array([i for i  in inputs]), np.array(labels))
+        if return_id:
+            yield (np.array([i for i in inputs]), ids, np.array(labels))
+        else:
+            yield (np.array([i for i in inputs]), np.array(labels))
 
 
 def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
