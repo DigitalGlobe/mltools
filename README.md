@@ -106,20 +106,43 @@ In short:
 ## PoolNet Workflow
 
 
-Start with a geojson shapefile and associated tif images:  
+Start with a geojson shapefile ('shapefile.geojson') and associated tif images:  
 
 <img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=500>   
 <sub> Pansharpened tif image with associated polygons overlayed. Green polygons indicate there is a pool in the property. </sub>
 
-### Prepare materials and train net
+### Prepare Shapefile for Training
 
-1. Filter shapefile for legitimate polygons (mltools.geojson_tools.filter_polygon_size). Use resolution to determine minimum and maximum acceptable side dimensions for polygons (generally between 30 and 150 pixels for pansharpened images).
+1. Filter shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip side dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
-    (Image of polygons over image)
+    <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' width=200>
+    <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' width=200>
 
-2. create train and test geojsons with balanced classes (mltools.geojson_tools.create_balanced_geojson)
+        import mltools.geojson_tools as gt
 
-3. create iterators of polygons of appropriate size zero-padded to input shape (mltools.data_extractors.get_iter_data)
+        gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
+        # creates filtered_shapefile.geojson
+
+2. Create train and test Shapefiles with and without balanced classes.
+
+        gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
+        # creates train_filtered.geojson and test_filtered.geojson
+
+        # use train_filtered.geojson to create balanced class shapefile:
+        gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
+        # creates training data (train_balanced.geojson) with balanced classes for first round of training  
+
+    Notice that we now have the following shapefiles:  
+
+    <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
+
+    a. <b>shapefile.geojson</b>: original file with all polygons  
+    b. <b>filtered_shapefile.geojson</b>: file with all polygons with side dimensions between 30 and 125 pixels  
+    c. <b>test_filtered.geojson</b>: test data with filtered polygons and unbalanced classes. don't touch it until testing the model!  
+    d. <b>train_filtered.geojson</b>: unbalanced training data, which we will be using in the second round of training (if applicable).  
+    e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.  
+
+3. Create iterators of polygons of appropriate size zero-padded to input shape (mltools.data_extractors.get_iter_data)
 
     (show polygon processing imgs)
 
