@@ -173,7 +173,7 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
 ## Results  
 
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 5 epochs on 9000 unbalanced classes. When deployed on test data (which is unbalanced) it gives approximately 81% precision, 85% recall and 98% accuracy. The high accuracy is due to the unbalanced classes.
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 5 epochs on 9000 unbalanced classes. When deployed on test data (which is unbalanced) it gives approximately *81% precision*, *85% recall* and *98% accuracy*. The high accuracy in this case is due to the unbalanced classes, testing on balanced classes lowers the accuracy to just over 91%.
 Check back for future results as we continue to improve the model.
 
 ## Docs  
