@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import json
-from mltools.data_extractors import get_iter_data
+from polygon_pipeline import get_iter_data
 from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
@@ -259,54 +259,6 @@ class PoolNet(object):
             self.save_model(save_model)
 
 
-    def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=30,
-                      max_chip_hw=125, validation_split=0.15, save_model=None):
-        '''
-        Uses generator to train model from shapefile
-        Note- this is extremely slow!!!
-
-        INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
-                (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
-                (3) int 'min_chip_hw': minimum acceptable side dimension (in pixels) for polygons
-                (4) int 'max_chip_hw': maximum acceptable side dimension (in pixels) for polygons
-                (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
-                (6) string 'save_model': name to save model as. If None, does not save model.
-        OUTPUT  (1) trained model
-        '''
-
-        print 'Training model on batches...'
-
-        # callback for early stopping
-        es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
-
-        # create generators for train and validation data
-        data_gen = get_iter_data(train_shapefile,
-                                batch_size=self.batch_size,
-                                min_chip_hw=min_chip_hw,
-                                max_chip_hw=max_chip_hw,
-                                resize_dim=self.input_shape)
-
-        if val_shapefile:
-            val_gen = get_iter_data(val_shapefile,
-                                    batch_size=self.batch_size,
-                                    min_chip_hw=min_chip_hw,
-                                    max_chip_hw=max_chip_hw,
-                                    resize_dim=self.input_shape)
-
-            # fit model
-            self.model.fit_generator(data_gen,
-                                    samples_per_epoch=self.train_size,
-                                    nb_epoch=self.nb_epoch,
-                                    callbacks=[checkpointer], validation_data=val_gen,
-                                    nb_val_samples=int(self.train_size * validation_split))
-        else:
-            self.model.fit_generator(data_gen,
-                                    samples_per_epoch=self.train_size,
-                                    nb_epoch=self.nb_epoch, callbacks=[es, checkpointer])
-        if save_model:
-            self.save_model(save_model)
-
     def retrain_output(self, X_train, Y_train, **kwargs):
         '''
         Retrains last dense layer of model. For use with unbalanced classes after
@@ -367,7 +319,7 @@ class PoolNet(object):
         print 'Done.'
         return mod
 
-    def evaluate_model(self, X_test, y_test, return_yhat=False):
+    def evaluate_model(self, X_test, Y_test, return_yhat=False):
         '''
         Predicts classes of X_test and evaluates precision, recall and f1 score
         INPUT   (1) array 'X_test': array of chips
@@ -376,7 +328,7 @@ class PoolNet(object):
         OUTPUT  (1) classification report
         '''
         y_hat = self.model.predict_classes(X_test)
-        y_true = [int(i[1]) for i in y_test]
+        y_true = [int(i[1]) for i in Y_test]
         print classification_report(y_true, y_hat)
 
         if return_yhat:
@@ -436,3 +388,54 @@ def x_to_rgb(X):
     rgb_array[...,1] = X[1] * 255
     rgb_array[...,2] = X[0] * 255
     return rgb_array
+
+
+## GRAVEYARD ##
+
+    # def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=30,
+    #                   max_chip_hw=125, validation_split=0.15, save_model=None):
+    #     '''
+    #     Uses generator to train model from shapefile
+    #     Note- this is extremely slow!!!
+    #
+    #     INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
+    #             (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
+    #             (3) int 'min_chip_hw': minimum acceptable side dimension (in pixels) for polygons
+    #             (4) int 'max_chip_hw': maximum acceptable side dimension (in pixels) for polygons
+    #             (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
+    #             (6) string 'save_model': name to save model as. If None, does not save model.
+    #     OUTPUT  (1) trained model
+    #     '''
+    #
+    #     print 'Training model on batches...'
+    #
+    #     # callback for early stopping
+    #     es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+    #     checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
+    #
+    #     # create generators for train and validation data
+    #     data_gen = get_iter_data(train_shapefile,
+    #                             batch_size=self.batch_size,
+    #                             min_chip_hw=min_chip_hw,
+    #                             max_chip_hw=max_chip_hw,
+    #                             resize_dim=self.input_shape)
+    #
+    #     if val_shapefile:
+    #         val_gen = get_iter_data(val_shapefile,
+    #                                 batch_size=self.batch_size,
+    #                                 min_chip_hw=min_chip_hw,
+    #                                 max_chip_hw=max_chip_hw,
+    #                                 resize_dim=self.input_shape)
+    #
+    #         # fit model
+    #         self.model.fit_generator(data_gen,
+    #                                 samples_per_epoch=self.train_size,
+    #                                 nb_epoch=self.nb_epoch,
+    #                                 callbacks=[checkpointer], validation_data=val_gen,
+    #                                 nb_val_samples=int(self.train_size * validation_split))
+    #     else:
+    #         self.model.fit_generator(data_gen,
+    #                                 samples_per_epoch=self.train_size,
+    #                                 nb_epoch=self.nb_epoch, callbacks=[es, checkpointer])
+    #     if save_model:
+    #         self.save_model(save_model)
