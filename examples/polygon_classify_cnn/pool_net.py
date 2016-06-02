@@ -180,6 +180,7 @@ class PoolNet(object):
         OUTPUT  (1) int 'behead_ix': index of flatten layer
         '''
         for i, layer_name in enumerate(layer_names):
+            # Find first dense layer, remove preceeding dropout if applicable
             if i > 0 and layer_name[:7] == 'flatten':
                 if layer_names[i-1][:7] != 'dropout':
                     behead_ix = i
@@ -230,7 +231,8 @@ class PoolNet(object):
                 save model.
         OUTPUT  (1) trained model.
         '''
-        es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+        # Define callback to save weights after each epoch
+        # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
                                        verbose=1)
 
@@ -263,6 +265,7 @@ class PoolNet(object):
                                        verbose=1)
         ct = 0
 
+        # iterate through batches, train model on each
         for e in range(self.nb_epoch):
             print 'Epoch {}/{}'.format(e + 1, self.nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
@@ -270,10 +273,12 @@ class PoolNet(object):
                                                   min_chip_hw = min_chip_hw,
                                                   max_chip_hw = max_chip_hw,
                                                   resize_dim = self.input_shape):
-
+                # Train on batch
                 self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1,
                                validation_split=validation_split,
                                callbacks=[checkpointer])
+
+                # Go to next epoch if batches_per_epoch have been trained
                 ct += 1
                 if ct == batches_per_epoch:
                     break
@@ -331,16 +336,20 @@ class PoolNet(object):
     def load_model_weights(self, model_name):
         '''
         INPUT  (1) string 'model_name': filepath to model and weights, not including
-        extension
+        extension. base name should be the same for both model and weights.
         OUTPUT: Model with loaded weights. can fit on model using loaded_model=True in
         fit_model method
         '''
         print 'Loading model {}'.format(self.model_name)
         model = '{}.json'.format(self.model_name)
         weights = '{}.h5'.format(self.model_name)
+
+        #load model
         with open(model) as f:
             m = f.next()
         mod = model_from_json(json.loads(m))
+
+        #load weights
         mod.load_weights(weights)
         print 'Done.'
         return mod
@@ -353,6 +362,7 @@ class PoolNet(object):
                 (3) bool 'return_yhat': return the values of predicted classes for X_test
         OUTPUT  (1) classification report
         '''
+        # classify chips from trained net
         y_hat = self.model.predict_classes(X_test)
         y_true = [int(i[1]) for i in Y_test]
         print classification_report(y_true, y_hat)
@@ -394,9 +404,11 @@ def confusion_matrix_imgs(X_test, y_test, y_pred):
             (4) false negatives
     '''
     wrong = X_test[[y_test!=y_pred]]
+    # Find chips yieling a false positive and false negative
     fp, fn = wrong[[y_test==0]], wrong[[y_test==1]]
 
     right = X_test[[y_test==y_pred]]
+    # Find chips yielding a true positive and true negative
     tp, tn = right[[y_test==1]], right[[y_test==0]]
 
     return tp, tn, fp, fn
