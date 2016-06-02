@@ -117,8 +117,8 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
 1. Filter shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip side dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
-    <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' width=200>
-    <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' width=200>
+    <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=300>
+    <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=300>
 
         import mltools.geojson_tools as gt
         import mltools.data_extractors as de
