@@ -212,7 +212,7 @@ ________________________________________________________________________________
 <i>**\__init__**(nb_classes=2, batch_size=32, input_shape=(3, 125, 125), fc = False, vgg=True, load_model=False, model_name=None, train_size=10000) </i>
 
 ##### make_fc_model  
-Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.4038.pdf). Beheads the standard convolutional model and adds three 2D convolutional layers.  
+Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.4038.pdf). Beheads the standard convolutional model and adds three 2D convolutional layers.   
 
 |Input| Description |
 |---------------|------|
@@ -238,7 +238,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 
 ##### fit_generator  
 (train_shapefile, batches=10000, batches_per_epoch=5, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=15)  
- Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).
+ Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).  
 
  |Input| Description |
  |---------------|------|
@@ -268,7 +268,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 
 ##### save_model  
 (model_name)  
-Saves model architecture as json and weights as h5py doc.
+Saves model architecture as json and weights as h5py doc.  
 
 |Input| Description |
 |---------------|------|
@@ -280,7 +280,7 @@ Saves model architecture as json and weights as h5py doc.
 
 ##### load_model_weights  
 (model_name)  
-Load model architecture and weights. Both files must have the same basename (model_name).
+Load model architecture and weights. Both files must have the same basename (model_name).  
 
 |Input| Description |
 |---------------|------|
@@ -291,7 +291,7 @@ Load model architecture and weights. Both files must have the same basename (mod
 
 ##### evaluate_model  
 (X_test, Y_test, return_yhat)  
-Classify X_test chips and print a classification report from the trained model.
+Classify X_test chips and print a classification report from the trained model.  
 
 |Input| Description |
 |---------------|------|
@@ -304,7 +304,7 @@ Classify X_test chips and print a classification report from the trained model.
 
 ##### classify_shapefile  
 (shapefile, output_name)  
-Create a geojson with results of classification saved as properties for each polygon.
+Create a geojson with results of classification saved as properties for each polygon.  
 
 |Input| Description |
 |---------------|------|
