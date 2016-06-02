@@ -5,3 +5,7 @@ dist/
 *.tiff
 *.json
 /venv
+*.geojson
+*.npz
+models/
+*.pptx

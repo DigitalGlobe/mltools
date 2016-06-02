@@ -180,21 +180,23 @@ def find_unique_values(input_file, property_name):
     return np.unique(values)
 
 
-def create_balanced_geojson(shapefile, output_name,
+def create_balanced_geojson(shapefile, output_name, balanced = True,
                             class_names=['Swimming pool', 'No swimming pool'],
                             samples_per_class=None, train_test=None):
     '''
-    Create a shapefile comprised of balanced classes for training net. Option to save a
-    train and test file- each with distinct, randomly selected polygons.
+    Create a shapefile comprised of balanced classes for training net, and/or split
+    shapefile into train and test data, each with distinct, randomly selected polygons.
 
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons
             (not including file extension)
-            (3) list[string] 'class_names': name of classes of interest as listed in
+            (3) bool 'balanced': put equal amounts of each class in the output shapefile.
+            Otherwise simply outputs shuffled version of original dataself.
+            (4) list[string] 'class_names': name of classes of interest as listed in
             properties['class_name']. defaults to pool classes.
-            (4) int or None 'samples_per_class': number of samples to select per class.
+            (5) int or None 'samples_per_class': number of samples to select per class.
             if None, uses length of smallest class. Defaults to None
-            (5) float or None 'train_test': proportion of polygons to save in test file.
+            (6) float or None 'train_test': proportion of polygons to save in test file.
             if None, only saves one file (balanced data). otherwise saves a train and
             test file. Defaults to None.
 
@@ -204,35 +206,39 @@ def create_balanced_geojson(shapefile, output_name,
     with open(shapefile) as f:
         data = geojson.load(f)
 
-    # sort classes into separate lists
-    sorted_classes = []
+    if balanced_classes:
+        # sort classes into separate lists
+        sorted_classes = []
 
-    for i in class_names:
-        this_data = []
+        for i in class_names:
+            this_data = []
 
-        for feat in data['features']:
-            if feat['properties']['class_name'] == i:
-                this_data.append(feat)
+            for feat in data['features']:
+                if feat['properties']['class_name'] == i:
+                    this_data.append(feat)
 
-        sorted_classes.append(this_data)
+            sorted_classes.append(this_data)
 
-    # randomly select given number of samples per class
-    if samples_per_class:
-        samples = [random.sample(i, samples_per_class) for i in sorted_classes]
-        final = [s for sample in samples for s in sample]
+        # randomly select given number of samples per class
+        if samples_per_class:
+            samples = [random.sample(i, samples_per_class) for i in sorted_classes]
+            final = [s for sample in samples for s in sample]
 
-    else:
-        # determine smallest class-size
-        small_class_ix = np.argmin([len(clss) for clss in sorted_classes])
-        class_sizes = len(sorted_classes[small_class_ix])
-        final = sorted_classes[small_class_ix]
+        else:
+            # determine smallest class-size
+            small_class_ix = np.argmin([len(clss) for clss in sorted_classes])
+            class_sizes = len(sorted_classes[small_class_ix])
+            final = sorted_classes[small_class_ix]
 
-        # randomly sample from larger classes to balance class sizes
-        for i in xrange(len(class_names)):
-            if i == small_class_ix:
-                continue
-            else:
-                final += random.sample(sorted_classes[i], class_sizes)
+            # randomly sample from larger classes to balance class sizes
+            for i in xrange(len(class_names)):
+                if i == small_class_ix:
+                    continue
+                else:
+                    final += random.sample(sorted_classes[i], class_sizes)
+
+    else: # dont need to ensure balanced classes
+        final = data['features']
 
     # shuffle classes for input to net
     np.random.shuffle(final)
