@@ -201,13 +201,13 @@ ________________________________________________________________________________
 #### Methods  
 
 1. [**make_fc_model**](#make_fc_model)(): Create a fully convolutional version of the current model.  
-2. [**fit_xy**](#fit_xy)(X_train, Y_train, validation_split, save_model, nb_epoch): Train PoolNet on X and Y.  
-3. [**fit_generator**](#fit_generator)(train_shapefile, batches, batches_per_epoch, min_chip_hw, max_chip_hw, validation_split, save_model, nb_epoch): For training PoolNet on more chips than will fit into memory.  
-4. [**retrain_output**](#retrain_output)(X_train, Y_train, kwargs): Retrain only the final layer of the model. For use on unbalanced data.  
-5. [**save_model**](#save_model)(model_name): Save the model architecture as a json and weights from final epoch.  
-6. [**load_model_weights**](#load_model_weights)(model_name): Use a previously trained and saved architecture and weights.  
-7. [**evaluate_model**](#evaluate_model)(X_test, Y_test, return_yhat=False): Get predicted classes and a classification report from test data.  
-8. [**classify_shapefile**](#classify_shapefile)(shapefile, output_name): create a shapefile with classification results stored as properties.  
+2. [**fit_xy**](#fit_xy(X_train, Y_train, validation_split=0.1, save_model=None, nb_epoch=15))(X_train, Y_train, validation_split, save_model, nb_epoch): Train PoolNet on X and Y.  
+3. [**fit_generator**](#fit_generator(train_shapefile, batches=10000, batches_per_epoch=5, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=15) )(train_shapefile, batches, batches_per_epoch, min_chip_hw, max_chip_hw, validation_split, save_model, nb_epoch): For training PoolNet on more chips than will fit into memory.  
+4. [**retrain_output**](#retrain_output(X_train, Y_train, kwargs))(X_train, Y_train, kwargs): Retrain only the final layer of the model. For use on unbalanced data.  
+5. [**save_model**](#save_model(model_name))(model_name): Save the model architecture as a json and weights from final epoch.  
+6. [**load_model_weights**](#load_model_weights(model_name))(model_name): Use a previously trained and saved architecture and weights.  
+7. [**evaluate_model**](#evaluate_model(X_test, Y_test, return_yhat))(X_test, Y_test, return_yhat=False): Get predicted classes and a classification report from test data.  
+8. [**classify_shapefile**](#classify_shapefile(shapefile, output_name))(shapefile, output_name): create a shapefile with classification results stored as properties.  
 
 <i>**\__init__**(nb_classes=2, batch_size=32, input_shape=(3, 125, 125), fc = False, vgg=True, load_model=False, model_name=None, train_size=10000) </i>
 
