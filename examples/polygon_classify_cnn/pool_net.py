@@ -216,7 +216,8 @@ class PoolNet(object):
         return model
 
 
-    def fit_xy(self, X_train, Y_train, nb_epoch=15, validation_split=0.1, save_model = None):
+    def fit_xy(self, X_train, Y_train, nb_epoch=15, validation_split=0.1,
+               save_model = None):
         '''
         Fit model on pre-loaded training data. Only for sizes small enough to fit in
         memory (~ 10000 3x100x100 chips on dg_gpu)
@@ -325,7 +326,7 @@ class PoolNet(object):
 
         # make log for model train
         time = localtime()
-        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + /
+        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + \
         str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
         layers = str(self.model.layers)
         with open(log, 'w') as l:
@@ -375,7 +376,8 @@ class PoolNet(object):
         print 'Classifying test data...'
         for x, y in get_iter_data(shapefile, batch_size = 5000,
                                       max_chip_hw=self.input_shape[1]):
-            yhat += self.model.predict_classes(x) # use model to predict classes
+            print 'Classifying polygons...'
+            yhat += list(self.model.predict_classes(x)) # use model to predict classes
             ytrue += [int(i[1]) for i in y] # put ytest in same format as ypred
 
         # find misclassfied chips
