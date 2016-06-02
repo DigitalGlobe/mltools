@@ -18,30 +18,28 @@ class PoolNet(object):
     '''
     Fully Convolutional model to classify polygons as pool/no pool
 
-    INPUT   (1) int 'nb_epoch': number of epochs to train. defaults to 4
-            (2) int 'nb_classes': number of different image classes. defaults to 2
+    INPUT   (1) int 'nb_classes': number of different image classes. defaults to 2
             (pool/no pool)
-            (3) int 'batch_size': amount of images to train for each batch. defaults
+            (2) int 'batch_size': amount of images to train for each batch. defaults
             to 32
-            (4) tuple[int] 'input_shape': shape of input images (3-dims). defaults to
+            (3) tuple[int] 'input_shape': shape of input images (3-dims). defaults to
             (3,125,125)
-            (5) bool 'fc': True for fully convolutional model, else classic convolutional
+            (4) bool 'fc': True for fully convolutional model, else classic convolutional
             model. defaults to False.
-            (6) bool 'vgg': True to use vggnet architecture. Defaults to True (currently
+            (5) bool 'vgg': True to use vggnet architecture. Defaults to True (currently
             better than original)
-            (7) bool 'load_model': Use a saved trained model (model_name) architecture
+            (6) bool 'load_model': Use a saved trained model (model_name) architecture
             and weights. Defaults to False
-            (8) string 'model_name': Only relevant if load_model is True. name of model
+            (7) string 'model_name': Only relevant if load_model is True. name of model
             (not including file extension) to load. Defaults to None
-            (9) int 'train_size': number of samples to train on per epoch. defaults to
+            (8) int 'train_size': number of samples to train on per epoch. defaults to
             10000
     '''
 
-    def __init__(self, nb_epoch=4, nb_classes=2, batch_size=32,
+    def __init__(self, nb_classes=2, batch_size=32,
                 input_shape=(3, 125, 125), fc = False,
                 vgg=True, load_model=False, model_name=None, train_size=10000):
 
-        self.nb_epoch = nb_epoch
         self.nb_classes = nb_classes
         self.batch_size = batch_size
         self.input_shape = input_shape
@@ -218,7 +216,7 @@ class PoolNet(object):
         return model
 
 
-    def fit_xy(self, X_train, Y_train, validation_split=0.1, save_model = None):
+    def fit_xy(self, X_train, Y_train, nb_epoch=15, validation_split=0.1, save_model = None):
         '''
         Fit model on pre-loaded training data. Only for sizes small enough to fit in
         memory (~ 10000 3x100x100 chips on dg_gpu)
@@ -237,15 +235,15 @@ class PoolNet(object):
                                        verbose=1)
 
         self.model.fit(X_train, Y_train, validation_split=validation_split,
-                       callbacks=[checkpointer], nb_epoch=self.nb_epoch)
+                       callbacks=[checkpointer], nb_epoch=nb_epoch)
 
         if save_model:
             self.save_model(save_model)
 
 
     def fit_generator(self, train_shapefile, batches = 10000, batches_per_epoch=5,
-                      min_chip_hw=30,
-                      max_chip_hw=125, validation_split=0.1, save_model=None):
+                      min_chip_hw=30, max_chip_hw=125, validation_split=0.1,
+                      save_model=None, nb_epoch=5):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
@@ -266,8 +264,8 @@ class PoolNet(object):
         ct = 0
 
         # iterate through batches, train model on each
-        for e in range(self.nb_epoch):
-            print 'Epoch {}/{}'.format(e + 1, self.nb_epoch)
+        for e in range(nb_epoch):
+            print 'Epoch {}/{}'.format(e + 1, nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = batches,
                                                   min_chip_hw = min_chip_hw,

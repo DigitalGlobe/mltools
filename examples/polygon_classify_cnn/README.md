@@ -157,23 +157,24 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 4. Train PoolNet on balanced training data:
 
         from pool_net import PoolNet
-        p = PoolNet(input_shape = (3,125,125), batch_size = 32, nb_epoch = 20)
-        p.fit_xy(X_train = x, Y_train = y, save_model = model_name)
+        p = PoolNet(input_shape = (3,125,125), batch_size = 32)
+        p.fit_xy(X_train = x, Y_train = y, save_model = model_name, nb_epoch=15)
         # saves model architecture and weights to model_name.json and model_name.h5 (respectively)
 
 5. Retrain the final dense layer of the network on unbalanced classes:  
 
-        unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+        unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True, nb_epoch = 5)
         x, y = unbal_generator.next()
         # Creates unbalanced training data
 
         p.retrain_output(X_train=x, Y_train=y)  
 
-    The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
+**Note**: The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
 
 ## Results  
 
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 5 epochs on 9000 unbalanced classes. When deployed on test data (which is unbalanced) it gives approximately *81% precision*, *85% recall* and *98% accuracy*. The high accuracy in this case is due to the unbalanced classes, testing on balanced classes lowers the accuracy to just over 91%.
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 5 epochs on 9000 unbalanced classes. When deployed on test data (which is unbalanced) it gives approximately *81% precision*, *85% recall* and *98% accuracy*. The high accuracy in this case is due to the unbalanced classes, testing on balanced classes lowers the accuracy to just over 91%.  
+
 Check back for future results as we continue to improve the model.
 
 ## Docs  
@@ -187,7 +188,6 @@ This classifier can be trained on polygons to detect pools in the property. This
 
 | **Parameter:**  | Description:                                                     |
 |-----------------|------------------------------------------------------------------|
-| nb_epoch   | int, Number of epochs to train for. Defaults to 4. |
 | nb_classes | int, Number of different image classes. Use 2 for pools. |
 | batch_size | int, Number of chips per batch. Defaults to 32. |
 | input_shape | tuple(ints), Shape of three-dim input image. Defaults to (3,125,125). Use Theano dimensional ordering. |
@@ -209,12 +209,28 @@ ________________________________________________________________________________
 7. [**evaluate_model**(X_test, Y_test, return_yhat=False)](#evaluate_model): Get predicted classes and a classification report from test data.  
 8. [**classify_shapefile**(shapefile, output_name)](#classify_shapefile): create a shapefile with classification results stored as properties.  
 
+<i>**\__init__**(nb_epoch=4, nb_classes=2, batch_size=32, input_shape=(3, 125, 125), fc = False, vgg=True, load_model=False, model_name=None, train_size=10000) </i>
 
 ##### make_fc_model()  
 Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.4038.pdf). Beheads the standard convolutional model and adds three 2D convolutional layers.  
 
+|Input| Description |
+|---------------|------|
+|*None* | *N/A*  |
+|**Output** |  **Description** |
+| model | Fully convolutional model ready for training|
+
 ##### fit_xy(X_train, Y_train, validation_split=0.1, save_model=None)  
 Fit the network on chips (X_train) and associated labels(Y_train). This can only be done if X and Y fit into memory.  
+
+|Input| Description |
+|---------------|------|
+|X_train | Array of training chips with shape *(n_chips, n_channels, chip_h, chip_w)*|
+|Y_train | Training chip labels using one-hot encoding |
+|validation_split | Proportion of X_train to use as validation data |
+|save_model | Name under which to save model. Defaults to None (doesn't save model) |
+|**Output** |  **Description** |
+|trained model | model trained on X_train |
 
 ##### fit_generator(train_shapefile, batches, batches_per_epoch, min_chip_hw, max_chip_hw, validation_split, save_model)  
  Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).  
