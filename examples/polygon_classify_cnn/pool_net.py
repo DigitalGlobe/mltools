@@ -19,14 +19,22 @@ class PoolNet(object):
     Fully Convolutional model to classify polygons as pool/no pool
 
     INPUT   (1) int 'nb_epoch': number of epochs to train. defaults to 4
-            (2) int 'nb_classes': number of different image classes. defaults to 2 (pool/no pool)
-            (3) int 'batch_size': amount of images to train for each batch. defaults to 32
-            (4) tuple[int] 'input_shape': shape of input images (3-dims). defaults to (3,125,125)
-            (5) bool 'fc': True for fully convolutional model, else classic convolutional model. defaults to False.
-            (6) bool 'vgg': True to use vggnet architecture. Defaults to True (currently better than original)
-            (7) bool 'load_model': Use a saved trained model (model_name) architecture and weights. Defaults to False
-            (8) string 'model_name': Only relevant if load_model is True. name of model (not including file extension) to load. Defaults to None
-            (9) int 'train_size': number of samples to train on per epoch. defaults to 10000
+            (2) int 'nb_classes': number of different image classes. defaults to 2
+            (pool/no pool)
+            (3) int 'batch_size': amount of images to train for each batch. defaults
+            to 32
+            (4) tuple[int] 'input_shape': shape of input images (3-dims). defaults to
+            (3,125,125)
+            (5) bool 'fc': True for fully convolutional model, else classic convolutional
+            model. defaults to False.
+            (6) bool 'vgg': True to use vggnet architecture. Defaults to True (currently
+            better than original)
+            (7) bool 'load_model': Use a saved trained model (model_name) architecture
+            and weights. Defaults to False
+            (8) string 'model_name': Only relevant if load_model is True. name of model
+            (not including file extension) to load. Defaults to None
+            (9) int 'train_size': number of samples to train on per epoch. defaults to
+            10000
     '''
 
     def __init__(self, nb_epoch=4, nb_classes=2, batch_size=32,
@@ -119,7 +127,7 @@ class PoolNet(object):
 
         model = Sequential()
         model.add(ZeroPadding2D((1,1), input_shape=self.input_shape))
-        model.add(Convolution2D(64, 3, 3, activation='relu', input_shape=self.input_shape))
+        model.add(Convolution2D(64, 3, 3,activation='relu',input_shape=self.input_shape))
         model.add(ZeroPadding2D((1,1)))
         model.add(Convolution2D(64, 3, 3, activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
@@ -186,7 +194,8 @@ class PoolNet(object):
         # get index of first dense layer in model
         behead_ix = self._get_behead_index(self.model_layer_names)
         model_layers = self.model.layers[:behead_ix]
-        inp_shape = self.model.layers[behead_ix - 1].get_output_shape_at(-1) # shape of image entering FC layers
+        # shape of image entering FC layers
+        inp_shape = self.model.layers[behead_ix - 1].get_output_shape_at(-1)
 
         # replace dense layers with convolutions
         model = Sequential()
@@ -195,7 +204,8 @@ class PoolNet(object):
         model_layers += [Convolution2D(2048, 1, 1)]
         model_layers += [Activation('relu')]
         model_layers += [Convolution2D(self.nb_classes, inp_shape[-1], inp_shape[-1])]
-        model_layers += [Reshape((self.nb_classes-1,1))] # must be same shape as target vector (None, num_classes, 1)
+        # must be same shape as target vector (None, num_classes, 1)
+        model_layers += [Reshape((self.nb_classes-1,1))]
         model_layers += [Activation('softmax')]
 
         print 'Compiling Fully Convolutional Model...'
@@ -209,37 +219,48 @@ class PoolNet(object):
 
     def fit_xy(self, X_train, Y_train, validation_split=0.1, save_model = None):
         '''
-        Fit model on pre-loaded training data. Only for sizes small enough to fit in memory (~ 10000 3x100x100 chips on dg_gpu)
+        Fit model on pre-loaded training data. Only for sizes small enough to fit in
+        memory (~ 10000 3x100x100 chips on dg_gpu)
         INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
-                (2) list 'Y_train': one-hot associated labels to X_train. shape = (train_size, n_classes)
+                (2) list 'Y_train': one-hot associated labels to X_train. shape =
+                train_size, n_classes)
                 (3) float 'validation_split': proportion of X_train to validate on.
                 #TODO: add X_test and Y_test, set val_split to None
-                (4) string 'save_model': name of model for saving. if None, does not save model.
+                (4) string 'save_model': name of model for saving. if None, does not
+                save model.
         OUTPUT  (1) trained model.
         '''
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
+                                       verbose=1)
 
-        self.model.fit(X_train, Y_train, validation_split=validation_split, callbacks=[checkpointer], nb_epoch=self.nb_epoch)
+        self.model.fit(X_train, Y_train, validation_split=validation_split,
+                       callbacks=[checkpointer], nb_epoch=self.nb_epoch)
 
         if save_model:
             self.save_model(save_model)
 
 
-    def fit_generator(self, train_shapefile, batches = 10000, batches_per_epoch=5, min_chip_hw=30,
+    def fit_generator(self, train_shapefile, batches = 10000, batches_per_epoch=5,
+                      min_chip_hw=30,
                       max_chip_hw=125, validation_split=0.1, save_model=None):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
-        INPUT   (1) string 'train_shapefile': filename for the training data (must be a geojson)
-                (2) int 'batches': number of chips to yield. must be small enough to fit into memory.
+        INPUT   (1) string 'train_shapefile': filename for the training data (must be a
+                geojson)
+                (2) int 'batches': number of chips to yield. must be small enough to fit
+                into memory.
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
-                (5) float 'validation_split': proportion of chips to use as validation data.
-                (6) string 'save_model': name of model for saving. if None, does not save model.
+                (5) float 'validation_split': proportion of chips to use as validation
+                data.
+                (6) string 'save_model': name of model for saving. if None, does not
+                save model.
         OUTPUT  (1) trained model.
         '''
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
+                                       verbose=1)
         ct = 0
 
         for e in range(self.nb_epoch):
@@ -249,8 +270,10 @@ class PoolNet(object):
                                                   min_chip_hw = min_chip_hw,
                                                   max_chip_hw = max_chip_hw,
                                                   resize_dim = self.input_shape):
+
                 self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1,
-                               validation_split=validation_split, callbacks=[checkpointer])
+                               validation_split=validation_split,
+                               callbacks=[checkpointer])
                 ct += 1
                 if ct == batches_per_epoch:
                     break
@@ -264,10 +287,12 @@ class PoolNet(object):
         Retrains last dense layer of model. For use with unbalanced classes after
         training on balanced data.
         INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
-                (2) list 'Y_train': one-hot associated labels to X_train. shape = (train_size, n_classes)
+                (2) list 'Y_train': one-hot associated labels to X_train. shape =
+                (train_size, n_classes)
                 (3) float 'validation_split': proportion of X_train to validate on.
                 #TODO: add X_test and Y_test, set val_split to None
-                (4) string 'save_model': name of model for saving. if None, does not save model.
+                (4) string 'save_model': name of model for saving. if None, does not
+                save model.
         OUTPUT  (1) retrained model
         '''
         # freeze all layers except final dense
@@ -297,7 +322,8 @@ class PoolNet(object):
 
         # make log for model train
         time = localtime()
-        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
+        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + /
+        str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
         layers = str(self.model.layers)
         with open(log, 'w') as l:
             l.write(date + layers)
@@ -360,7 +386,8 @@ def confusion_matrix_imgs(X_test, y_test, y_pred):
     Generate file with incorrectly classified polygons for inspection
     INPUT   (1) array 'X_test': array of chips
             (2) list 'y_test': labels corresponding to chips in X_test
-            (3) list 'y_pred': results of classification on X_test. if None, will classify X_test and generate y_pred.
+            (3) list 'y_pred': results of classification on X_test. if None, will
+            classify X_test and generate y_pred.
     OUTPUT  (1) true positives
             (2) true negatives
             (3) false positives
@@ -377,7 +404,8 @@ def confusion_matrix_imgs(X_test, y_test, y_pred):
 
 def x_to_rgb(X):
     '''
-    Transform a normalized (3,h,w) image (theano ordering) to a (h,w,3) rgb image (tensor flow).
+    Transform a normalized (3,h,w) image (theano ordering) to a (h,w,3) rgb image
+    (tensor flow).
     Use this when viewing polygons as a color image in matplotlib.
 
     INPUT   (1) 3d array 'X': originial chip with theano dimensional ordering (3, h, w)
@@ -388,54 +416,3 @@ def x_to_rgb(X):
     rgb_array[...,1] = X[1] * 255
     rgb_array[...,2] = X[0] * 255
     return rgb_array
-
-
-## GRAVEYARD ##
-
-    # def train_on_datagen(self, train_shapefile, val_shapefile=None, min_chip_hw=30,
-    #                   max_chip_hw=125, validation_split=0.15, save_model=None):
-    #     '''
-    #     Uses generator to train model from shapefile
-    #     Note- this is extremely slow!!!
-    #
-    #     INPUT   (1) string 'train_shapefile': geojson file containing polygons to be trained on
-    #             (2) string 'val_shapefile': geojson file containing polygons for validation. use a shuffled version of the original balanced shapefile
-    #             (3) int 'min_chip_hw': minimum acceptable side dimension (in pixels) for polygons
-    #             (4) int 'max_chip_hw': maximum acceptable side dimension (in pixels) for polygons
-    #             (5) float 'validation_split': amount of sample to validate on relative to train size. set to zero to skip validation. defaults to 0.15
-    #             (6) string 'save_model': name to save model as. If None, does not save model.
-    #     OUTPUT  (1) trained model
-    #     '''
-    #
-    #     print 'Training model on batches...'
-    #
-    #     # callback for early stopping
-    #     es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-    #     checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5", verbose=1)
-    #
-    #     # create generators for train and validation data
-    #     data_gen = get_iter_data(train_shapefile,
-    #                             batch_size=self.batch_size,
-    #                             min_chip_hw=min_chip_hw,
-    #                             max_chip_hw=max_chip_hw,
-    #                             resize_dim=self.input_shape)
-    #
-    #     if val_shapefile:
-    #         val_gen = get_iter_data(val_shapefile,
-    #                                 batch_size=self.batch_size,
-    #                                 min_chip_hw=min_chip_hw,
-    #                                 max_chip_hw=max_chip_hw,
-    #                                 resize_dim=self.input_shape)
-    #
-    #         # fit model
-    #         self.model.fit_generator(data_gen,
-    #                                 samples_per_epoch=self.train_size,
-    #                                 nb_epoch=self.nb_epoch,
-    #                                 callbacks=[checkpointer], validation_data=val_gen,
-    #                                 nb_val_samples=int(self.train_size * validation_split))
-    #     else:
-    #         self.model.fit_generator(data_gen,
-    #                                 samples_per_epoch=self.train_size,
-    #                                 nb_epoch=self.nb_epoch, callbacks=[es, checkpointer])
-    #     if save_model:
-    #         self.save_model(save_model)
