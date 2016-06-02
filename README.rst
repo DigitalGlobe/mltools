@@ -6,15 +6,16 @@ mltools
     :target: https://badge.fury.io/py/mltools
 
 Tools for fast prototyping of object detection and classification solutions on DG imagery.
-Relies heavily on popular open source machine learning (ML) toolkits such as scikit-learn. 
-It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. These are: 
+Relies heavily on popular machine learning (ML) toolkits such as scikit-learn and deep 
+learning toolkits such as keras. It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. 
+These are: 
 
 - data_extractors: get pixels and metadata from georeferenced imagery; uses geoio (https://github.com/digitalglobe/geoio);
 - features: functions to derive features from pixels; 
-- crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
 - geojson_tools: functions to manipulate geojson files.
+- crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
 
-Example scripts can be found in /examples. These can be used as a guideline to create object detection/classification 
+Example code can be found in /examples. The examples can be used as a guideline to create object detection/classification 
 workflows which involve one or more of the following steps: 
 
 1. retrieve training, test and target data from the Tomnod database;
@@ -23,9 +24,8 @@ workflows which involve one or more of the following steps:
 4. deploy the algorithm on the target data for detection or classification;
 5. write results back to the Tomnod database.
 
-Step 1 can be omitted if data is available from a source other than Tomnod. 
-(However, the data must respect the geojson format found in /examples.)
-Step 5 can also be omitted if we don't want to write the results back to Tomnod.
+Steps 1 or 5 can be omitted if data is available from a source other than Tomnod or
+if results do not need to be written back to Tomnod. 
 
 
 Installation/Usage
