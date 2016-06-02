@@ -222,7 +222,7 @@ Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.403
 
 
 ##### fit_xy  
-(X_train, Y_train, validation_split=0.1, save_model=None, nb_epoch=15)  
+\(X_train, Y_train, validation_split=0.1, save_model=None, nb_epoch=15)  
 Fit the network on chips (X_train) and associated labels(Y_train). This can only be done if X and Y fit into memory.  
 
 |Input| Description |
@@ -255,7 +255,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 
 
 ##### retrain_output  
-(X_train, Y_train, kwargs)  
+\(X_train, Y_train, kwargs)  
  Re-train the final dense layer of PoolNet. This is meant for use on unbalanced classes, in order to minimize false positives associated with the initial training on balanced classes.  
 
 |Input| Description |
@@ -267,7 +267,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 |trained model | Model with last dense layer trained on X_train |
 
 ##### save_model  
-(model_name)  
+\(model_name)  
 Saves model architecture as json and weights as h5py doc.  
 
 |Input| Description |
@@ -279,7 +279,7 @@ Saves model architecture as json and weights as h5py doc.
 
 
 ##### load_model_weights  
-(model_name)  
+\(model_name)  
 Load model architecture and weights. Both files must have the same basename (model_name).  
 
 |Input| Description |
@@ -290,7 +290,7 @@ Load model architecture and weights. Both files must have the same basename (mod
 
 
 ##### evaluate_model  
-(X_test, Y_test, return_yhat)  
+\(X_test, Y_test, return_yhat)  
 Classify X_test chips and print a classification report from the trained model.  
 
 |Input| Description |
@@ -303,7 +303,7 @@ Classify X_test chips and print a classification report from the trained model.
 
 
 ##### classify_shapefile  
-(shapefile, output_name)  
+\(shapefile, output_name)  
 Create a geojson with results of classification saved as properties for each polygon.  
 
 |Input| Description |
