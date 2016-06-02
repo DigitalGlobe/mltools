@@ -7,7 +7,8 @@
     * [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
     * [Setting up a Virtual Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
-4. [Docs](#docs)
+4. [Results](#results)
+5. [Docs](#docs)
 
 ## About PoolNet
 
@@ -169,6 +170,11 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
         p.retrain_output(X_train=x, Y_train=y)  
 
     The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
+
+## Results  
+
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 5 epochs on 9000 unbalanced classes. When deployed on test data (which is unbalanced) it gives approximately 81% precision, 85% recall and 98% accuracy. The high accuracy is due to the unbalanced classes.
+Check back for future results as we continue to improve the model.
 
 ## Docs  
 ### mltools.pool_net.PoolNet  
