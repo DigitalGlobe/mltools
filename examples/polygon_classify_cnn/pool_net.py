@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import json
-from polygon_pipeline import get_iter_data
+from mltools.data_extractors import get_iter_data
 from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
