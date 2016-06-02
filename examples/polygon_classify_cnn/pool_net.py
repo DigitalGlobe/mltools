@@ -422,7 +422,7 @@ def x_to_rgb(X):
     OUTPUT  (1) 3d array: rgb image in tensor flow dim-prdering (h,w,3)
     '''
     rgb_array = np.zeros((X.shape[1], X.shape[2], 3), 'uint8')
-    rgb_array[...,0] = X[2] * 255
+    rgb_array[...,0] = X[0] * 255
     rgb_array[...,1] = X[1] * 255
-    rgb_array[...,2] = X[0] * 255
+    rgb_array[...,2] = X[2] * 255
     return rgb_array
