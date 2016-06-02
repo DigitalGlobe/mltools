@@ -110,7 +110,7 @@ In short:
 
 Start with a geojson shapefile ('shapefile.geojson') and associated tif images:  
 
-<img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=500>   
+<img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=750>   
 <sub> Pansharpened tif image with associated polygons overlayed. Green polygons indicate there is a pool in the property. </sub>
 
 ### Prepare Shapefile for Training
