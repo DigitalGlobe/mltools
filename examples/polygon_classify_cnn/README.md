@@ -200,18 +200,18 @@ This classifier can be trained on polygons to detect pools in the property. This
 __________________________________________________________________________________________
 #### Methods  
 
-1. [**make_fc_model**](#make_fc_model)(): Create a fully convolutional version of the current model.  
-2. [**fit_xy**](#fit_xy(X_train, Y_train, validation_split=0.1, save_model=None, nb_epoch=15))(X_train, Y_train, validation_split, save_model, nb_epoch): Train PoolNet on X and Y.  
-3. [**fit_generator**](#fit_generator(train_shapefile, batches=10000, batches_per_epoch=5, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=15) )(train_shapefile, batches, batches_per_epoch, min_chip_hw, max_chip_hw, validation_split, save_model, nb_epoch): For training PoolNet on more chips than will fit into memory.  
-4. [**retrain_output**](#retrain_output(X_train, Y_train, kwargs))(X_train, Y_train, kwargs): Retrain only the final layer of the model. For use on unbalanced data.  
-5. [**save_model**](#save_model(model_name))(model_name): Save the model architecture as a json and weights from final epoch.  
-6. [**load_model_weights**](#load_model_weights(model_name))(model_name): Use a previously trained and saved architecture and weights.  
-7. [**evaluate_model**](#evaluate_model(X_test, Y_test, return_yhat))(X_test, Y_test, return_yhat=False): Get predicted classes and a classification report from test data.  
-8. [**classify_shapefile**](#classify_shapefile(shapefile, output_name))(shapefile, output_name): create a shapefile with classification results stored as properties.  
+1. [**make_fc_model**](#make_fc_model): Create a fully convolutional version of the current model.  
+2. [**fit_xy**](#fit_xy): Train PoolNet on X and Y.  
+3. [**fit_generator**](#fit_generator): For training PoolNet on more chips than will fit into memory.  
+4. [**retrain_output**](#retrain_output): Retrain only the final layer of the model. For use on unbalanced data.  
+5. [**save_model**](#save_model): Save the model architecture as a json and weights from final epoch.  
+6. [**load_model_weights**](#load_model_weights): Use a previously trained and saved architecture and weights.  
+7. [**evaluate_model**](#evaluate_model): Get predicted classes and a classification report from test data.  
+8. [**classify_shapefile**](#classify_shapefile): create a shapefile with classification results stored as properties.  
 
 <i>**\__init__**(nb_classes=2, batch_size=32, input_shape=(3, 125, 125), fc = False, vgg=True, load_model=False, model_name=None, train_size=10000) </i>
 
-##### make_fc_model()  
+##### make_fc_model  
 Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.4038.pdf). Beheads the standard convolutional model and adds three 2D convolutional layers.  
 
 |Input| Description |
@@ -221,7 +221,8 @@ Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.403
 | model | Fully convolutional model ready for training|  
 
 
-##### fit_xy(X_train, Y_train, validation_split=0.1, save_model=None, nb_epoch=15)  
+##### fit_xy  
+(X_train, Y_train, validation_split=0.1, save_model=None, nb_epoch=15)  
 Fit the network on chips (X_train) and associated labels(Y_train). This can only be done if X and Y fit into memory.  
 
 |Input| Description |
@@ -235,7 +236,8 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 |trained model | model trained on X_train |  
 
 
-##### fit_generator(train_shapefile, batches=10000, batches_per_epoch=5, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=15)  
+##### fit_generator  
+(train_shapefile, batches=10000, batches_per_epoch=5, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=15)  
  Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).
 
  |Input| Description |
@@ -252,7 +254,8 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
  |trained model | model trained on polygons in shapefile |  
 
 
-##### retrain_output(X_train, Y_train, kwargs)  
+##### retrain_output  
+(X_train, Y_train, kwargs)  
  Re-train the final dense layer of PoolNet. This is meant for use on unbalanced classes, in order to minimize false positives associated with the initial training on balanced classes.  
 
  |Input| Description |
@@ -263,7 +266,8 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
  |**Output** |  **Description** |
  |trained model | Model with last dense layer trained on X_train |
 
-##### save_model(model_name)  
+##### save_model  
+(model_name)  
 Saves model architecture as json and weights as h5py doc.
 
 |Input| Description |
@@ -274,7 +278,8 @@ Saves model architecture as json and weights as h5py doc.
 |model_name.h5 | model weights |  
 
 
-##### load_model_weights(model_name)  
+##### load_model_weights  
+(model_name)  
 Load model architecture and weights. Both files must have the same basename (model_name).
 
 |Input| Description |
@@ -284,7 +289,8 @@ Load model architecture and weights. Both files must have the same basename (mod
 |model | model loaded with weights, ready to classify chips. |  
 
 
-##### evaluate_model(X_test, Y_test, return_yhat)  
+##### evaluate_model  
+(X_test, Y_test, return_yhat)  
 Classify X_test chips and print a classification report from the trained model.
 
 |Input| Description |
@@ -296,7 +302,8 @@ Classify X_test chips and print a classification report from the trained model.
 |yhat | array, predicted classes for X_test |  
 
 
-##### classify_shapefile(shapefile, output_name)  
+##### classify_shapefile  
+(shapefile, output_name)  
 Create a geojson with results of classification saved as properties for each polygon.
 
 |Input| Description |
