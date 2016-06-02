@@ -146,19 +146,29 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
 3. Create standardized polygons as uniformly-sized chips for input into the net. Use a batch size that will fit into memory if you will not be training on a generator.  
 
-        data_generator = de.get_iter_data('train_balanced.geojson' batch_size=10000, max_chip_hw=125, normalize=True)
+        data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)
         x, y = data_generator.next()  
 
     This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.
 
     <sample images of chips>
 
-4. Train PoolNet on training data:
+4. Train PoolNet on balanced training data:
 
         from pool_net import PoolNet
         p = PoolNet(input_shape = (3,125,125), batch_size = 32, nb_epoch = 20)
         p.fit_xy(X_train = x, Y_train = y, save_model = model_name)
         # saves model architecture and weights to model_name.json and model_name.h5 (respectively)
+
+5. Retrain the final dense layer of the network on unbalanced classes:  
+
+        unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+        x, y = unbal_generator.next()
+        # Creates unbalanced training data
+
+        p.retrain_output(X_train=x, Y_train=y)  
+
+    The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
 
 ## Docs  
 ### mltools.pool_net.PoolNet  
@@ -181,10 +191,35 @@ This classifier can be trained on polygons to detect pools in the property. This
 | load_model | bool, Use a saved trained model (model_name) architecture and weights. Defaults to False. |
 | model_name | string, Only relevant if load_model is True. Name of model (not including file extension) to load. Defaults to None (will not load a model) |
 | train_size | int, Number of samples to train on per epoch if training on a generator. Defaults to 10000. |  
-
+__________________________________________________________________________________________
 #### Methods  
 
-[make_fc_model()](#make_fc_model)
+1. [**make_fc_model**()](#make_fc_model): Create a fully convolutional version of the current model.  
+2. [**fit_xy**(X_train, Y_train, validation_split, save_model)](#fit_xy): Train PoolNet on X and Y.  
+3. [**fit_generator**(train_shapefile, batches, batches_per_epoch, min_chip_hw, max_chip_hw, validation_split, save_model)](#fit_generator): For training PoolNet on more chips than will fit into memory.  
+4. [**retrain_output**(X_train, Y_train, kwargs)](#retrain_output): Retrain only the final layer of the model. For use on unbalanced data.  
+5. [**save_model**(model_name)](#save_model): Save the model architecture as a json and weights from final epoch.  
+6. [**load_model_weights**(model_name)](#load_model_weights): Use a previously trained and saved architecture and weights.  
+7. [**evaluate_model**(X_test, Y_test, return_yhat=False)](#evaluate_model): Get predicted classes and a classification report from test data.  
+8. [**classify_shapefile**(shapefile, output_name)](#classify_shapefile): create a shapefile with classification results stored as properties.  
+
 
 ##### make_fc_model()  
-Re-compile current model as [fully convolutional]. Beheads the standard convolutional model and adds three 2D convolutional layers. 
+Re-compile current model as [fully convolutional](https://arxiv.org/pdf/1411.4038.pdf). Beheads the standard convolutional model and adds three 2D convolutional layers.  
+
+##### fit_xy(X_train, Y_train, validation_split=0.1, save_model=None)  
+Fit the network on chips (X_train) and associated labels(Y_train). This can only be done if X and Y fit into memory.  
+
+##### fit_generator(train_shapefile, batches, batches_per_epoch, min_chip_hw, max_chip_hw, validation_split, save_model)  
+ Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).  
+
+##### retrain_output(X_train, Y_train, kwargs)  
+ Re-train the final dense layer of PoolNet. This is meant for use on unbalanced classes, in order to minimize false positives associated with the initial training on balanced classes.  
+
+##### save_model(model_name)  
+
+##### load_model_weights(model_name)  
+
+##### evaluate_model(X_test, Y_test, return_yhat)  
+
+##### classify_shapefile(shapefile, output_name)  
