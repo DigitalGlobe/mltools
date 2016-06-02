@@ -131,7 +131,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
                     chip_patch = resize(chip_patch, resize_dim)
 
             if normalize:
-                chip_patch /= np.max(chip_patch)
+                chip_patch /= 255.
 
             if return_labels:
                 try:
