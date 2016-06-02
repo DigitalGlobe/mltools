@@ -241,32 +241,32 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
  Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).  
 
 
- |Input| Description |
- |---------------|------|
- |train_shapefile | string, filepath to shapefile containing polygons to train model on (not including extension)|
- |batches | int, number of chips to generate per batch of training. This must fit in memory. |
- |batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
- |min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
- |max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
- |validation_split | float, proportion of training data to use for validation |
- |save_model | string, name under which to save model. Defaults to None (doesn't save model) |
- |nb_epoch | Number of epochs to train for |
- |**Output** |  **Description** |
- |trained model | model trained on polygons in shapefile |  
+|Input| Description |
+|---------------|------|
+|train_shapefile | string, filepath to shapefile containing polygons to train model on (not including extension)|
+|batches | int, number of chips to generate per batch of training. This must fit in memory. |
+|batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
+|min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
+|max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
+|validation_split | float, proportion of training data to use for validation |
+|save_model | string, name under which to save model. Defaults to None (doesn't save model) |
+|nb_epoch | Number of epochs to train for |
+|**Output** |  **Description** |
+|trained model | model trained on polygons in shapefile |  
 
 
 ##### retrain_output  
 (X_train, Y_train, kwargs)  
  Re-train the final dense layer of PoolNet. This is meant for use on unbalanced classes, in order to minimize false positives associated with the initial training on balanced classes.  
- 
 
- |Input| Description |
- |---------------|------|
- |X_train | array, training chips with shape *(n_chips, n_channels, chip_h, chip_w)*|
- |Y_train | array, training chip labels using one-hot encoding |
- |kwargs | Keyword arguments from fit_xy |
- |**Output** |  **Description** |
- |trained model | Model with last dense layer trained on X_train |
+
+|Input| Description |
+|---------------|------|
+|X_train | array, training chips with shape *(n_chips, n_channels, chip_h, chip_w)*|
+|Y_train | array, training chip labels using one-hot encoding |
+|kwargs | Keyword arguments from fit_xy |
+|**Output** |  **Description** |
+|trained model | Model with last dense layer trained on X_train |
 
 ##### save_model  
 (model_name)  
