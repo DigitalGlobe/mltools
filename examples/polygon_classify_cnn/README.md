@@ -7,21 +7,27 @@
     * [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
     * [Setting up a Virtual Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
-4. [Results](#results)
+4. [Results and Discussion](#results-and-discussion)
 5. [Docs](#docs)
 
 ## About PoolNet
 
-PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network architecture, a 16-layer convolutional neural network, the top-scoring submission for the 2014 [ImageNet](http://www.image-net.org/challenges/LSVRC/2014/) classification challenge.
+PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network architecture, a 16-layer convolutional neural network, the top-scoring submission for the 2014 [ImageNet](http://www.image-net.org/challenges/LSVRC/2014/) classification challenge.  
 
-This network is trained on satellite images of various property polygons in order to classify these properties as ones with or without pools (see image below). This model provides an efficient and reliable way to determine which homes have pools, information that is useful to insurance companies. With appropriate training data this model can be extended to applications such as vehicles, solar panels and buildings.
+<b>VGG-16 Architecture</b>  
+<img src='images/VGGNet.png' width=500>
+
+PoolNet is trained on satellite images of various property polygons in order to classify them as homes with or without a pool. This model provides an efficient and reliable way to classify polygons, information that is valuable to insurance companies and would otherwise be challenging to collect at a large scale. With appropriate training data this model can be extended to various applications such as vehicles, boats, solar panels and buildings.
 
 <img alt='Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon.' src='images/sample_polygons.png' width=300>  
-<sub> Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon. </sub>
+<sub> Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon. </sub>  
 
 ### The challenge:
 
-Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for learning to detect pools, providing the flexibility of learning common abstract qualities of the item of interest independent of location in the input image. The large amount of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques may overlook.
+Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for learning to detect pools, providing the flexibility of learning common abstract qualities of the item of interest independent of location in the input image. The vast number of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques may overlook.
+
+<img alt='Major challenge in machine classification of pools- diversity of pools in satellite imagery' src='images/pool_diversity.png'>  
+<sub> various pool-containing polygons from the test data. Notice the diversity in shape, size, color, intensity and location in the polygon. This makes machine classification of pools very challenging. </sub>
 
 
 ## Getting Started  
@@ -150,9 +156,10 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
         data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)
         x, y = data_generator.next()  
 
-    This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.
+    This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.  
 
-    <sample images of chips>
+    <img alt='sample chips after processing' src='images/chips.png' width=700>  
+    <sub> Sample chips used as input for PoolNet. Notice that only the contents of the polygon are being input to the net.</sub>
 
 4. Train PoolNet on balanced training data:
 
@@ -171,9 +178,10 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
 **Note**: The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
 
-## Results  
-
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 5 epochs on 9000 unbalanced classes. When deployed on test data (which is unbalanced) it gives approximately *81% precision*, *85% recall* and *98% accuracy*. The high accuracy in this case is due to the unbalanced classes, testing on balanced classes lowers the accuracy to just over 91%.  
+## Results and Discussion  
+There were several challenges associated with making an effective net. To minimize the overwhelming and time-consuming task of selecting from the infinite architectures and parameters for PoolNet, we elected to use VGG-16, a model that has been shown to be an effective classifier on previous datasets. We instead focused on parameters such as training/batch size, number of epochs and learning rate as well as data selection and manipulation methods. As mentioned [before](#prepare-shapefile-for-training), we elected to zero-pad each chip outside of the polygon. The purpose of this is two-fold: firstly to eliminate any surrounding objects from neighbors that could cause a false positive, and to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks. Additionally, we ensure that the pixel intensity data is normalized by dividing each pixel by 255 (maximum intensity for 8-bit rgb images).  
+It was also important to find a balance between false negatives and false positives when it comes to classifying the chips. As discussed above the first round of training takes place on balanced classes in order to allow the net to learn based on the composition of the image, as opposed to statistical probability of encountering a pool. After this round of training the model will give over 90% precision and recall when tested on balanced classes. Testing this model on data that is representative of the original data, however, brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To minimize this false positive rate without affecting the way the net identifies a pool we retrain only the output layer on unbalanced classes (~6% pools). This simultaneously preserves the way that the net detects pools, while increasing the probability threshold for producing a positive label. There is a fine balance for how much data should be fed into each round of training as well as how many epochs is ideal for each. After playing around with these two variables the net produced the best results when training on more chips in the first round, followed by more epochs on fewer chips in the second round.    
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. When deployed on test data (which has the same class imbalance as the original data) it gives approximately 86% precision and recall and 98% accuracy. The high accuracy in this case is due to the unbalanced classes, testing on balanced classes lowers the accuracy to just over 91%.  
 
 Check back for future results as we continue to improve the model.
 
