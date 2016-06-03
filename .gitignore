@@ -5,7 +5,7 @@ dist/
 *.tiff
 *.json
 /venv
-*.geojson
+*class.geojson
 *.npz
 models/
 *.pptx
