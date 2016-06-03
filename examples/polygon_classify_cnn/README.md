@@ -141,6 +141,8 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
         gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
         # creates training data (train_balanced.geojson) with balanced classes for first round of training  
 
+    If you would like to work through training PoolNet from here and have access to the original pansharpened image (id = 1040010014800C00), sample training and testing geojsons can be found in the 'shapefiles' directory.
+
     <b>Notice that we now have the following shapefiles</b>:  
 
     <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
