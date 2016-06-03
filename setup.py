@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.7',
-      description='Added mask to data extractor.',
+      version='1.0.8',
+      description='New examples and geojson tools.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
