@@ -332,12 +332,11 @@ class PoolNet(object):
         with open(log, 'w') as l:
             l.write(date + layers)
 
-    def load_model_weights(self, model_name):
+    def load_model(self, model_name):
         '''
-        INPUT  (1) string 'model_name': filepath to model and weights, not including
-        extension. base name should be the same for both model and weights.
-        OUTPUT: Model with loaded weights. can fit on model using loaded_model=True in
-        fit_model method
+        INPUT  (1) string 'model_name': filepath to model, not including
+        extension.
+        OUTPUT: Loaded model architecture
         '''
         print 'Loading model {}'.format(self.model_name)
         model = '{}.json'.format(self.model_name)
@@ -370,22 +369,26 @@ class PoolNet(object):
             return y_hat
 
     def classify_shapefile(self, shapefile, output_name):
-        yhat, ytrue = [], []
+        yprob, ytrue = [], []
 
         # Classify all chips in input shapefile
         print 'Classifying test data...'
         for x, y in get_iter_data(shapefile, batch_size = 5000,
                                       max_chip_hw=self.input_shape[1]):
             print 'Classifying polygons...'
-            yhat += list(self.model.predict_classes(x)) # use model to predict classes
+            yprob += list(self.model.predict_proba(x)) # use model to predict classes
             ytrue += [int(i[1]) for i in y] # put ytest in same format as ypred
+
+        # Get predicted class and certainty of classification results
+        yhat = [np.argmax(i) for i in yprob]
+        ycert = [np.max(j) for j in yprob]
 
         # find misclassfied chips
         missed = [0 if ytrue[i] == yhat[i] else 1 for i in xrange(len(yhat))]
 
         # Update shapefile, save as output_name
-        data = zip(yhat, missed)
-        property_names = ['PoolNet_class', 'missed']
+        data = zip(yhat, ycert, missed)
+        property_names = ['PoolNet_class', 'certainty', 'missed']
         write_properties_to(data, property_names, shapefile, output_name)
 
 
