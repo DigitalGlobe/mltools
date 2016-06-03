@@ -19,10 +19,11 @@ The example walks the user through the following steps:
 
 + Ordering the multispectral imagery from GBDX.
 
-+ Training the classifier on a training data set and testing the classifier on a test data set.
++ Training, testing and deploying the classifier on training, test and target data sets, respectively.
 
 This work was performed as part of the PSMA project whose goal is to provide a number of information layers on millions
-of property parcels across urban centers in Australia. More information can b
+of property parcels across urban centers in Australia. Additional information about combining the algorithm classifications with
+the crowd labels can be found in this blog post http://blog.tomnod.com/crowd-and-machine-combo.
 
 
 ## Getting the imagery
