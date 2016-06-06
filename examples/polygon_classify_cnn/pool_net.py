@@ -49,7 +49,7 @@ class PoolNet(object):
 
         if self.load_model:
             self.model_name = model_name
-            self.model = self.load_model_weights(model_name)
+            self.model = self.load_model(model_name)
         else:
             self.model = self._VGG_16()
 
@@ -249,7 +249,7 @@ class PoolNet(object):
         # train model
         self.fit_xy(X_train, Y_train, **kwargs)
 
-    def retrain_on_errors(self, X_train, Y_train, initial_weights, nb_epochs=5,
+    def retrain_on_errors(self, X_train, Y_train, initial_weights, nb_epoch=5,
                         samples_per_epoch=2500, **kwargs):
         '''
         Retrain model on polygons that were initially misclassified.
@@ -275,7 +275,7 @@ class PoolNet(object):
             self.model.layers[i].trainable = True
 
         # Fit as usual if augmentation is unncessary
-        if len(X_train) <= samples_per_epoch:
+        if len(X_train) >= samples_per_epoch:
             self.fit_xy(X_train[:samples_per_epoch], Y_train[:samples_per_epoch],
                         nb_epoch=nb_epoch, **kwargs)
 
@@ -284,9 +284,9 @@ class PoolNet(object):
             datagen = ImageDataGenerator(rotation_range=120, width_shift_range=0.2,
                                         height_shift_range=0.2, fill_mode='constant',
                                         cval=0, horizontal_flip= True, vertical_flip=True)
-            datagen.fit(X_train)
 
             # Fit model on batches with real-time data augmentation
+            self.model.load_weights(initial_weights)
             self.model.fit_generator(datagen.flow(X_train, Y_train,
                                     batch_size=self.batch_size),
                                     samples_per_epoch=samples_per_epoch,
