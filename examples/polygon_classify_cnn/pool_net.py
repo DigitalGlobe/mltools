@@ -6,6 +6,7 @@ from mltools.data_extractors import get_iter_data
 from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
+from keras.preprocessing.image import ImageDataGenerator
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -27,96 +28,35 @@ class PoolNet(object):
             (3,125,125)
             (4) bool 'fc': True for fully convolutional model, else classic convolutional
             model. defaults to False.
-            (5) bool 'vgg': True to use vggnet architecture. Defaults to True (currently
-            better than original)
-            (6) bool 'load_model': Use a saved trained model (model_name) architecture
+            (5) bool 'load_model': Use a saved trained model (model_name) architecture
             and weights. Defaults to False
-            (7) string 'model_name': Only relevant if load_model is True. name of model
+            (6) string 'model_name': Only relevant if load_model is True. name of model
             (not including file extension) to load. Defaults to None
-            (8) int 'train_size': number of samples to train on per epoch. defaults to
+            (7) int 'train_size': number of samples to train on per epoch. defaults to
             10000
     '''
 
     def __init__(self, nb_classes=2, batch_size=32,
                 input_shape=(3, 125, 125), fc = False,
-                vgg=True, load_model=False, model_name=None, train_size=10000):
+                load_model=False, model_name=None, train_size=10000):
 
         self.nb_classes = nb_classes
         self.batch_size = batch_size
         self.input_shape = input_shape
         self.fc = fc
-        self.vgg = vgg
         self.load_model = load_model
         self.train_size = train_size
-        if self.vgg:
-            self.model = self._VGG_16()
-        elif self.load_model:
+
+        if self.load_model:
             self.model_name = model_name
             self.model = self.load_model_weights(model_name)
         else:
-            self.model = self._compile_model()
+            self.model = self._VGG_16()
+
         self.model_layer_names = [self.model.layers[i].get_config()['name']
                                     for i in range(len(self.model.layers))]
         if self.fc:
             self.model = self.make_fc_model()
-
-    def _compile_model(self):
-        '''
-        compiles standard convolutional netowrk (not FCNN)
-        currently not a good model. use VGGnet.
-        '''
-        print 'Compiling standard model...'
-        model = Sequential()
-
-        model.add(Convolution2D(64, 5, 5, W_regularizer = l1l2(l1=0.01, l2=0.01),
-                                border_mode = 'valid',
-                                input_shape=self.input_shape,
-                                activation = 'relu'))
-        model.add(MaxPooling2D(pool_size=(2,2), strides=(1,1)))
-        model.add(Dropout(0.75))
-
-        model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(BatchNormalization(mode=0, axis=1))
-        model.add(MaxPooling2D(pool_size = (2,2)))
-
-        model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(MaxPooling2D(pool_size = (2,2)))
-        model.add(Dropout(0.5))
-
-        model.add(Convolution2D(128, 3, 3, W_regularizer = l1l2(l1=0.01, l2=0.01),
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(MaxPooling2D(pool_size = (2,2), strides=(1,1)))
-        model.add(Dropout(0.5))
-
-        model.add(Convolution2D(128, 3, 3,
-                                border_mode = 'valid',
-                                activation = 'relu'))
-        model.add(Dropout(0.25))
-
-        model.add(Flatten())
-        model.add(Dense(2048))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(2048))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(2048))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.5))
-        model.add(Dense(self.nb_classes))
-        model.add(Activation('softmax'))
-
-        sgd = SGD(lr=0.0001, decay=0.01)
-
-        model.compile(loss = 'categorical_crossentropy', optimizer = 'sgd')
-
-        return model
-
 
     def _VGG_16(self):
         '''
@@ -226,7 +166,6 @@ class PoolNet(object):
                 (2) list 'Y_train': one-hot associated labels to X_train. shape =
                 train_size, n_classes)
                 (3) float 'validation_split': proportion of X_train to validate on.
-                #TODO: add X_test and Y_test, set val_split to None
                 (4) string 'save_model': name of model for saving. if None, does not
                 save model.
         OUTPUT  (1) trained model.
@@ -286,7 +225,6 @@ class PoolNet(object):
         if save_model:
             self.save_model(save_model)
 
-
     def retrain_output(self, X_train, Y_train, **kwargs):
         '''
         Retrains last dense layer of model. For use with unbalanced classes after
@@ -311,9 +249,52 @@ class PoolNet(object):
         # train model
         self.fit_xy(X_train, Y_train, **kwargs)
 
+    def retrain_on_errors(self, X_train, Y_train, initial_weights, nb_epochs=5,
+                        samples_per_epoch=2500, **kwargs):
+        '''
+        Retrain model on polygons that were initially misclassified.
+        INPUT   (1) array 'X_train': misclassified chips. It is recommended to
+                only use chips with classification certainty under 0.9, given that the
+                training data is flawed. A shapefile of these chips can be created from
+                filter_by_classification. use shape (train_size, 3, h, w).
+                (2) list 'Y_train': one-hot associated labels to X_train. shape =
+                train_size, n_classes)
+                (3) int 'nb_epochs': number of epochs to train for.
+                (4) string 'initial_weights': file path to weights to retrain on. It is
+                recommended to use weights from the first (balanced) round of training,
+                then repeat training on unbalanced after this.
+                (5) int 'samples_per_epoch': number of samples to train on per epoch.
+                if this is more than len(X_train) real-time data augmentation will be used
+                (6) float 'validation_split': proportion of X_train to validate on.
+                (7) string 'save_model': name of model for saving. if None, does not
+                save model.
+        OUTPUT  (1) trained model
+        '''
+        # Recompile model to ensure all layers trainable
+        for i in xrange(len(self.model.layers)):
+            self.model.layers[i].trainable = True
+
+        # Fit as usual if augmentation is unncessary
+        if len(X_train) <= samples_per_epoch:
+            self.fit_xy(X_train[:samples_per_epoch], Y_train[:samples_per_epoch],
+                        nb_epoch=nb_epoch, **kwargs)
+
+        else:
+            # Augment data, fit on generator
+            datagen = ImageDataGenerator(rotation_range=120, width_shift_range=0.2,
+                                        height_shift_range=0.2, fill_mode='constant',
+                                        cval=0, horizontal_flip= True, vertical_flip=True)
+            datagen.fit(X_train)
+
+            # Fit model on batches with real-time data augmentation
+            self.model.fit_generator(datagen.flow(X_train, Y_train,
+                                    batch_size=self.batch_size),
+                                    samples_per_epoch=samples_per_epoch,
+                                    nb_epoch=nb_epoch)
+
     def save_model(self, model_name):
         '''
-        INPUT string 'model_name': name to save model and weigths under, including
+        INPUT   (1) string 'model_name': name to save model and weigths under, including
         filepath but not extension
         Saves current model as json and weigts as h5df file
         '''
