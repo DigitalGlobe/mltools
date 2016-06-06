@@ -459,19 +459,20 @@ def filter_by_classification(shapefile, output_name, max_cert=0.75, min_cert=0.5
     '''
 
     with open(shapefile) as f:
-        data = geojson.load(shapefile)
+        data = geojson.load(f)
     ok_polygons = []
 
     # Cycle through each polygon, check for certainty and misclassification
+    print 'Filtering polygons...'
     for geom in data['features']:
         try:
-            cert = geom['certainty']
-            if geom['missed'] == 0:
+            cert = geom['properties']['certainty']
+            if geom['properties']['missed'] == 0:
                 misclass = False
             else:
-                misclass == True
-            gt = geom['class_name']
-        except (TypeError, KeyError):
+                misclass = True
+            # gt = geom['properties']['class_name']
+        except (KeyError):
             continue
 
         if misclass == missed:
@@ -483,4 +484,4 @@ def filter_by_classification(shapefile, output_name, max_cert=0.75, min_cert=0.5
     with open('{}.geojson'.format(output_name), 'wb') as f:
         geojson.dump(filtrate, f)
 
-    print 'Saved {} polygons as {}.geojson'.format(len(ok_polygons), output_file)
+    print 'Saved {} polygons as {}.geojson'.format(len(ok_polygons), output_name)
