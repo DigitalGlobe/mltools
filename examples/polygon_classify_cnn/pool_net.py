@@ -369,7 +369,17 @@ class PoolNet(object):
             return y_hat
 
     def classify_shapefile(self, shapefile, output_name):
+        '''
+        Use the current model and weights to classify all polygons (of appropriate size)
+        in the given shapefile. Records PoolNet classification, whether or not it was
+        misclassified by PoolNet, and the certainty for the given class.
+        INPUT   (1) string 'shapefile': name of the shapefile to classify
+                (2) string 'output_name': name to give the classified shapefile (not
+                including extension.)
+        OUTPUT  (1) classified shapefile
+        '''
         yprob, ytrue = [], []
+        output_file = '{}.gejson'.format(output_name)
 
         # Classify all chips in input shapefile
         print 'Classifying test data...'
@@ -389,7 +399,7 @@ class PoolNet(object):
         # Update shapefile, save as output_name
         data = zip(yhat, ycert, missed)
         property_names = ['PoolNet_class', 'certainty', 'missed']
-        write_properties_to(data, property_names, shapefile, output_name)
+        write_properties_to(data, property_names, shapefile, output_file)
 
 
 # Evaluation methods
@@ -431,3 +441,18 @@ def x_to_rgb(X):
     rgb_array[...,1] = X[1] * 255
     rgb_array[...,2] = X[2] * 255
     return rgb_array
+
+
+def filter_by_classification(input_file, output_name, max_cert=0.75, min_cert=0.5,
+                             missed=True):
+    '''
+    Method for filtering a geojson file by max and min classification certainty.
+    INPUT   (1) string 'input_file': name of shapefile to filter. should be output of
+            classify_shapefile method from PoolNet.
+            (2) string 'output_name': name of file (not including extension) to save
+            filtered geojson to.
+            (3) float 'max_cert': Maximum acceptable certainty from PoolNet classification
+            (4) float 'min_cert': Maximum acceptable certainty from PoolNet classification
+            (5) bool 'missed': use only misclassfied polygons. Defaults to True
+    OUTPUT  (1) shapefile filtered by certainty and missed.
+    '''
