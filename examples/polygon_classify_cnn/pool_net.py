@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import json
+import geojson
 from mltools.data_extractors import get_iter_data
 from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
@@ -443,7 +444,7 @@ def x_to_rgb(X):
     return rgb_array
 
 
-def filter_by_classification(input_file, output_name, max_cert=0.75, min_cert=0.5,
+def filter_by_classification(shapefile, output_name, max_cert=0.75, min_cert=0.5,
                              missed=True):
     '''
     Method for filtering a geojson file by max and min classification certainty.
@@ -456,3 +457,30 @@ def filter_by_classification(input_file, output_name, max_cert=0.75, min_cert=0.
             (5) bool 'missed': use only misclassfied polygons. Defaults to True
     OUTPUT  (1) shapefile filtered by certainty and missed.
     '''
+
+    with open(shapefile) as f:
+        data = geojson.load(shapefile)
+    ok_polygons = []
+
+    # Cycle through each polygon, check for certainty and misclassification
+    for geom in data['features']:
+        try:
+            cert = geom['certainty']
+            if geom['missed'] == 0:
+                misclass = False
+            else:
+                misclass == True
+            gt = geom['class_name']
+        except (TypeError, KeyError):
+            continue
+
+        if misclass == missed:
+            if cert >= min_cert and cert >= max_cert:
+                ok_polygons.append(geom)
+
+    # Save filtered polygons to nex shapefile
+    filtrate = {data.keys()[0]: data.values()[0], data.keys()[1]: ok_polygons}
+    with open('{}.geojson'.format(output_name), 'wb') as f:
+        geojson.dump(filtrate, f)
+
+    print 'Saved {} polygons as {}.geojson'.format(len(ok_polygons), output_file)
