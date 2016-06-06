@@ -7,8 +7,14 @@
     * [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
     * [Setting up a Virtual Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
-4. [Results and Discussion](#results-and-discussion)
-5. [Docs](#docs)
+4. [Data Selection and Training](data-selection-and-training)
+    * [Image Preprocessing](#image-preprocessing)
+    * [Two-Phase Training](#two-phase-training)
+    * [Misclassified Polygons](#misclassified-polygons)
+    * [Bootstrapping Accurate Training Data](#bootstrapping-accurate-training-data)
+    * [Upsampling Problem Geometries](#upsampling-problem-geometries)
+5. [Results](#results)
+6. [Docs](#docs)
 
 ## About PoolNet
 
@@ -132,7 +138,7 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
         gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
         # creates filtered_shapefile.geojson
 
-2. Create train and test Shapefiles with and without balanced classes.
+2. Create train and test shapefiles with and without balanced classes.
 
         gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
         # creates train_filtered.geojson and test_filtered.geojson
@@ -160,10 +166,7 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
     This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.  
 
-    <img alt='sample chips after processing' src='images/chips.png' width=700>  
-    <sub> Sample chips used as input for PoolNet. Notice that only the contents of the polygon are being input to the net.</sub>
-
-4. Train PoolNet on balanced training data:
+4. Train PoolNet on balanced training data:  
 
         from pool_net import PoolNet
         p = PoolNet(input_shape = (3,125,125), batch_size = 32)
@@ -178,18 +181,49 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
         p.retrain_output(X_train=x, Y_train=y)  
 
+6. Load a previously trained model:
+
+        p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = model_name)
+        p.model.load_weights('model_weighs')
+
+
 **Note**: The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
 
-## Results and Discussion
-### Data Selection and Training  
-There were several challenges associated with making an effective net. To minimize the overwhelming and time-consuming task of selecting from the infinite architectures and parameters for PoolNet, we elected to use VGG-16, a model that has been shown to be an effective classifier on previous datasets. We instead focused on parameters such as training/batch size, number of epochs and learning rate as well as data selection and manipulation methods. As mentioned [before](#prepare-shapefile-for-training), we elected to zero-pad each chip outside of the polygon. The purpose of this is two-fold: firstly to eliminate any surrounding objects from neighbors that could cause a false positive, and to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks. Additionally, we ensure that the pixel intensity data is normalized (between 0 and 1) by dividing each pixel by 255.  
+## Data Selection and Training  
 
-<img alt='Swimming pools not detected by PoolNet.' src='images/missed.png'>  
+There were several challenges associated with making an effective net. To minimize the overwhelming and time-consuming task of selecting from the infinite architectures and parameters for PoolNet, we elected to use VGG-16, a model that has been shown to be an effective classifier on previous datasets. We instead focused on parameters such as training/batch size, number of epochs and learning rate as well as data selection and manipulation methods.
+
+### Image Preprocessing
+
+As mentioned [before](#prepare-shapefile-for-training), we elected to zero-pad each chip outside of the polygon. The purpose of this is two-fold: firstly to eliminate any surrounding objects from neighbors that could cause a false positive, and also to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks. Additionally, we ensure that the pixel intensity data is normalized (between 0 and 1) by dividing each pixel by 255.  
+
+<img alt='sample chips after processing' src='images/chips.png' width=700>  
+<sub> Sample chips used as input for PoolNet. Notice that only the contents of the polygon are being input to the net.</sub>
+
+### Two-Phase Training
+
+It was important to find a balance between false negatives and false positives when it comes to classifying the chips. As discussed above the first round of training takes place on balanced classes in order to allow the net to learn based on the composition of the image, as opposed to statistical probability of encountering a pool. After this round of training the model will give over 90% precision and recall when tested on balanced classes. Testing this model on data that is representative of the original data, however, brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools.
+
+To minimize this false positive rate without affecting the way the net identifies a pool we retrain only the output layer on unbalanced classes (~6% pools). This simultaneously preserves the way that the net detects pools, while increasing the probability threshold for producing a positive label. There is a fine balance for how much data should be fed into each round of training as well as how many epochs is ideal for each. After playing around with these two variables the net produced the best results when training on more chips in the first round, followed by more epochs on fewer chips in the second round.  
+
+### Misclassified Polygons
+
+After two training phases precision and recall were a little over 85%. Upon manual inspection of the results a few of the causes of misclassification became apparent. Firstly, swimming pools that are partially covered by trees or a tarp, empty, small, or with green water were often falsely classified as 'no pool'. However, the ground truth also appeared to have some incorrectly classified polygons, which the model was actually classifying correctly, despite being marked as a false negative.  
+
+Similarly, a large portion of the geometries that were marked as false positives were actually incorrectly labeled polygons that do have pools. Genuine false positives were usually due to a bright blue object in the back yard with a similar color to many pools. See below for some examples of polygons falsely classified by PoolNet.
+
+<img alt='Swimming pools not detected by PoolNet.' src='images/missed.png' width=700>  
 <sub> Samples of pools that the net misclassified. Notice that many are difficult to see, covered by trees or unusually dark. </sub>
 
-It was also important to find a balance between false negatives and false positives when it comes to classifying the chips. As discussed above the first round of training takes place on balanced classes in order to allow the net to learn based on the composition of the image, as opposed to statistical probability of encountering a pool. After this round of training the model will give over 90% precision and recall when tested on balanced classes. Testing this model on data that is representative of the original data, however, brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To minimize this false positive rate without affecting the way the net identifies a pool we retrain only the output layer on unbalanced classes (~6% pools). This simultaneously preserves the way that the net detects pools, while increasing the probability threshold for producing a positive label. There is a fine balance for how much data should be fed into each round of training as well as how many epochs is ideal for each. After playing around with these two variables the net produced the best results when training on more chips in the first round, followed by more epochs on fewer chips in the second round.  
+### Bootstrapping Accurate Training Data
 
 <Predicted probabilities>
+
+### Upsampling Problem Geometries
+
+<more training rounds>
+
+## Results
 
 The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. When deployed on test data (which has the same class imbalance as the original data) it gives approximately 86% precision and recall and 98% accuracy. The high accuracy in this case is due to the unbalanced classes, testing on balanced classes lowers the accuracy to just over 91%.  
 
