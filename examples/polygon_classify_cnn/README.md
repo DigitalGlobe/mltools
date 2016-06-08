@@ -11,8 +11,6 @@
     * [Image Preprocessing](#image-preprocessing)
     * [Two-Phase Training](#two-phase-training)
     * [Misclassified Polygons](#misclassified-polygons)
-    * [Bootstrapping Accurate Training Data](#bootstrapping-accurate-training-data)
-    * [Upsampling Problem Geometries](#upsampling-problem-geometries)
 5. [Results](#results)
 6. [Docs](#docs)
 
@@ -215,13 +213,6 @@ Similarly, a large portion of the geometries that were marked as false positives
 <img alt='Swimming pools not detected by PoolNet.' src='images/missed.png' width=700>  
 <sub> Samples of pools that the net misclassified. Notice that many are difficult to see, covered by trees or unusually dark. </sub>
 
-### Bootstrapping Accurate Training Data
-
-<Predicted probabilities>
-
-### Upsampling Problem Geometries
-
-<more training rounds>
 
 ## Results
 

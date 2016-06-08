@@ -361,7 +361,7 @@ class PoolNet(object):
         OUTPUT  (1) classified shapefile
         '''
         yprob, ytrue = [], []
-        output_file = '{}.gejson'.format(output_name)
+        output_file = '{}.geojson'.format(output_name)
 
         # Classify all chips in input shapefile
         print 'Classifying test data...'
