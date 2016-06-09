@@ -17,6 +17,8 @@
     * [Misclassified Polygons](#misclassified-polygons)
 5. [Results](#results)
 6. [Docs](#docs)
+    * [About](#about)
+    * [Methods](#methods)
 
 ## About PoolNet
 
