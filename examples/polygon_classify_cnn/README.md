@@ -16,8 +16,6 @@
     * [Two-Phase Training](#two-phase-training)
     * [Misclassified Polygons](#misclassified-polygons)
 5. [Results](#results)
-    * [Original Data](#original-data)
-    * [Ground Truth](#ground-truth)
 6. [Docs](#docs)
 
 ## About PoolNet
@@ -300,14 +298,15 @@ Similarly, a large portion of the geometries that were marked as false positives
 
 ## Results
 
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on the ground truth data gives a precision of 83% and recall of 92%. Given that the ground truth data appears to be flawed, however, we needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of the polygon. We then compared the results to the original ground truth as well as PoolNet classifications. The new ground truth data gave a precision of 88% and recall of 93%. Results are summarized in the table below.
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on the ground truth data gives a precision of 83% and recall of 92%. Given that the ground truth data appears to be flawed, however, we needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of the polygon. We then compared the results to the original ground truth as well as PoolNet classifications. The new ground truth data gave a precision of 88% and recall of 93%. Results are summarized in the table below.  
 
-### Original Data  
+
+#### Original Data  
 
 <img src='images/Original_results.png' width=350>  
 <sub> Results of pool classification based on the original (flawed) 'ground truth' data </sub>
 
-### Ground Truth   
+#### Ground Truth    
 
 <img src='images/Updated_gt.png' width=350>  
 <sub> Results of classification based on the accurate ground truth data </sub>
