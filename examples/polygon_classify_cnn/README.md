@@ -54,40 +54,41 @@ In short:
 
 1. Update packages:  
 
-        sudo apt-get update  
-        sudo apt-get -y dist-upgrade
+        >> sudo apt-get update  
+        >> sudo apt-get -y dist-upgrade
 
 2. Open tmux:  
 
-        tmux  
+        >> tmux  
 
 3. Install dependencies:  
 
-        sudo apt-get install -y gcc g++ gfortran build-essential git wget linux-image-generic libopenblas-dev python-dev python-pip python-nose python-numpy python-scipy
+        >> sudo apt-get install -y gcc g++ gfortran build-essential git wget linux-image-generic libopenblas-dev python-dev python-pip python-nose python-numpy python-scipy
 
 4. Install bleeding-edge version of Theano:  
 
-        sudo pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git  
+        >> sudo pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git  
 
 5. Get cuda toolkit (7.0):  
 
-        sudo wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.0-28_amd64.deb  
+        >> sudo wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.0-28_amd64.deb  
+
 6. Depackage cuda:  
 
-        sudo dpkg -i cuda-repo-ubuntu1404_7.0-28_amd64.deb  
+        >> sudo dpkg -i cuda-repo-ubuntu1404_7.0-28_amd64.deb  
 
 7. Add package and install cuda driver (~5 min)  
 
-        sudo apt-get update  
-        sudo apt-get install -y cuda  
+        >> sudo apt-get update  
+        >> sudo apt-get install -y cuda  
 
 8. Add cuda nvcc and ld_library_path to path:  
 
-        echo -e "\nexport PATH=/usr/local/cuda/bin:$PATH\n\nexport LD_LIBRARY_PATH=/usr/local/cuda/lib64" >> .bashrc  
+        >> echo -e "\nexport PATH=/usr/local/cuda/bin:$PATH\n\nexport LD_LIBRARY_PATH=/usr/local/cuda/lib64" >> .bashrc  
 
 9. Reboot:  
 
-        sudo reboot  
+        >> sudo reboot  
 
 10. Create a .theanorc in the /home/ubuntu/ directory as follows:  
 
@@ -110,20 +111,9 @@ In short:
 
 ### Setting up an environment
 
-1. Create the environment:  
-
-        conda create -n geo python ipython numpy scipy gdal git libgdal=2  
-
-2. upgrade pip:  
-
-        pip install --upgrade pip  
-
-3. install mltools:  
-
-        pip install mltools
+See instructions for setting up an environment [here](https://github.com/kostasthebarbarian/mltools/blob/master/README.rst)
 
 ## PoolNet Workflow
-
 
 Start with a geojson shapefile ('shapefile.geojson') and associated tif images:  
 
@@ -132,27 +122,27 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
 ### Prepare Shapefile for Training
 
-1. Filter shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip side dimensions (generally between 30 and 125 pixels for pansharpened images).  
+1. Open an ipython terminal and filter the shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip side dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
     <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=200>
     <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=200>
 
-        import mltools.geojson_tools as gt
-        import mltools.data_extractors as de
+        >> import mltools.geojson_tools as gt
+        >> import mltools.data_extractors as de
 
-        gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
+        >> gt.filter_polygon_size('shapefiles/shapefile.geojson', 'shapefiles/filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
         # creates filtered_shapefile.geojson
 
 2. Create train and test shapefiles with and without balanced classes.
 
-        gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
+        >> gt.create_balanced_geojson('shapefiles/filtered_shapefile.geojson', output_name = 'shapefiles/filtered', 'balanced = False', train_test = 0.2)
         # creates train_filtered.geojson and test_filtered.geojson
 
         # use train_filtered.geojson to create balanced class shapefile:
-        gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
+        >> gt.create_balanced_geojson('shapefiles/train_filtered.geojson', output_name = 'train_balanced')
         # creates training data (train_balanced.geojson) with balanced classes for first round of training  
 
-    <b>Notice that we now have the following shapefiles</b>:  
+    <b>Notice that we now have the following geojsons in the 'shapefiles' folder</b>:  
 
     <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
 
@@ -166,30 +156,30 @@ Start with a geojson shapefile ('shapefile.geojson') and associated tif images:
 
 3. Create standardized polygons as uniformly-sized chips for input into the net. Use a batch size that will fit into memory if you will not be training on a generator.  
 
-        data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
-        x, y = data_generator.next()  
+        >> data_generator = de.get_iter_data('shapefiles/train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
+        >> x, y = data_generator.next()  
 
     This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.  
 
 4. Train PoolNet on balanced training data:  
 
-        from pool_net import PoolNet
-        p = PoolNet(input_shape = (3,125,125), batch_size = 32)
-        p.fit_xy(X_train = x, Y_train = y, save_model = model_name, nb_epoch=15)
+        >> from pool_net import PoolNet
+        >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
+        >> p.fit_xy(X_train = x, Y_train = y, save_model = model_name, nb_epoch=15)
         # saves model architecture and weights to model_name.json and model_name.h5 (respectively)
 
 5. Retrain the final dense layer of the network on unbalanced classes:  
 
-        unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True, nb_epoch = 5)
-        x, y = unbal_generator.next()
+        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True, nb_epoch = 5)
+        >> x, y = unbal_generator.next()
         # Creates unbalanced training data
 
-        p.retrain_output(X_train=x, Y_train=y)  
+        >> p.retrain_output(X_train=x, Y_train=y)  
 
 6. Load a previously trained model:
 
-        p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = model_name)
-        p.model.load_weights('model_weighs')
+        >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = model_name)
+        >> p.model.load_weights('model_weighs')
 
 
 **Note**: The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
