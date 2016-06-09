@@ -6,10 +6,10 @@
     * [The Challenge](#the-challenge)
     * [Network Architecture](#network-architecture)
 2. [Getting Started](#getting-started)
-    * [Setting up your EC2 Instance](#setting-up-anec2-instance-with-theano)
+    * [Setting up your EC2 Instance](#setting-up-an-ec2-instance-with-theano)
     * [Setting up a Virtual Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
-4. [Data Selection and Training](data-selection-and-training)
+4. [Data Selection and Training](#data-selection-and-training)
     * [Image Preprocessing](#image-preprocessing)
     * [Two-Phase Training](#two-phase-training)
     * [Misclassified Polygons](#misclassified-polygons)
@@ -20,17 +20,17 @@
 
 ## About PoolNet
 
-PoolNet is trained on satellite images of various property polygons in order to classify them as homes with or without a pool. This model provides an efficient and reliable way to classify polygons, information that is valuable to insurance companies and would otherwise be challenging to collect at a large scale. With appropriate training data this model can be extended to various applications such as vehicles, boats, solar panels and buildings.
+PoolNet uses deep learning with a convolutional neural network to classify satellite images of various property polygons as homes with or without a pool. This model provides an efficient and reliable way to classify polygons, information that is valuable to insurance companies and would otherwise be challenging to collect at a large scale. With appropriate training data this model can be extended to various applications such as vehicles, boats, solar panels and buildings.
 
 <img alt='Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon.' src='images/sample_polygons.png' width=400>  
 <sub> Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon. </sub>  
 
 ### The Challenge
 
-Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for computer detection of pools, providing the flexibility of learning common abstract qualities of the item of interest independent of location in the input image. The vast number of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques may overlook.
+Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for machine detection of pools, providing the flexibility of learning common abstract qualities of the item of interest independent of location in the input image. The vast number of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques may overlook.
 
 <img alt='Major challenge in machine classification of pools- diversity of pools in satellite imagery' src='images/pool_diversity.png'>  
-<sub> various pool-containing polygons from the test data. Notice the diversity in shape, size, color, intensity and location in the polygon. This makes machine classification of pools very challenging. </sub>  
+<sub>Various pool-containing polygons from the test data. Notice the diversity in shape, size, color, intensity and location in the polygon. This makes machine classification of pools very challenging. </sub>  
 
 
 ### Network Architecture
@@ -38,8 +38,8 @@ Pools turn out to be very diverse in satellite images, varying in shape, color, 
 PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network architecture, a 16-layer convolutional neural network, the top-scoring submission for the 2014 [ImageNet](http://www.image-net.org/challenges/LSVRC/2014/) classification challenge. This architecture is composed of many small (3x3) convolutional filters, which enables such a deep network to be trained and deployed in a timely manner on a GPU.  
 
 <b>VGG-16 Architecture</b>  
-<img src='images/VGGNet.png' width=500>
-
+<img src='images/VGGNet.png' width=500>  
+<sub>Architecture of VGGNet. The input layer (blue) is comprised of a 3-channel pansharpened rgb property polygon. Each green layer represents a convolution of the original image with a 3x3 kernel. Max-pooling layers (denoted by the black MP) are used for downsampling the convolved image by taking only the most intense of a given pool of pixels. The yellow layers at the end represent fully connected layers where all remaining pixels are flattened into a 2-dimensional layer of nodes. Finally two nodes of the the softmax layer at the end each represent one class (pool or no pool) and produces a probability the the input image belongs to that class. </sub>  
 
 ## Getting Started  
 
