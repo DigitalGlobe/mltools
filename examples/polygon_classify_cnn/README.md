@@ -11,25 +11,27 @@
 3. [PoolNet Workflow](#poolnet-workflow)
     * [Getting the Imagery](#getting-the-imagery)
     * [Prepare Shapefile for Training](#prepare-shapefile-for-training)
-4. [Data Selection and Training](#data-selection-and-training)
+    * [Training the Network](#training-the-network)
+    * [Testing the Network](#testing-the-network)
+4. [Results and Discussion](#results-and-discussion)
     * [Image Preprocessing](#image-preprocessing)
     * [Two-Phase Training](#two-phase-training)
     * [Misclassified Polygons](#misclassified-polygons)
-5. [Results](#results)
-6. [Docs](#docs)
+    * [Results](#results)
+5. [Docs](#docs)
     * [About](#about)
     * [Methods](#methods)
 
 ## About PoolNet
 
-PoolNet uses deep learning with a convolutional neural network to classify satellite images of various property polygons as homes with or without a pool. This model provides an efficient and reliable way to classify polygons, information that is valuable to insurance companies and would otherwise be challenging to collect at a large scale. With appropriate training data this model can be extended to various applications such as vehicles, boats, solar panels and buildings.
+PoolNet uses deep learning with a [convolutional neural network](http://neuralnetworksanddeeplearning.com/chap6.html#introducing_convolutional_networks) to classify satellite images of various property polygons as homes with or without a pool. This model provides an efficient and reliable way to classify polygons, information that is valuable to insurance companies and would otherwise be challenging to collect at a large scale. With appropriate training data this model can be extended to various applications such as vehicles, boats, solar panels and buildings.
 
 <img alt='Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon.' src='images/sample_polygons.png' width=400>  
 <sub> Example property polygons. Red indicates no pool, green indicates that there is a pool within the polygon. </sub>  
 
 ### The Challenge
 
-Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for machine detection of pools, providing the flexibility of learning common abstract qualities of the item of interest independent of location in the input image. The vast number of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques may overlook.
+Pools turn out to be very diverse in satellite images, varying in shape, color, tree-coverage and location. A convolutional neural net is therefore a promising option for machine detection of pools, providing the flexibility to learn common abstract qualities of the item of interest independently of location in the input image. The vast number of parameters trained in PoolNet allows it to learn a variety of features that pools have that other machine learning techniques and even the human eye may overlook.
 
 <img alt='Major challenge in machine classification of pools- diversity of pools in satellite imagery' src='images/pool_diversity.png'>  
 <sub>Various pool-containing polygons from the test data. Notice the diversity in shape, size, color, intensity and location in the polygon. This makes machine classification of pools very challenging. </sub>  
@@ -109,19 +111,19 @@ In short:
 
 ### Setting up an environment
 
-See instructions for setting up an environment [here](https://github.com/kostasthebarbarian/mltools/blob/master/README.rst).
+Before training your net be sure to activate the environment on which mltools was installed ([instructions](https://github.com/kostasthebarbarian/mltools#installationusage)).
 
 ## PoolNet Workflow
 
-The PoolNet workflow described here requires a pansharpened tif image and a shapefile containing labeled polygon geometries 
-(shapefile.geojson). 
+The PoolNet workflow described here requires a pansharpened tif image and a shapefile containing labeled polygon geometries
+(shapefile.geojson).
 
 <img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=750>   
 <sub> Pansharpened tif image with associated polygons overlayed. Green polygons indicate there is a pool in the property. </sub>
 
 ### Getting the Imagery
 
-Download the image with catalog id 1040010014800C00 using [gbdxtools](http://github.com/DigitalGlobe/gbdxtools) by following [these](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_random_forest) instructions. This is the image where we will be classifying property parcels in those that contain swimming pools and those that don't. 
+Download the image with catalog id 1040010014800C00 using [gbdxtools](http://github.com/DigitalGlobe/gbdxtools) by following [these](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_random_forest) instructions. This is the image where we will be classifying property parcels in those that contain swimming pools and those that don't.
 
 ### Prepare Shapefile for Training
 
@@ -133,7 +135,6 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
     <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=200>
 
         >> import mltools.geojson_tools as gt
-        >> import mltools.data_extractors as de
 
         >> gt.filter_polygon_size(your_shapefile, 'shapefiles/filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
         # creates filtered_shapefile.geojson
@@ -157,22 +158,24 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
     d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used in the second round of training.  
     e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.  
 
+### Training the Network
 
-3. Create standardized polygons as uniformly-sized chips for input into the net. Use a batch size that will fit into memory if you will not be training on a generator.  
+1. Create standardized polygons as uniformly-sized chips for input into the net. Use a batch size that will fit into memory if you will not be training on a generator.  
 
+        >> import mltools.data_extractors as de
         >> data_generator = de.get_iter_data('shapefiles/train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
         >> x, y = data_generator.next()  
 
     This will produce chips with only the polygon pixels zero padded to the maximum acceptable chip side dimensions.  
 
-4. Train PoolNet on balanced training data:  
+2. Train PoolNet on balanced training data:  
 
         >> from pool_net import PoolNet
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
         >> p.fit_xy(X_train = x, Y_train = y, save_model = model_name, nb_epoch=15)
         # saves model architecture and weights to model_name.json and model_name.h5 (respectively)
 
-5. Retrain the final dense layer of the network on unbalanced classes:  
+3. Retrain the final dense layer of the network on unbalanced classes:  
 
         >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True, nb_epoch = 5)
         >> x, y = unbal_generator.next()
@@ -180,15 +183,18 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
         >> p.retrain_output(X_train=x, Y_train=y)  
 
-6. Load a previously trained model:
+4. Load a previously trained model:
 
-        >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = model_name)
-        >> p.model.load_weights('model_weighs')
+    If you already have a saved model architecture and weights, you may load those using the load_model=True argument when creating an instance of the PoolNet class. You then may load the associated weights saved as an h5 file.  
 
+        >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = 'model_name.json')
+        >> p.model.load_weights('model_weighs.h5')
 
 **Note**: The reason why we initially train on balanced data is to allow the model to learn distinct attributes of pools. Given that only about 6% of the original polygons contain pools, training on unbalanced classes would result in the model classifying everything as no pool. Once the model has learned to detect pools in balanced data, we retrain only the final dense layer of PoolNet to minimize the false positives that result from the balanced data training phase.  
 
-## Data Selection and Training  
+### Testing the Network
+
+## Results and Discussion  
 
 There were several challenges associated with making an effective net. To minimize the overwhelming and time-consuming task of selecting from the infinite architectures and parameters for PoolNet, we elected to use VGG-16, a model that has been shown to be an effective classifier on previous datasets. We instead focused on parameters such as training/batch size, number of epochs and learning rate as well as data selection and manipulation methods.
 
@@ -214,7 +220,7 @@ Similarly, a large portion of the geometries that were marked as false positives
 <img alt='Swimming pools not detected by PoolNet.' src='images/missed.png' width=700>  
 <sub> Samples of pools that the net misclassified. Notice that many are difficult to see, covered by trees, unusually dark or at the edge of the bounding box. </sub>  
 
-## Results
+### Results
 
 The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on the ground truth data gives a precision of 83% and recall of 92%. Given that the ground truth data appears to be flawed, however, we needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of the polygon. We then compared the results to the original ground truth as well as PoolNet classifications. The new ground truth data gave a precision of 88% and recall of 93%. Results are summarized in the table below.  
 
@@ -260,7 +266,7 @@ ________________________________________________________________________________
 3. [**fit_generator**](#fit_generator): For training PoolNet on more chips than will fit into memory.  
 4. [**retrain_output**](#retrain_output): Retrain only the final layer of the model. For use on unbalanced data.  
 5. [**save_model**](#save_model): Save the model architecture as a json and weights from final epoch.  
-6. [**load_model_weights**](#load_model_weights): Use a previously trained and saved architecture and weights.  
+6. [**load_model**](#load_model): Use a previously saved model architecture.  
 7. [**evaluate_model**](#evaluate_model): Get predicted classes and a classification report from test data.  
 8. [**classify_shapefile**](#classify_shapefile): create a shapefile with classification results stored as properties.  
 
