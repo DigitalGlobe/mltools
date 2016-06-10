@@ -97,7 +97,7 @@ You can easily create a leaflet map with the pansharpened image overlayed using 
 Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html) on your browser in order to view the image.  
 
 Alternatively, you can run a gbdx workflow to generate the pansharpened image and then download it locally 
-in order to view it (e.g., on QGIS) 
+in order to view it (e.g., on QGIS):
 
         >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True, enable_pansharpen=True)
         >> workflow = gbdx.Workflow([aoptask])
@@ -106,8 +106,7 @@ in order to view it (e.g., on QGIS)
         >> u'8674859687574738145'
         >> gbdx.s3.download('kostas/pools/pansharpened')
 
-You will have noticed that the image file is huge. You can compress it  
-using the following gdal command from the command line:
+You will have noticed that the image file is huge. You can compress it using the following gdal command from the command line:
 
         > gdal_translate -outsize 20% 20% myimage.tif myimage_downsampled.tif
 
