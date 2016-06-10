@@ -316,21 +316,15 @@ class PoolNet(object):
 
     def load_model(self, model_name):
         '''
-        INPUT  (1) string 'model_name': filepath to model, not including
-        extension.
+        INPUT  (1) string 'model_name': filepath to model
         OUTPUT: Loaded model architecture
         '''
         print 'Loading model {}'.format(self.model_name)
-        model = '{}.json'.format(self.model_name)
-        weights = '{}.h5'.format(self.model_name)
 
         #load model
         with open(model) as f:
             m = f.next()
         mod = model_from_json(json.loads(m))
-
-        #load weights
-        mod.load_weights(weights)
         print 'Done.'
         return mod
 
