@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Leaflet Quick Start Guide Example</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-pip/v0.1.0/leaflet-pip.min.js'></script> 
+    <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+    <script src="http://www.sumbera.com/gist/js/vt/geojson-vt-dev.js"></script>
+    <script src="http://www.sumbera.com/gist/js/leaflet/canvas/L.CanvasTiles.js"></script>
+
+	<style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #mapid {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+	<div id="mapid"></div>
+	
+    <script>
+
+		var map = L.map('mapid');
+        var maxZoom = 20
+
+		// mapbox layer
+        L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
+			maxZoom: maxZoom,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			id: 'mapbox.streets'
+		}).addTo(map);
+
+		// idaho tiles layer 
+        var token = 'fKDngjvtv58fqoSCSuvGXZwQYoR9Bj';
+		var bands = '4,2,1';
+        var gamma = '1.3';
+        var highCutoff = '0.98';
+        var lowCutoff = '0.02';
+        var brightness = '1.0';
+        var contrast = '2.0';
+		var tmsRootUrl = 'http://idaho.geobigdata.io/v1/'
+
+		function addLayerToMap(bucketName, imageId, W, S, E, N, panImageId) {
+			//var bucketName = 'idaho-images';
+        	//var imageId = '4f4a9067-a2a9-46a3-ae6a-9b499aa1ee0b';
+			var southWest = L.latLng(S,W),
+    			northEast = L.latLng(N,E),
+    			bounds = L.latLngBounds(southWest, northEast);
+
+        	var tmsUrl = tmsRootUrl+"tile/"+bucketName+'/'+imageId+'/{z}/{x}/{y}?bands='+bands+'&gamma='+gamma+'&highCutoff='+highCutoff+'&lowCutoff='+lowCutoff+'&brightness='+brightness+'&contrast='+contrast+'&token='+token;
+
+			if(panImageId !== ""){
+        		tmsUrl = tmsUrl+'&panId='+panImageId;
+       		}
+			var tmsLayer = new L.tileLayer(tmsUrl, {minZoom: 9, maxZoom: maxZoom, bounds:bounds});
+        	tmsLayer.isBaseLayer=false;
+        	map.addLayer(tmsLayer);
+
+		}
+
+		addLayerToMap('idaho-images','91dbbc47-797c-4293-8aa3-bc91a814b48b',138.44021373,-34.84883697,138.58723244,-34.71329334,'ea337c8c-cc04-4689-b643-7c96491c104d');
+        addLayerToMap('idaho-images','b21137bf-ca11-4276-ba55-de193bb5cb98',138.44017473,-34.95879766,138.58734879,-34.81326916,'fbcb8afe-b090-4663-a03e-38351da29769');
+        addLayerToMap('idaho-images','779bb33e-3312-45f2-99eb-1d67f7ea2a33',138.44010004,-35.0686964,138.58743906,-34.92327883,'0dbb9e0d-a8c8-42da-9824-406f32a54d20');
+        addLayerToMap('idaho-images','293adef4-0853-4bc1-882b-74c0e88035b7',138.44002428,-35.17858721,138.58755526,-35.03311941,'721d1fdb-193a-46e7-844b-d4a3a2c1a595');
+        addLayerToMap('idaho-images','25c23258-6970-460a-85a3-720d49ff8e3a',138.43996043,-35.28843962,138.58763092,-35.14304178,'8f7f5e6f-77a6-4a69-9d51-1a3c3d97b1d5');
+        addLayerToMap('idaho-images','b69382c7-a7f5-48b0-87e6-c22269245f64',138.4398586,-35.39808421,138.58771186,-35.25300809,'1c9cf0d9-1053-4200-8ce8-0b3a2114d818');
+        addLayerToMap('idaho-images','1e211ed7-00bf-4860-941a-cef40a7dce50',138.4398169,-35.43557751,138.58777429,-35.36275052,'cabc7b36-5021-4ef8-a269-ee40c4787c85');
+
+    	map.setView([-35.43557751, 138.4398169], 12);
+
+        // vector tile layer
+
+        // create an empty geojson layer
+        var Parcels = L.geoJson(null, {
+            onEachFeature: function(feature, layer) {
+                layer.bindPopup(feature.properties.feature_id)
+            },
+            style: {color:'yellow'}
+        });
+
+        // fill with data
+        var tileData = omnivore.geojson("train.geojson", null, Parcels);
+        console.log(tileData)
+        // interact with parcels
+        tileData.on('ready', function() {
+            
+            console.log('parcel data ready');
+            //map.fitBounds(Parcels.getBounds());
+
+            var highlight;            
+            map.on('click', function(e) {
+              if (highlight){
+                map.removeLayer(highlight)
+              }
+              var x = e.latlng.lng;
+              var y = e.latlng.lat;
+              var layerData = leafletPip.pointInLayer([x,y], Parcels, true);
+               if (!layerData[0]) {
+                 console.log('nothing to see here')
+               }
+               else{
+                   var highlightIndex = layerData[0].feature.properties.feature_id;
+                   highlight = new L.geoJson(data, {
+                       filter: function(feature, layer) {
+                                   return feature.properties.feature_id == highlightIndex;
+                               },
+                   style: {color:'deepskyblue', fillColor:'deepskyblue'}}).addTo(map);
+
+                   var popup = 'feature_id: ' + highlightIndex + '<hr>' + layerData[0].feature.properties.class_name;
+                   map.openPopup(popup, e.latlng);
+                   map.on('popupclose', function() {
+                       map.removeLayer(highlight)
+                   });
+               }
+            });
+
+            var tileOptions = {
+                maxZoom: 20,  // max zoom to preserve detail on
+                tolerance: 5, // 5 simplification tolerance (higher means simpler)
+                extent: 4096, //4096 tile extent (both width and height)
+                buffer: 64,   // 664 tile buffer on each side
+                debug: 0,      // logging level (0 to disable, 1 or 2)
+                indexMaxZoom: 0,        // 0 max zoom in the initial tile index
+                indexMaxPoints: 100000, // 100000 max number of points per tile in the index
+            };
+
+            var data = Parcels.toGeoJSON();
+
+            // build tile index
+            var tileIndex = geojsonvt(data, tileOptions);
+            // take json output from geojson-vt and draw it with the now deprecated (in leaflet-beta) L.canvasTiles 
+            // and code from here - http://blog.sumbera.com/2015/05/31/geojson-vt-on-leaflet/
+            var vectorLayer = L.canvasTiles().params({ debug: false, padding: 50, maxZoom: 20 }).drawing(drawingOnCanvas);
+            vectorLayer.addTo(map);
+            
+
+            function drawingOnCanvas(canvasOverlay, params) {
+
+                var bounds = params.bounds;
+                params.tilePoint.z = params.zoom;
+
+                var ctx = params.canvas.getContext('2d');
+                ctx.globalCompositeOperation = 'source-over';
+
+                var tile = tileIndex.getTile(params.tilePoint.z, params.tilePoint.x, params.tilePoint.y);
+                if (!tile) {
+                    console.log('tile empty');
+                    return;
+                }
+
+                ctx.clearRect(0, 0, params.canvas.width, params.canvas.height);
+                ctx.lineWidth = 3;
+
+                var features = tile.features;
+                for (var i = 0; i < features.length; i++) {
+                    var feature = features[i],
+                        type = feature.type;
+
+                    ctx.strokeStyle = feature.tags.class_name == 'Swimming pool' ? 'green' : 'red';
+                    ctx.fillStyle = feature.tags.color ? feature.tags.color : 'transparent';
+                    ctx.beginPath();
+
+                    var pad = 0;
+                    for (var j = 0; j < feature.geometry.length; j++) {
+                        var geom = feature.geometry[j];
+
+                        if (type === 1) {
+                            ctx.arc(geom[0] * ratio + pad, geom[1] * ratio + pad, 2, 0, 2 * Math.PI, false);
+                            continue;
+                        }
+
+                        for (var k = 0; k < geom.length; k++) {
+                            var p = geom[k];
+                            var extent = tileOptions.extent;
+
+                            var x = p[0] / extent * 256;
+                            var y = p[1] / extent * 256;
+                            if (k) ctx.lineTo(x  + pad, y   + pad);
+                            else ctx.moveTo(x  + pad, y  + pad);
+                        }
+                    }
+
+                    if (type === 3 || type === 1) ctx.fill();
+                    ctx.stroke();
+                }
+
+            };
+
+        });
+
+	</script>
+
+</body>
+</html>

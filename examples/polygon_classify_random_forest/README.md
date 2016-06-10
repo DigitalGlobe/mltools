@@ -4,8 +4,9 @@
 
 1. [About](#about)
 2. [Getting the imagery](#getting-the-imagery)
-3. [Training, testing and deploying the classifier](#training-testing-and-deploying-the-classifier)
-
+3. [Viewing the imagery](#viewing-the-imagery)
+4. [Training, testing and deploying the classifier](#training-testing-and-deploying-the-classifier)
+5. [Viewing the results](#viewing-the-results)
 
 ## About
 
@@ -23,16 +24,15 @@ The example walks the user through the following steps:
 
 This work was performed as part of the PSMA project whose goal is to provide a number of information layers on millions
 of property parcels across urban centers in Australia. Additional information about combining the algorithm classifications with
-the crowd labels can be found in this blog post http://blog.tomnod.com/crowd-and-machine-combo.
+the crowd labels can be found in this [blog post](http://blog.tomnod.com/crowd-and-machine-combo).
 
 
 ## Getting the imagery
 
-We will use gbdxtools (http://github.com/DigitalGlobe/gbdxtools) to order the image with catalog id 1040010014800C00
+We will use [gbdxtools](http://github.com/DigitalGlobe/gbdxtools) to order the raw image with catalog id 1040010014800C00
 which constitutes our Area Of Interest. We will then run a workflow to produce an atmospherically 
-compensated (acomped) multi-spectral image which will be used to train the classifier,
-and a workflow to produce a pan-sharpened image which will be used in order to visualize our results.
-Detailed information on gbdxtools can be found at http://gbdxtools.readthedocs.io/.
+compensated (acomped) multi-spectral image which will be used to train the classifier.
+Detailed information on gbdxtools can be found [here](http://gbdxtools.readthedocs.io/).
 
 First, we need to activate the conda environment we created to install mltools:
 
@@ -57,53 +57,61 @@ The key 'location' specifies the location of the ordered image on S3. We store t
 
         >> data = result[0]['location']
 
-We now execute the following steps in order to produce the acomped multi-spectral image and the pansharpened image.
+We now execute the following steps in order to produce the acomped multi-spectral image.
 
-        >> aoptask1 = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True)
-        >> workflow1 = gbdx.Workflow([aoptask1])
-        >> workflow1.savedata(aoptask1.outputs.data, location='kostas/pools/multispectral')
-        >> workflow1.execute()
+        >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True)
+        >> workflow = gbdx.Workflow([aoptask])
+        >> workflow.savedata(aoptask.outputs.data, location='kostas/pools/multispectral')
+        >> workflow.execute()
         >> u'4346825990110459472'
-        >> aoptask2 = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True, enable_pansharpen=True)
-        >> workflow2 = gbdx.Workflow([aoptask2])
-        >> workflow2.savedata(aoptask2.outputs.data, location='kostas/pools/pansharpened')
-        >> workflow2.execute()
-        >> u'4346826806501479525'
 
-The workflows might take a while to complete. We can check on their status as follows:
+The workflow might take a while to complete. We can check on its status as follows:
 
-        >> workflow1.status
+        >> workflow.status
         >> {u'event': u'started', u'state': u'running'}
-        >> workflow2.status
-        >> {u'event': u'submitted', u'state': u'pending'}
 
-When the workflows are done, their state will be 'complete'. This means that we can download the corresponding images locally.
+When the workflow is done, its state will be 'complete'. This means that we can download the corresponding image locally.
 
-        >> mkdir multispectral 
-        >> gbdx.s3.download('kostas/pools/multispectral', './multispectral')
-        >> mkdir pansharpened
-        >> gbdx.s3.download('kostas/pools/pansharpened', './pansharpened')
+        >> gbdx.s3.download('kostas/pools/multispectral')
 
-These commands will download a number of files which include shapefiles and imagery metadata. 
-We are only interested in the tif files. Exit ipython, go into each directory and rename the tif file to '1040010014800C00.tif'.
+This command will download a number of files which include shapefiles and imagery metadata. 
+We are only interested in the tif file so you can delete the rest of the files (they will not be of any use in this example).
+In addition, rename the tif file to '1040010014800C00.tif' as this is how the image is identified in our training, test and target
+data sets.
 
-        > cd multispectral
-        > mv 055078617010_01_assembly.tif 1040010014800C00.tif
-        > cd ..
-        > cd pansharpened
-        > mv 055078617010_01_assembly.tif 1040010014800C00.tif
-        > cd ..
 
-You can delete the rest of the files as they will not be of any use to you in this example. 
+## Viewing the imagery
 
-You will have noticed that the image files are huge. You can compress them for visualization purposes 
+The multispectral image is useful for machine learning but not for visualization. The best visualization can be achieved
+with a pansharpened image, produced by combining a multispectral and a panchromatic image.   
+
+In order to view the pansharpened image corresponding to catalog id 1040010014800C00, we can use [IDAHO](http://gbdxdocs.digitalglobe.com/v1/page/labs). IDAHO is a cloud-based, data storage format which allows fast, tile-based access to 
+imagery.
+
+You can easily create a leaflet map with the pansharpened image overlayed using gbdxtools. In ipython: 
+
+        >> from gbdxtools import Interface
+        >> gbdx = Interface()
+        >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1040010014800C00'), 'my_map.html') 
+
+Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html) on your browser in order to view the image.  
+
+Alternatively, you can run a gbdx workflow to generate the pansharpened image and then download it locally 
+in order to view it (e.g., on QGIS) 
+
+        >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True, enable_pansharpen=True)
+        >> workflow = gbdx.Workflow([aoptask])
+        >> workflow.savedata(aoptask.outputs.data, location='kostas/pools/pansharpened')
+        >> workflow.execute()
+        >> u'8674859687574738145'
+        >> gbdx.s3.download('kostas/pools/pansharpened')
+
+You will have noticed that the image file is huge. You can compress it  
 using the following gdal command from the command line:
 
-        > cd pansharpened
-        > gdal_translate -outsize 20% 20% 1040010014800C00.tif 1040010014800C00_downsampled.tif
+        > gdal_translate -outsize 20% 20% myimage.tif myimage_downsampled.tif
 
-You can open the file in QGIS (or a regular image viewer) in order to view it.
-Here is a screenshot.
+Here is a screenshot of the pansharpened image.
 
 <img src='images/adelaide_pansharpened.png' scale=1>   
 <sub> Worldview-2 pansharpened image of Adelaide region, Australia.</sub>
@@ -121,11 +129,6 @@ The test data set is found in test.geojson. This a collection of 5000 polygons w
 
 Finally, the target data set is in target.geojson. This is a collection of 1000 polygons which are not labeled. The idea is that once 
 the classifier is trained and tested, and we are happy with its performance, we can have it classify a set of unlabeled polygons from the same image.
-
-Note that we can visualize geojson's by directly opening them on github. If we want to visualize them overlayed on the imagery, we need to use QGIS. Here is a screenshot of train.geojson, with green/red polygons indicating presence/absence of a pool, respectively.
-
-<img src='images/adelaide_dataset_snapshot.png' scale=1>   
-<sub> Green/red polygons indicate presence/absence of a pools, respectively.</sub>
 
 Before proceeding, place the multispectral 1040010014800C00.tif in the same directory as the geojson files. 
 Enter ipython and import the following modules:
@@ -207,8 +210,19 @@ All the steps described in this section are found in polygon_classify_rf.py whic
         > python polygon_classify_rf.py        
 
 
+## Viewing the results
 
+Note that we can visualize geojson's by directly opening them on github.
+Viewing the geometries on top of the imagery (which is definitely more interesting!) is trickier.
 
+<img src='images/adelaide_dataset_snapshot.png' scale=1>   
+<sub> Green/red polygons indicate presence/absence of a pool, respectively.</sub>
+
+In this directory, you can find the file [my_map_with_vectors.html](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map_with_vectors.html). This is my_map.html modified to display train.geojson
+as a vector tile stack on top of the IDAHO raster tile stack. In order to do this, we use the [geojson-vt](https://github.com/mapbox/geojson-vt) javascript library which Mapbox built in order to slice GeoJSON data into vector tiles on the fly. Pretty cool.
+Green/red polygons indicate presence/absence of a pool, respectively. Click on each polygon to view the corresponding polygon id.
+
+(Note: if you download my_map_with_vectors.html and try to open it locally in Chrome, you might run into CORS issues. Firefox might solve the problem.)
 
 
 
