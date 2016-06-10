@@ -67,32 +67,28 @@ In short:
 
         >> sudo apt-get install -y gcc g++ gfortran build-essential git wget linux-image-generic libopenblas-dev python-dev python-pip python-nose python-numpy python-scipy
 
-4. Install bleeding-edge version of Theano:  
-
-        >> sudo pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git  
-
-5. Get cuda toolkit (7.0):  
+4. Get cuda toolkit (7.0):  
 
         >> sudo wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.0-28_amd64.deb  
 
-6. Depackage cuda:  
+5. Depackage cuda:  
 
         >> sudo dpkg -i cuda-repo-ubuntu1404_7.0-28_amd64.deb  
 
-7. Add package and install cuda driver (~5 min)  
+6. Add package and install cuda driver (~5 min)  
 
         >> sudo apt-get update  
         >> sudo apt-get install -y cuda  
 
-8. Add cuda nvcc and ld_library_path to path:  
+7. Add cuda nvcc and ld_library_path to path:  
 
         >> echo -e "\nexport PATH=/usr/local/cuda/bin:$PATH\n\nexport LD_LIBRARY_PATH=/usr/local/cuda/lib64" >> .bashrc  
 
-9. Reboot:  
+8. Reboot:  
 
         >> sudo reboot  
 
-10. Create a .theanorc in the /home/ubuntu/ directory as follows:  
+9. Create a .theanorc in the /home/ubuntu/ directory as follows:  
 
 <b>.theanorc config: </b>  
 
