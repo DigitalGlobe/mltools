@@ -6,6 +6,7 @@ import geoio
 import geojson_tools as gt
 import numpy as np
 import sys
+from keras.utils import np_utils
 import osgeo.gdal as gdal
 from osgeo.gdalconst import *
 from functools import reduce
