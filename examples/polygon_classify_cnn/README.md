@@ -13,8 +13,6 @@
     * [Prepare Shapefile for Training](#prepare-shapefile-for-training)
     * [Image Preprocessing](#image-preprocessing)
     * [Training the Network](#training-the-network)
-        - [Class Imbalance](#class-imbalance)
-        - [Two-Phase Training](#two-phase-training)
     * [Testing the Network](#testing-the-network)
 4. [Performance](#performance)
     * [Misclassified Polygons](#misclassified-polygons)
