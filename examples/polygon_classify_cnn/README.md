@@ -67,32 +67,28 @@ In short:
 
         >> sudo apt-get install -y gcc g++ gfortran build-essential git wget linux-image-generic libopenblas-dev python-dev python-pip python-nose python-numpy python-scipy
 
-4. Install bleeding-edge version of Theano:  
-
-        >> sudo pip install --upgrade --no-deps git+git://github.com/Theano/Theano.git  
-
-5. Get cuda toolkit (7.0):  
+4. Get cuda toolkit (7.0):  
 
         >> sudo wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_7.0-28_amd64.deb  
 
-6. Depackage cuda:  
+5. Depackage cuda:  
 
         >> sudo dpkg -i cuda-repo-ubuntu1404_7.0-28_amd64.deb  
 
-7. Add package and install cuda driver (~5 min)  
+6. Add package and install cuda driver (~5 min)  
 
         >> sudo apt-get update  
         >> sudo apt-get install -y cuda  
 
-8. Add cuda nvcc and ld_library_path to path:  
+7. Add cuda nvcc and ld_library_path to path:  
 
         >> echo -e "\nexport PATH=/usr/local/cuda/bin:$PATH\n\nexport LD_LIBRARY_PATH=/usr/local/cuda/lib64" >> .bashrc  
 
-9. Reboot:  
+8. Reboot:  
 
         >> sudo reboot  
 
-10. Create a .theanorc in the /home/ubuntu/ directory as follows:  
+9. Create a .theanorc in the /home/ubuntu/ directory as follows:  
 
 <b>.theanorc config: </b>  
 
@@ -113,22 +109,25 @@ In short:
 
 ### Setting up an environment
 
-See instructions for setting up an environment [here](https://github.com/kostasthebarbarian/mltools/blob/master/README.rst)
+See instructions for setting up an environment [here](https://github.com/kostasthebarbarian/mltools/blob/master/README.rst).
 
 ## PoolNet Workflow
 
-Start with a geojson shapefile ('shapefile.geojson') and associated tif images:  
+The PoolNet workflow described here requires a pansharpened tif image and a shapefile containing labeled polygon geometries 
+(shapefile.geojson). 
 
 <img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=750>   
 <sub> Pansharpened tif image with associated polygons overlayed. Green polygons indicate there is a pool in the property. </sub>
 
 ### Getting the Imagery
 
-Download the image with catalog id 1040010014800C00 using [gbdxtools](http://github.com/DigitalGlobe/gbdxtools) by following [these](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_random_forest) instructions. This is the image we will be classifying using it's corresponding geojson file (which you should have). If you do not have access to this file there are sample train and test geojsons in the [shapefiles](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training the model.
+Download the image with catalog id 1040010014800C00 using [gbdxtools](http://github.com/DigitalGlobe/gbdxtools) by following [these](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_random_forest) instructions. This is the image where we will be classifying property parcels in those that contain swimming pools and those that don't. 
 
 ### Prepare Shapefile for Training
 
-1. Open an ipython terminal and filter the shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip side dimensions (generally between 30 and 125 pixels for pansharpened images).  
+We initially filter shapefile.geojson to get rid of polygons that are too small. If you do not have access to shapefile.geojson, there are sample train and test geojsons in the [shapefiles](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit steps 1-2 and go straight to step 3.
+
+1. Open an ipython terminal and filter the shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
     <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=200>
     <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=200>
@@ -158,7 +157,6 @@ Download the image with catalog id 1040010014800C00 using [gbdxtools](http://git
     d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used in the second round of training.  
     e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.  
 
-    *If you would like to work through training PoolNet from here and have access to the original pansharpened image (id = 1040010014800C00), sample training and testing geojsons can be found in the 'shapefiles' directory.*
 
 3. Create standardized polygons as uniformly-sized chips for input into the net. Use a batch size that will fit into memory if you will not be training on a generator.  
 

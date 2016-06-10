@@ -7,25 +7,31 @@ mltools
 
 Tools for fast prototyping of object detection and classification solutions on DG imagery.
 Relies heavily on popular machine learning (ML) toolkits such as scikit-learn and deep 
-learning toolkits such as keras. It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. 
+learning toolkits such as keras. The intent is to use mltools to experiment with algorithms; 
+when these are mature, they can be baked into GBDX tasks and deployed at scale on GBDX (developer.digitalglobe.com/gbdx)  
+
+It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. 
 These are: 
 
 - data_extractors: get pixels and metadata from georeferenced imagery; uses geoio (https://github.com/digitalglobe/geoio);
 - features: functions to derive features from pixels; 
-- geojson_tools: functions to manipulate geojson files.
-- crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB;
+- geojson_tools: functions to manipulate geojson files;
+- crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB.
 
 Example code can be found in /examples. The examples can be used as a guideline to create object detection/classification 
-workflows which involve one or more of the following steps: 
+solutions which involve one or more of the following steps: 
 
 1. retrieve training, test and target data from the Tomnod database;
 2. train the algorithm;
 3. test the algorithm on the test data and compute accuracy metrics;
 4. deploy the algorithm on the target data for detection or classification;
-5. write results back to the Tomnod database.
+5. write results back to the Tomnod database;
+6. bake algorithm into GBDX task and deploy on GBDX.
 
 Steps 1 or 5 can be omitted if data is available from a source other than Tomnod or
 if results do not need to be written back to Tomnod. 
+Note that instructions on step 6 are NOT yet included in the examples (but they will arrive shortly). 
+In the meantime, please refer to http://gbdxdocs.digitalglobe.com. 
 
 
 Installation/Usage
@@ -74,9 +80,20 @@ If installation fails for some of the dependencies, (try to) install them with c
 
    conda install <dependency_name>
 
+and then retry::
+
+   pip install mltools
+
+The examples require imagery which can be ordered and downloaded from 
+GBDX using gbdxtools (http://github.com/digitalglobe/gbdxtools). You can install gbdxtools within the conda environment with::
+
+   pip install gbdxtools
+
+If you have any trouble with the installation of gbdxtools, refer to the readme of the gbdxtools repo.
+
 You can now copy the scripts found in /examples in your project directory or create your own. 
 Keep in mind that the imagery has to be in your project folder and it should have the same name as the image_name 
-property in the geojson. Imagery in the format required by a MLA (e.g., pansharpened, multi-spectral or orthorectified) can be obtained with the gbdxtools package (https://github.com/digitalglobe/gbdxtools).
+property in the geojson. 
 
 To exit your conda virtual environment::
 

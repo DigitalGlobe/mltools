@@ -38,10 +38,6 @@ First, we need to activate the conda environment we created to install mltools:
 
         > source activate env
 
-Then install gbdxtools:
-
-        > pip install gbdxtools
-
 Open ipython and create a gbdx interface:
 
         >> from gbdxtools import Interface
