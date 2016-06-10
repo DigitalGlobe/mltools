@@ -352,12 +352,14 @@ class PoolNet(object):
         in the given shapefile. Records PoolNet classification, whether or not it was
         misclassified by PoolNet, and the certainty for the given class.
         INPUT   (1) string 'shapefile': name of the shapefile to classify
-                (2) string 'output_name': name to give the classified shapefile (not
-                including extension.)
+                (2) string 'output_name': name to give the classified shapefile
         OUTPUT  (1) classified shapefile
         '''
         yprob, ytrue = [], []
-        output_file = '{}.geojson'.format(output_name)
+        if output_name[-8:] != '.geojson':
+            output_file = '{}.geojson'.format(output_name)
+        else:
+            output_file = output_name
 
         # Classify all chips in input shapefile
         print 'Classifying test data...'
