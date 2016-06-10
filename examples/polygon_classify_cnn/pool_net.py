@@ -157,8 +157,8 @@ class PoolNet(object):
         return model
 
 
-    def fit_xy(self, X_train, Y_train, nb_epoch=15, validation_split=0.1,
-               save_model = None):
+    def fit_xy(self, X_train, Y_train, validation_split=0.1,
+               save_model = None, nb_epoch=15):
         '''
         Fit model on pre-loaded training data. Only for sizes small enough to fit in
         memory (~ 10000 3x100x100 chips on dg_gpu)
@@ -168,6 +168,7 @@ class PoolNet(object):
                 (3) float 'validation_split': proportion of X_train to validate on.
                 (4) string 'save_model': name of model for saving. if None, does not
                 save model.
+                (5) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) trained model.
         '''
         # Define callback to save weights after each epoch
@@ -197,6 +198,7 @@ class PoolNet(object):
                 data.
                 (6) string 'save_model': name of model for saving. if None, does not
                 save model.
+                (7) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) trained model.
         '''
         es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
@@ -233,9 +235,9 @@ class PoolNet(object):
                 (2) list 'Y_train': one-hot associated labels to X_train. shape =
                 (train_size, n_classes)
                 (3) float 'validation_split': proportion of X_train to validate on.
-                #TODO: add X_test and Y_test, set val_split to None
                 (4) string 'save_model': name of model for saving. if None, does not
                 save model.
+                (5) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) retrained model
         '''
         # freeze all layers except final dense
