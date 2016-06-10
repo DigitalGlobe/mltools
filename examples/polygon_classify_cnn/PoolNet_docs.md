@@ -1,5 +1,6 @@
 ## PoolNet Docs  
 
+## Table of Contents  
 1. [About](#about)
 2. [Methods](#methods)
 
