@@ -1,4 +1,8 @@
 ## PoolNet Docs  
+
+1. [About](#about)
+2. [Methods](#methods)
+
 ### mltools.pool_net.PoolNet  
 <i> class </i> mltools.pool_net. **PoolNet** ( <i> nb_classes=2, batch_size=32, input_shape=(3,125,125), n_dense_nodes=2048, fc=False, vgg=True, load_model=False, model_name=None, train_size=10000 </i> ) [[source](github.com/poolnet_class)]  
 __________________________________________________________________________________________
