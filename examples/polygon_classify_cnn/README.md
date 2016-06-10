@@ -187,13 +187,12 @@ One problem with the data is that only about 6% of the polygons actually contain
 
 After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data, however, brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To minimize this false positive rate without affecting the way the net identifies a pool we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while increasing the probability threshold for producing a positive label.  
 
-
 1. Train PoolNet on balanced training data:  
 
         >> from pool_net import PoolNet
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
         >> p.fit_xy(X_train = x, Y_train = y, save_model = model_name, nb_epoch=15)
-        # saves model architecture and weights to model_name.json and model_name.h5 (respectively)
+        # Saves model architecture and weights to model_name.json and model_name.h5 (respectively)
 
 2. Retrain the final dense layer of the network on unbalanced classes:  
 
@@ -211,7 +210,39 @@ After this round of training the model produces over 90% precision and recall wh
         >> p.model.load_weights('model_weighs.h5')
         # Produces a model with loaded weights that can be used for testing and deployment
 
-### Testing the Network
+
+### Testing the Network  
+
+We now have a fully trained network that is ready to be tested.
+
+1. Generate test data from shapfeiles/test_filtered.geojson:  
+
+        >> test_generator = de.get_iter_data('shapefiles/test_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+        >> x,y = test_generator.next()
+        # Creates test data  
+
+2. Use model to predict classes of test chips:
+
+        >> y_pred = p.model.predict_classes(x)  
+
+3. Convert y from one-hot encoding to list of classes:
+
+        >> y_true = [i[1] for i in y]  
+
+4. Create confusion matrix from y_true and y_pred:  
+
+        >> from sklearn.metrics import confusion_matrix
+
+        >> print confusion_matrix(y_true, y_pred)
+        # [[true_positives  false_positives]
+        # [false_negatives  true_negatives]]  
+
+5. Calculate precision and recall:
+
+        >> precision = float(tp) / (tp + fp)
+        >> recall = float(tp) / (tp + fn)  
+
+### Visualizing Results
 
 ## Performance  
 
