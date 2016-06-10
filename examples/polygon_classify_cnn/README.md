@@ -122,7 +122,7 @@ Download the pansharpened image with catalog id 1040010014800C00 using [gbdxtool
 
 ### Prepare Shapefile for Training
 
-We initially filter shapefile.geojson to get rid of polygons that are too small, create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance).  
+We initially filter shapefile.geojson to get rid of polygons that are too small, create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance). **Note that the original tif image must be placed in the shapefiles directory with the image id as the file name (example: 1040010014800C00.tif)**  
 
 If you do not have access to shapefile.geojson, there are sample train and test geojsons (already filtered) in the [shapefiles](https://github.com/kostasthebarbarian/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Image Preprocessing](#image-preprocessing).
 
@@ -213,11 +213,11 @@ After this round of training the model produces over 90% precision and recall wh
 
 ### Testing the Network  
 
-We now have a fully trained network that is ready to be tested.
+We now have a fully trained network that is ready to be tested. Here we will produce a confusion matrix from 2500 test polygons.  
 
 1. Generate test data from shapfeiles/test_filtered.geojson:  
 
-        >> test_generator = de.get_iter_data('shapefiles/test_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+        >> test_generator = de.get_iter_data('shapefiles/test_filtered.geojson', batch_size=2500, max_chip_hw=125, normalize=True)
         >> x,y = test_generator.next()
         # Creates test data  
 
@@ -242,7 +242,30 @@ We now have a fully trained network that is ready to be tested.
         >> precision = float(tp) / (tp + fp)
         >> recall = float(tp) / (tp + fn)  
 
-### Visualizing Results
+
+### Visualizing Results  
+
+For visualization of the results we must create a new geojson shapefile for which each polygon has PoolNet classification, certainty of the classification and the ground truth listed as properties. Here we will classify all polygons in shapefiles/test_filtered.geojson and save them to shapefiles/test_classed.geojson. We will then use the classified shapefile to visualize polygon classifications overlayed on the original tif image (1040010014800C00.tif).  
+
+Complete the first step only if you would like to classify your own data. Otherwise just use shapefiles/test_classed.geojson and continue on to step 2.  
+
+1. Classify all test data (this will take some time):
+
+        >> p.classify_shapefile('shapefiles/test_filtered.geojson', 'shapefiles/test_classed.geojson')  
+
+2. Open 1040010014800C00.tif in QGIS:  
+
+    **Layer > Add Layer > Add Raster Layer...**  
+
+    <img src='images/QGIS_step1.png' width=200>  
+
+    **Select appropriate tif image**  
+
+    <img src='images/QGIS_step2.png' width=200>   
+
+    <img src='images/QGIS_step3.png' width=200>
+
+
 
 ## Performance  
 
