@@ -261,9 +261,29 @@ Complete the first step only if you would like to classify your own data. Otherw
 
     **Select appropriate tif image**  
 
-    <img src='images/QGIS_step2.png' width=200>   
+    <img src='images/QGIS_step2.png' width=200> ->
+    <img src='images/QGIS_step3.png' width=155>
 
-    <img src='images/QGIS_step3.png' width=200>
+3. Open shapefiles/test_classed.geojson as a vector file:  
+
+    **Layer > Add Layer > Add Vector Layer...**  
+    <img src='images/QGIS_vector.png' width=200>  
+
+    **Select shapefiles/test_classed.png**  
+    <img src='images/QGIS_geojson.png' width=200> ->
+    <img src='images/QGIS_overlay.png' width=160s>  
+
+4. Color Polygons by Category:
+
+    **Layer > Properties**  
+    *Vector layer must be highlighted*  
+    <img src='images/QGIS_categorize.png' width=200>  
+
+    **Select Ground Truth Property, click 'Classify'**  
+    <img src='images/QGIS_classify.png' width=200> ->
+    <img src='images/QGIS_clssed.png' width=200>  
+
+    **Make polygons transparent, color outline by class**  
 
 
 
