@@ -6,7 +6,7 @@
     * [The Challenge](#the-challenge)
     * [Network Architecture](#network-architecture)
 2. [Getting Started](#getting-started)
-    * [Setting up your EC2 Instance](#setting-up-an-ec2-instance-with-theano)
+    * [Setting up your EC2 Instance](#setting-up-your-ec2-instance)
     * [Setting up an Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
     * [Getting the Imagery](#getting-the-imagery)
@@ -45,7 +45,7 @@ PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network archi
 
 PoolNet should run on a GPU to prevent training from being prohibitively slow. Before getting started you will need to set up an EC2 instance with Theano.
 
-### Setting up an EC2 Instance With Theano  
+### Setting up your EC2 Instance 
 
 Begin by setting up an Ubuntu g2.2xlarge EC2 GPU ubuntu instance on AWS.  
 
