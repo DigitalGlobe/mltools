@@ -253,15 +253,62 @@ Complete the first step only if you would like to classify your own data. Otherw
 
     **Select appropriate tif image**  
 
-    <img src='images/QGIS_step2.png' width=200>   
+    <img src='images/QGIS_step2.png' width=200> ->
+    <img src='images/QGIS_step3.png' width=155>
 
-    <img src='images/QGIS_step3.png' width=200>
+3. Open shapefiles/test_classed.geojson as a vector file:  
 
+    **Layer > Add Layer > Add Vector Layer...**  
+    <img src='images/QGIS_vector.png' width=200>  
+
+    **Select shapefiles/test_classed.png**  
+    <img src='images/QGIS_geojson.png' width=200> ->
+    <img src='images/QGIS_overlay.png' width=160s>  
+
+4. Color Polygons by Category:
+
+    **Layer > Properties**  
+    *Vector layer must be highlighted*  
+    <img src='images/QGIS_categorize.png' width=200>  
+
+    **Select Ground Truth Property, click 'Classify'**  
+    <img src='images/QGIS_classify.png' width=200> ->
+    <img src='images/QGIS_clssed.png' width=200>  
+
+    **Format polygons by class**  
+    <img src='images/QGIS_format_polygons.png' width=200> ->
+    <img src='images/QGIS_simplefill.png' width=200>  
+
+    **change fill to transparent**  
+    <img src='images/QGIS_transparent.png' width=100>
+    <img src='images/QGIS_border.png' width=100>  
+
+    **Result**  
+    <img src='images/QGIS_final.png' width=400>  
+    <sub>Classified geojson with polygons colored by ground-truth class.</sub>
 
 
 ## Performance  
 
-There were several challenges associated with making an effective net. To minimize the overwhelming and time-consuming task of selecting from the infinite architectures and parameters for PoolNet, we elected to use VGG-16, a model that has been shown to be an effective classifier on previous datasets. We instead focused on parameters such as training/batch size, number of epochs and learning rate as well as data selection and manipulation methods.
+Below are metrics for the results of out trained model on test data.  
+
+### Results
+
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on test data gives a precision of 83% and recall of 92%. The original ground truth data, however, appears to be flawed, we needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of the polygon. We then compared the results to the original ground truth as well as PoolNet classifications. The new ground truth data gave a precision of 88% and recall of 93%. Results are summarized in the table below.  
+
+
+#### Test Dataset #1:  
+
+<img src='images/Original_results.png' width=350>  
+<sub> Results of pool classification based on the original (flawed) 'ground truth' data </sub>
+
+#### Test Dataset #2:    
+
+<img src='images/Updated_gt.png' width=350>  
+<sub> Results of classification based on the accurate ground truth data </sub>
+
+
+Check back for future results as we continue to improve the model.
 
 ### Misclassified Polygons
 
@@ -271,21 +318,3 @@ Similarly, a large portion of the geometries that were marked as false positives
 
 <img alt='Swimming pools not detected by PoolNet.' src='images/missed.png' width=700>  
 <sub> Samples of pools that the net misclassified. Notice that many are difficult to see, covered by trees, unusually dark or at the edge of the bounding box. </sub>  
-
-### Results
-
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on the ground truth data gives a precision of 83% and recall of 92%. Given that the ground truth data appears to be flawed, however, we needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of the polygon. We then compared the results to the original ground truth as well as PoolNet classifications. The new ground truth data gave a precision of 88% and recall of 93%. Results are summarized in the table below.  
-
-
-#### Original Data  
-
-<img src='images/Original_results.png' width=350>  
-<sub> Results of pool classification based on the original (flawed) 'ground truth' data </sub>
-
-#### Ground Truth    
-
-<img src='images/Updated_gt.png' width=350>  
-<sub> Results of classification based on the accurate ground truth data </sub>
-
-
-Check back for future results as we continue to improve the model.
