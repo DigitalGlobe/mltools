@@ -111,7 +111,7 @@ Before training your net be sure to install mltools and activate your conda envi
 
 ## PoolNet Workflow
 
-The steps described here require a pansharpened tif image, an associated shapefile (shapefile.geojson) containing labeled polygon geometries, and [pool_net.py](https://github.com/DigitalGlobe/mltools/blob/master/examples/polygon_classify_cnn/pool_net.py) placed in the same directory. 
+The steps described here require a pansharpened tif image, an associated shapefile (shapefile.geojson) containing labeled polygon geometries, and [pool_net.py](https://github.com/DigitalGlobe/mltools/blob/master/examples/polygon_classify_cnn/pool_net.py) placed in the same directory.
 
 <img alt='Raw shapefile polygons overlayed on tif' src='images/raw_polygons.png' width=750>   
 <sub> Pansharpened tif image with associated polygons overlayed. Green polygons indicate there is a pool in the property. </sub>
@@ -122,7 +122,7 @@ Order, create and download the pansharpened image with catalog id 1040010014800C
 
 ### Prepare Shapefile
 
-We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance). 
+We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance).
 
 If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons in the [shapefiles](https://github.com/digitalglobe/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).
 
@@ -156,6 +156,10 @@ d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used i
 e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.   
 
 ### Training the Network  
+
+Before training the network, make sure to create a 'models' folder in the directory from which you will be running the training. The model will automatically save the weights after each epoch of training to this directory. You will get an IO error if you omit this step:
+
+        >> mkdir models/
 
 The training chips and corresponding labels are extracted from train_balanced.geojson as follows:   
 
