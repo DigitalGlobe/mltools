@@ -289,7 +289,7 @@ Complete the first step only if you would like to classify your own data. Otherw
 
     **change fill to transparent**  
     <img src='images/QGIS_transparent.png' width=100>
-    <img src='images/QGIS_border.png' width=100>  
+    <idmg src='images/QGIS_border.png' width=100>  
 
     **Result**  
     <img src='images/QGIS_final.png' width=400>  
@@ -298,11 +298,11 @@ Complete the first step only if you would like to classify your own data. Otherw
 
 ## Performance  
 
-Below are metrics for the results of out trained model on test data.  
+Below is an overview of
 
 ### Results
 
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on test data gives a precision of 83% and recall of 92%. The original ground truth data, however, appears to be flawed, we needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of the polygon. We then compared the results to the original ground truth as well as PoolNet classifications. The new ground truth data gave a precision of 88% and recall of 93%. Results are summarized in the table below.  
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on initial test data gives a precision of 83% and recall of 92%. The original test data, however, appears to be flawed upon visual inspection of results. We therefore needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of each polygon. We then compared the results to the original test data as well as PoolNet classifications. The reliable test data indicates a precision of 88% and recall of 93% by our model. Results are summarized in the table below.  
 
 
 #### Test Dataset #1:  
@@ -316,7 +316,7 @@ The current top model was trained first on 9000 polygons with balanced classes (
 <sub> Results of classification based on the accurate ground truth data </sub>
 
 
-Check back for future results as we continue to improve the model.
+Check back for future results as we continue to improve the model.  
 
 ### Misclassified Polygons
 
@@ -325,4 +325,4 @@ After two training phases precision and recall reached approximately 86% and 87%
 Similarly, a large portion of the geometries that were marked as false positives were actually incorrectly labeled polygons that do have pools. Genuine false positives were usually due to a bright blue object in the back yard with a similar color to many pools. See below for some examples of polygons falsely classified by PoolNet.  
 
 <img alt='Swimming pools not detected by PoolNet.' src='images/missed.png' width=700>  
-<sub> Samples of pools that the net misclassified. Notice that many are difficult to see, covered by trees, unusually dark or at the edge of the bounding box. </sub>  
+<sub> Samples of pools that the net misclassified. Notice that many are difficult to see, covered by trees, unusually dark or at the edge of the bounding box. </sub>
