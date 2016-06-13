@@ -117,6 +117,15 @@ To exit your conda virtual environment:
 
       source deactivate
 
+### Create a new version
+
+To create a new version:
+     
+      bumpversion ( major | minor | patch )
+      git push --tags
+
+Then upload to pypi.
+
 
 ## Comments
 
