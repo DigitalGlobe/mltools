@@ -159,7 +159,7 @@ e. <b>train_balanced.geojson</b>: balanced training data. this is what we will u
 
 Before training the network, make sure to create a 'models' folder in the directory from which you will be running the training. The model will automatically save the weights after each epoch of training to this directory. You will get an IO error if you omit this step:
 
-        >> mkdir models/
+        >> mkdir models
 
 The training chips and corresponding labels are extracted from train_balanced.geojson as follows:   
 
@@ -187,8 +187,12 @@ One challenge that the data in this example presents is that only about 6% of th
 
         >> from pool_net import PoolNet
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
-        >> p.fit_xy(X_train = x, Y_train = y, save_model = 'my_model', nb_epoch=15)
-        # Saves model architecture and weights to model_name.json and model_name.h5 (respectively)
+
+This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (n_channels, max chip height, max chip width). Note that RGB images have 3 channels.
+
+        >> p.fit_xy(X_train = x, Y_train = y, save_model = 'my_model', nb_epoch=15)  
+
+The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
 
 #### Two-phase Training
 
