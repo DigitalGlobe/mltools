@@ -283,8 +283,17 @@ Complete the first step only if you would like to classify your own data. Otherw
     <img src='images/QGIS_classify.png' width=200> ->
     <img src='images/QGIS_clssed.png' width=200>  
 
-    **Make polygons transparent, color outline by class**  
-    <img src='images/QGIS_format_polygons.png' width=200>
+    **Format polygons by class**  
+    <img src='images/QGIS_format_polygons.png' width=200> ->
+    <img src='images/QGIS_simplefill.png' width=200>  
+
+    **change fill to transparent**  
+    <img src='images/QGIS_transparent.png' width=100>
+    <img src='images/QGIS_border.png' width=100>  
+
+    **Result**  
+    <img src='images/QGIS_final.png' width=400>  
+    <sub>Classified geojson with polygons colored by ground-truth class.</sub>
 
 
 ## Performance  
