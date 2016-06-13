@@ -196,12 +196,20 @@ The final command executes the training on the x and y data you created in the p
 
 #### Two-phase Training
 
-After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data, however, brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while increasing the probability threshold for producing a positive label.  
+After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To see these results for yourself, create balanced and unbalanced test data by completing the steps below, then use that data in steps 2-5 in [testing the network](#testing-the-network).
+
+        # make balanced test data
+        >> x_balance_test, y_balance_test = data_generator.next()
+
+        # make unbalanced test data
+        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+        >> x_unbal_test, y_unbal_test = unbal_generaor.next()
+
+ To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while increasing the probability threshold for producing a positive label.  
 
         >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
         >> x, y = unbal_generator.next()
         # Creates unbalanced training data
-
         >> p.retrain_output(X_train=x, Y_train=y, nb_epoch=20)  
 
 If you already have a saved model architecture and weights, you may load those using the load_model=True argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
