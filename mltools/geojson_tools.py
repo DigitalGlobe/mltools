@@ -180,7 +180,7 @@ def find_unique_values(input_file, property_name):
     return np.unique(values)
 
 
-def create_balanced_geojson(shapefile, output_name, balanced = True,
+def create_balanced_geojson(shapefile, output_file, balanced = True,
                             class_names=['Swimming pool', 'No swimming pool'],
                             samples_per_class=None, train_test=None):
     '''
@@ -188,8 +188,8 @@ def create_balanced_geojson(shapefile, output_name, balanced = True,
     shapefile into train and test data, each with distinct, randomly selected polygons.
 
     INPUT   (1) string 'shapefile': name of shapefile with original samples
-            (2) string 'output_file': name of file in which to save selected polygons
-            (not including file extension)
+            (2) string 'output_file': name of file in which to save selected polygons.
+            This should end in '.geojson'
             (3) bool 'balanced': put equal amounts of each class in the output shapefile.
             Otherwise simply outputs shuffled version of original dataself.
             (4) list[string] 'class_names': name of classes of interest as listed in
@@ -245,8 +245,8 @@ def create_balanced_geojson(shapefile, output_name, balanced = True,
 
     # split feature lists into train and test
     if train_test:
-        test_out = 'test_{}'.format(output_name + '.geojson')
-        train_out = 'train_{}'.format(output_name + '.geojson')
+        test_out = 'test_{}'.format(output_file)
+        train_out = 'train_{}'.format(output_file)
         test_size = int(train_test * len(final))
         test = {
             data.keys()[0]: data.values()[0],
@@ -278,8 +278,8 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
-            (2) string 'output_file': name of file in which to save selected polygons
-            (not including file extension)
+            (2) string 'output_file': name of file in which to save selected polygons.
+            This should end in '.geojson'
             (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for
             given polygon
             (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for
@@ -328,7 +328,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
                 data.keys()[1]: ok_polygons}
 
     # save new geojson
-    with open('{}.geojson'.format(output_file), 'wb') as f:
+    with open(output_file, 'wb') as f:
         geojson.dump(filtrate, f)
 
-    print 'Saved {} polygons to {}.geojson'.format(len(ok_polygons), output_file)
+    print 'Saved {} polygons to {}'.format(str(len(ok_polygons)), output_file)
