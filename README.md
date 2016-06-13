@@ -1,16 +1,16 @@
 # mltools 
 
-<img src='https://badge.fury.io/py/mltools.svg' scale=1>   
+[![PyPI version](https://badge.fury.io/py/mltools.svg)](https://badge.fury.io/py/mltools)
 
 Tools for fast prototyping of object detection and classification solutions on DG imagery.
 Relies heavily on popular machine learning (ML) toolkits such as scikit-learn and deep 
 learning toolkits such as keras. The intent is to use mltools to experiment with algorithms; 
 when these are mature, they can be baked into GBDX tasks and deployed at scale on [GBDX](developer.digitalglobe.com/gbdx).  
 
-It also includes a collection of auxiliary tools necessary for pre- and post- ML processing. 
+mltools also includes a collection of auxiliary tools necessary for pre- and post- ML processing. 
 These are: 
 
-+ data_extractors: get pixels and metadata from georeferenced imagery; uses [geoio](https://github.com/digitalglobe/geoio);
++ data_extractors: get pixels and metadata from DigitalGlobe imagery; uses [geoio](https://github.com/digitalglobe/geoio);
 + features: functions to derive features from pixels; 
 + geojson_tools: functions to manipulate geojson files;
 + crowdsourcing: interface with Tomnod to obtain training/test/target data and to write machine output to Tomnod DB.
@@ -52,7 +52,7 @@ so that modifications in your .bashrc take effect.
 
 Create a conda environment:
 
-      conda create -n env python ipython numpy scipy gdal libgdal=2 git  
+      conda create -n env python ipython numpy scipy gdal libgdal=2 git psycopg2  
    
 Activate the environment:
 
@@ -116,6 +116,15 @@ Please follow [this python style guide](https://google.github.io/styleguide/pygu
 To exit your conda virtual environment:
 
       source deactivate
+
+### Create a new version
+
+To create a new version:
+     
+      bumpversion ( major | minor | patch )
+      git push --tags
+
+Then upload to pypi.
 
 
 ## Comments

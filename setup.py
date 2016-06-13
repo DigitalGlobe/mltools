@@ -11,8 +11,8 @@ if sys.version_info > (3,):
 # long_description=readme,
       
 setup(name='mltools',
-      version='1.0.8',
-      description='New examples and geojson tools.',
+      version='1.0.9',
+      description='New example for pool detection with CNNs. Additional functionality for geojsons.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
@@ -23,9 +23,9 @@ setup(name='mltools',
       include_package_data=True,
       zip_safe=False,
       install_requires=['geojson >= 1.3.2',
-                        'psycopg2 >= 2.6.1',
                         'scikit-learn >= 0.17.1',
                         'Shapely >= 1.5.15',
                         'geoio >= 1.1.1',
-                        'keras >= 1.0.2']
+                        'keras >= 1.0.2',
+                        'bumpversion']
       )
