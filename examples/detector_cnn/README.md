@@ -78,7 +78,7 @@ You can easily create a leaflet map with the pansharpened image overlayed using 
 
         >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1030010038CD4D00'), 'my_map.html') 
 
-Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map.html) on your browser in order to view the image. A big part of it is land - no boats there! It is therefore a good idea to apply a water mask in order to reduce the search area.
+Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map.html) on your browser in order to view the image (If you can't view the image in this link, it's probably because the IDAHO token has expired. However, if you create the file yourself and open it using Firefox, it should work fine.). A big part of it is land - no boats there! It is therefore a good idea to apply a water mask in order to reduce the search area.
 
 ## Applying a water mask
 
