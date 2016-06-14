@@ -124,7 +124,7 @@ Order, create and download the pansharpened image with catalog id 1040010014800C
 
 ### Prepare Shapefile
 
-**In this section we will create the following shapefiles: **
+<b>In this section we will create the following shapefiles:</b>
 
 <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
 
