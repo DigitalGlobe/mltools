@@ -203,7 +203,7 @@ One challenge that the data in this example presents is that only about 6% of th
         >> from pool_net import PoolNet
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
 
-    This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (n_channels, max chip height, max chip width). Note that RGB images have 3 channels.  
+    This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (*n_channels, max chip height, max chip width*). Note that RGB images have 3 channels.  
 
 2. Train the network:
 
@@ -220,7 +220,7 @@ After this round of training the model produces over 90% precision and recall wh
 
         # make unbalanced test data
         >> unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
-        >> x_unbal_test, y_unbal_test = unbal_generaor.next()
+        >> x_unbal_test, y_unbal_test = unbal_generator.next()
 
 To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while decreasing the probability the then network will generate a positive label.  
 
