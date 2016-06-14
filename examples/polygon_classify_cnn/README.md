@@ -218,14 +218,14 @@ After this round of training the model produces over 90% precision and recall wh
         >> x_balance_test, y_balance_test = data_generator.next()
 
         # make unbalanced test data
-        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+        >> unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
         >> x_unbal_test, y_unbal_test = unbal_generaor.next()
 
 To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while decreasing the probability the then network will generate a positive label.  
 
 1. Create unbalanced data generator:
 
-        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)  
+        >> unbal_generator = de.get_iter_data('train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)  
 
 2. Generate X and Y:  
 
@@ -277,13 +277,13 @@ We now have a fully trained network that is ready to be tested. Here we will pro
 
 ### Visualizing Results  
 
-For visualization of the results we must create a new geojson shapefile for which each polygon has PoolNet classification, certainty of the classification and the ground truth listed as properties. Here we will classify all polygons in shapefiles/test_filtered.geojson and save them to shapefiles/test_classed.geojson. We will then use the classified shapefile to visualize polygon classifications overlayed on the original tif image (1040010014800C00.tif).  
+For visualization of the results we must create a new geojson shapefile for which each polygon has PoolNet classification, certainty of the classification and the ground truth listed as properties. Here we will classify all polygons in test_filtered.geojson and save them to test_classed.geojson. We will then use the classified shapefile to visualize polygon classifications overlayed on the original tif image (1040010014800C00.tif).  
 
-Complete the first step only if you would like to classify your own data. Otherwise just use shapefiles/test_classed.geojson and continue on to step 2.  
+Complete the first step only if you would like to classify your own data. Otherwise just use test_classed.geojson and continue on to step 2.  
 
 1. Classify all test data (this will take some time):
 
-        >> p.classify_shapefile('shapefiles/test_filtered.geojson', 'shapefiles/test_classed.geojson')  
+        >> p.classify_shapefile('test_filtered.geojson', test_classed.geojson')  
 
 2. Open 1040010014800C00.tif in QGIS:  
 
@@ -296,12 +296,12 @@ Complete the first step only if you would like to classify your own data. Otherw
     <img src='images/QGIS_step2.png' width=200> ->
     <img src='images/QGIS_step3.png' width=155>
 
-3. Open shapefiles/test_classed.geojson as a vector file:  
+3. Open test_classed.geojson as a vector file:  
 
     **Layer > Add Layer > Add Vector Layer...**  
     <img src='images/QGIS_vector.png' width=200>  
 
-    **Select shapefiles/test_classed.png**  
+    **Select test_classed.png**  
     <img src='images/QGIS_geojson.png' width=200> ->
     <img src='images/QGIS_overlay.png' width=160s>  
 
