@@ -2,6 +2,7 @@
 
 import geojson
 import numpy as np
+import geoio
 
 from shapely.wkb import loads
 
