@@ -6,7 +6,7 @@
 2. [Getting and viewing the imagery](#getting-and-viewing-the-imagery)
 3. [Applying a water mask](#applying-a-water-mask)
 4. [Training and testing the chip classifier](#training-testing-the-chip-classifier)
-5. [Deploying the chip detector](#deployong-the-chip-detector)
+5. [Detecting boats](#detecting-boats)
 6. [Viewing the results](#viewing-the-results)
 
 ## About
@@ -82,13 +82,13 @@ Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/detector
 
 ## Applying a water mask
 
-
-
-
 ## Training and testing the chip classifier
 
+The file boats.geojson contains the coordinates of about 4500 boats which were tagged by the Tomnod crowd. 
+You can view this data set by opening [my_map_with_points.html](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map_with_points.html). In order to create this file, we have used the [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) library to create marker clusters which are displayed on top of the IDAHO tiles. (The required javascript files can be found in /jsfiles of this example.)  
 
-## Deploying the chip detector
+
+## Detecting boats
 
 ## Viewing the results
 
