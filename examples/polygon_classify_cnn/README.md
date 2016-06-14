@@ -146,19 +146,19 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
     Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
         >> import mltools.geojson_tools as gt
-        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
+        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile.geojson', min_polygon_hw=30, max_polygon_hw=125)
 
 2. **Create train_filtered.geojson and test_filtered.geojson:**
 
     <img src='images/repr_shapefiles_3.png' width=100>
 
-        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
+        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered.geojson', 'balanced = False', train_test = 0.2)
 
 3. **Create balanced training data 'train_balanced.geojson':**  
 
     <img src='images/repr_shapefiles4.png' width=100>
 
-        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
+        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced.geojson')
 
 
 ### Training the Network  
