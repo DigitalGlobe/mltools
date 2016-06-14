@@ -208,7 +208,7 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
     with open(shapefile) as f:
         data = geojson.load(f)
 
-    if balanced_classes:
+    if balanced:
         # sort classes into separate lists
         sorted_classes = []
 
