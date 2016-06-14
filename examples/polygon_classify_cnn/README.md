@@ -132,13 +132,13 @@ Order, create and download the pansharpened image with catalog id 1040010014800C
 
 <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
 
-a. <b>shapefile.geojson</b>: original file with all polygons  
-b. <b>filtered_shapefile.geojson</b>: file with all polygons with side dimensions between 30 and 125 pixels  
-c. <b>test_filtered.geojson</b>: test data with filtered polygons and unbalanced classes. don't touch it until testing the model!  
-d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used in the second round of training.  
-e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.   
+a. <b>shapefile.geojson</b>: Original file with all polygons.  
+b. <b>filtered_shapefile.geojson</b>: File with all polygons with side dimensions between 30 and 125 pixels.  
+c. <b>test_filtered.geojson</b>: Test data with filtered polygons and unbalanced classes. Don't touch it until testing the model!  
+d. <b>train_filtered.geojson</b>: Unbalanced training data, which will be used in the second round of training.  
+e. <b>train_balanced.geojson</b>: Balanced training data. This is what we will use for the first round of training.   
 
-We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance). If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons in the [shapefiles](https://github.com/digitalglobe/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).  
+We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, as well as a batch of training data with balanced classes, the motivation for which is detailed [below](#first-training-phase). If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons (test_filtered.geojson, train_filtered.geojson, and train_balanced.geojson), which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).  
 
 <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=175>
 <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=175>
