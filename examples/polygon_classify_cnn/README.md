@@ -90,26 +90,29 @@ In short:
 
 9. Create a .theanorc in the /home/ubuntu/ directory as follows:  
 
-<b>.theanorc config: </b>  
+    <b>.theanorc config: </b>  
 
-        [global]  
-        floatX = float32  
-        device = gpu  
-        optimizer = fast_run  
+            [global]  
+            floatX = float32  
+            device = gpu  
+            optimizer = fast_run  
 
-        [lib]  
-        cnmem = 0.9
+            [lib]  
+            cnmem = 0.9
 
-        [nvcc]  
-        fastmath = True
+            [nvcc]  
+            fastmath = True
 
-        [blas]  
-        ldflags = -llapack -lblas  
+            [blas]  
+            ldflags = -llapack -lblas  
 
 
 ### Setting up an Environment
 
-Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).
+Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).  
+
+**Note**: to run PoolNet you must install the current version of the master branch:  
+    >> pip install git+https://github.com/DigitalGlobe/mltools
 
 ## PoolNet Workflow
 
@@ -152,7 +155,7 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
     <img src='images/repr_shapefiles_3.png' width=100>
 
-        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered.geojson', 'balanced = False', train_test = 0.2)
+        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_file = 'filtered.geojson', balanced = False, train_test = 0.2)
 
 3. **Create balanced training data 'train_balanced.geojson':**  
 
