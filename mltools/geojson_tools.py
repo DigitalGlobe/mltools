@@ -271,9 +271,9 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
         balanced_json = {
             data.keys()[0]: data.values()[0],
             data.keys()[1]: final}
-        with open(output_name + '.geojson', 'wb') as f:
+        with open(output_file, 'wb') as f:
             geojson.dump(balanced_json, f)
-        print '{} polygons saved as {}.geojson'.format(len(final), output_name)
+        print '{} polygons saved as {}'.format(len(final), output_name)
 
 
 
