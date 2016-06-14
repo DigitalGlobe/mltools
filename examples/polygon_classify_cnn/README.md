@@ -278,7 +278,7 @@ We now have a fully trained network that is ready to be tested. Here we will pro
 
 ### Visualizing Results  
 
-For visualization of the results we must create a new geojson shapefile for which each polygon has PoolNet classification, certainty of the classification and the ground truth listed as properties. Here we will classify all polygons in test_filtered.geojson and save them to test_classed.geojson. We will then use the classified shapefile to visualize polygon classifications overlayed on the original tif image (1040010014800C00.tif).  
+To visualize the results we must create a new geojson shapefile for which each polygon has a PoolNet classification, certainty of that classification and the ground truth classification listed in the properties. Here we will classify all polygons in test_filtered.geojson and save them to test_classed.geojson. We will then use the classified shapefile to visualize polygon classifications overlayed on the original tif image (1040010014800C00.tif).  
 
 Complete the first step only if you would like to classify your own data. Otherwise just use test_classed.geojson and continue on to step 2.  
 
