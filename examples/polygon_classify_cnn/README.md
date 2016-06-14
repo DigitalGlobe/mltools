@@ -11,12 +11,14 @@
 3. [PoolNet Workflow](#poolnet-workflow)
     * [Getting the Imagery](#getting-the-imagery)
     * [Prepare Shapefile](#prepare-shapefile)
-    * [Create the Training Chips](#create-the-chips)
     * [Training the Network](#training-the-network)
+        - [Create the Training Chips](#create-the-training-chips)
+        - [First Training Phase](#first-training-phase)
+        - [Second Training Phase](#second-training-phase)
     * [Testing the Network](#testing-the-network)
 4. [Performance](#performance)
-    * [Misclassified Polygons](#misclassified-polygons)
     * [Results](#results)
+    * [Misclassified Polygons](#misclassified-polygons)
 
 ## About PoolNet
 
@@ -45,7 +47,7 @@ PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network archi
 
 PoolNet should run on a GPU to prevent training from being prohibitively slow. Before getting started you will need to set up an EC2 instance with Theano.
 
-### Setting up your EC2 Instance 
+### Setting up your EC2 Instance
 
 Begin by setting up an Ubuntu g2.2xlarge EC2 GPU ubuntu instance on AWS.  
 
@@ -122,30 +124,7 @@ Order, create and download the pansharpened image with catalog id 1040010014800C
 
 ### Prepare Shapefile
 
-We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance).
-
-If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons in the [shapefiles](https://github.com/digitalglobe/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).
-
-Open an ipython terminal and filter the shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
-
-        >> import mltools.geojson_tools as gt
-
-        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
-        # creates filtered_shapefile.geojson
-
-<img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=200>
-<img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=200>
-
-Create train and test shapefiles with and without balanced classes.
-
-        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
-        # creates train_filtered.geojson and test_filtered.geojson
-
-        # use train_filtered.geojson to create balanced class shapefile:
-        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
-        # creates training data (train_balanced.geojson) with balanced classes for first round of training  
-
-We now have the following shapefiles:  
+**In this section we will create the following shapefiles: **
 
 <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
 
@@ -155,48 +134,82 @@ c. <b>test_filtered.geojson</b>: test data with filtered polygons and unbalanced
 d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used in the second round of training.  
 e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.   
 
+We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance). If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons in the [shapefiles](https://github.com/digitalglobe/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).  
+
+<img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=175>
+<img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=175>
+
+1. **Create filtered_shapefile.geojson:**
+
+    <img src='images/repr_shapefiles_2.png' width=100>
+
+    Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
+
+        >> import mltools.geojson_tools as gt
+        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
+
+2. **Create train_filtered.geojson and test_filtered.geojson:**
+
+    <img src='images/repr_shapefiles_3.png' width=100>
+
+        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
+
+3. **Create balanced training data 'train_balanced.geojson':**  
+
+    <img src='images/repr_shapefiles4.png' width=100>
+
+        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
+
+
 ### Training the Network  
 
-Before training the network, make sure to create a 'models' folder in the directory from which you will be running the training. The model will automatically save the weights after each epoch of training to this directory. You will get an IO error if you omit this step:
+Before training the network, make sure to create a 'models' folder in the directory from which you will be running the training. The model will automatically save the weights after each epoch of training to this directory. *You will get an IO error if you omit this step*:
 
         >> mkdir models
 
-The training chips and corresponding labels are extracted from train_balanced.geojson as follows:   
-
-Create the generator object:  
-
-        >> import mltools.data_extractors as de
-        >> data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
-
-*You will need to set the batch size small enough to fit into memory. If this does not produce sufficient training data (~10,000 chips) see [the docs](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md) for information on how to train directly on a generator using the [fit_generator](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md#fit_generator) function.*
-
-Generate a batch of chips and labels (x and y):  
-
-        >> x, y = data_generator.next()  
-
-We zero-pad each chip outside of the polygon to eliminate any surrounding objects from neighbors that could cause a false positive, and also to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks (see figure below). Additionally, we ensure that the pixel intensity data is normalized (between 0 and 1) by dividing each pixel by 255. Some sample chips can be seen in the figure below.  
+#### Create the Training Chips
 
 <img alt='sample chips after processing' src='images/chips.png' width=700>  
 <sub> Sample chips used as input for PoolNet. Notice that only the contents of the polygon are being input to the net.</sub>  
 
-We are now ready to train PoolNet on the chips we have generated. The motivation behind the training methodolgy is detailed below.
+The training chips and corresponding labels are extracted from train_balanced.geojson as follows:   
 
-#### Class Imbalance
+1. Create the generator object:  
+
+        >> import mltools.data_extractors as de
+        >> data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
+
+    *You will need to set the batch size small enough to fit into memory. If this does not produce sufficient training data (~10,000 chips) see [the docs](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md) for information on how to train directly on a generator using the [fit_generator](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md#fit_generator) function.*
+
+2. Generate a batch of chips and labels (x and y):  
+
+        >> x, y = data_generator.next()  
+
+    We zero-pad each chip outside of the polygon to eliminate any surrounding objects from neighbors that could cause a false positive, and also to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks (see figure below). Additionally, we ensure that the pixel intensity data is normalized (between 0 and 1) by dividing each pixel by 255. Some sample chips can be seen in the figure below.  
+
+
+We are now ready to train PoolNet on the chips we have generated. The motivation behind the training methodology is detailed below.
+
+#### First Training Phase
 
 One challenge that the data in this example presents is that only about 6% of the polygons actually contain pools. This class imbalance causes the net to learn only the statistical probability of encountering a pool, and thus produce only 'non-pool' classifications. To force the net to instead learn the general attributes of pools based on image composition, we train it on balanced data (equal number of 'pool' and 'no pool' polygons).  
+
+1. Create a PoolNet instance:
 
         >> from pool_net import PoolNet
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
 
-This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (n_channels, max chip height, max chip width). Note that RGB images have 3 channels.
+    This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (n_channels, max chip height, max chip width). Note that RGB images have 3 channels.  
+
+2. Train the network:
 
         >> p.fit_xy(X_train = x, Y_train = y, save_model = 'my_model', nb_epoch=15)  
 
-The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
+    The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
 
-#### Two-phase Training
+#### Second Training Phase
 
-After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To see these results for yourself, create balanced and unbalanced test data by completing the steps below, then use that data in steps 2-5 in [testing the network](#testing-the-network).
+After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To see these results for yourself, create balanced and unbalanced test data by completing the steps below, then use that data to complete steps 2-5 in [testing the network](#testing-the-network).
 
         # make balanced test data
         >> x_balance_test, y_balance_test = data_generator.next()
@@ -205,14 +218,22 @@ After this round of training the model produces over 90% precision and recall wh
         >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
         >> x_unbal_test, y_unbal_test = unbal_generaor.next()
 
- To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while decreasing the probability the then network will generate a positive label.  
+To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while decreasing the probability the then network will generate a positive label.  
 
-        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+1. Create unbalanced data generator:
+
+        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)  
+
+2. Generate X and Y:  
+
         >> x, y = unbal_generator.next()
-        # Creates unbalanced training data
+        # Creates unbalanced training data  
+
+3. Retrain final layer of network:  
+
         >> p.retrain_output(X_train=x, Y_train=y, nb_epoch=20)  
 
-If you already have a saved model architecture and weights, you may load those using the load_model=True argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
+If you already have a saved model architecture and weights, you may load those using the *load_model=True* argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
 
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = 'model_name.json')
         >> p.model.load_weights('model_weighs.h5')
@@ -306,11 +327,11 @@ Complete the first step only if you would like to classify your own data. Otherw
 
 ## Performance  
 
-Below is an overview of
+Below is an overview of the model's performance on test data.
 
 ### Results
 
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on initial test data gives a precision of 83% and recall of 92%. The original test data, however, appears to be flawed upon visual inspection of results. We therefore needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of each polygon. We then compared the results to the original test data as well as PoolNet classifications. The reliable test data indicates a precision of 88% and recall of 93% by our model. Results are summarized in the table below.  
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on initial test data gives a precision and recall of 83% and 92%, respectively. The original test data, however, appears to be flawed upon visual inspection of results (see [below](#misclassified-polygons)). We therefore needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of each polygon. We then compared the results to the original test data as well as PoolNet classifications. The reliable test data indicates a precision of 88% and recall of 93% by our model. Results are summarized in the table below.  
 
 
 #### Test Dataset #1:  
@@ -328,7 +349,7 @@ Check back for future results as we continue to improve the model.
 
 ### Misclassified Polygons
 
-After two training phases precision and recall reached approximately 86% and 87%, respectively. Upon manual inspection of the results a few of the causes of misclassification became apparent. Firstly, swimming pools that are partially covered by trees or a tarp, empty, small, or with green water were often falsely classified as 'no pool'. However, the ground truth also appeared to have some incorrectly classified polygons, which the model was actually classifying correctly, despite being marked as a false negative.  
+Upon manual inspection of the results a few of the causes of misclassification became apparent. Firstly, swimming pools that are partially covered by trees or a tarp, empty, small, or with green water were often falsely classified as 'no pool'. However, the ground truth also appeared to have some incorrectly classified polygons, which the model was actually classifying correctly, despite being marked as a false negative.  
 
 Similarly, a large portion of the geometries that were marked as false positives were actually incorrectly labeled polygons that do have pools. Genuine false positives were usually due to a bright blue object in the back yard with a similar color to many pools. See below for some examples of polygons falsely classified by PoolNet.  
 
