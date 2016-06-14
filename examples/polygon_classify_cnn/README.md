@@ -209,7 +209,7 @@ One challenge that the data in this example presents is that only about 6% of th
 
         >> p.fit_xy(X_train = x, Y_train = y, save_model = 'my_model', nb_epoch=15)  
 
-    The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
+    The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing to avoid overfitting. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
 
 #### Second Training Phase
 
