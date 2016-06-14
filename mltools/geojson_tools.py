@@ -295,7 +295,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
     # find indicies of acceptable polygons
     ix_ok, ix = [], 0
     print 'Extracting image ids...'
-    img_ids = gt.find_unique_values(shapefile, property_name='image_id')
+    img_ids = find_unique_values(shapefile, property_name='image_id')
 
     print 'Filtering polygons...'
     for img_id in img_ids:
