@@ -6,7 +6,7 @@
     * [The Challenge](#the-challenge)
     * [Network Architecture](#network-architecture)
 2. [Getting Started](#getting-started)
-    * [Setting up your EC2 Instance](#setting-up-an-ec2-instance-with-theano)
+    * [Setting up your EC2 Instance](#setting-up-your-ec2-instance)
     * [Setting up an Environment](#setting-up-an-environment)
 3. [PoolNet Workflow](#poolnet-workflow)
     * [Getting the Imagery](#getting-the-imagery)
@@ -45,7 +45,7 @@ PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network archi
 
 PoolNet should run on a GPU to prevent training from being prohibitively slow. Before getting started you will need to set up an EC2 instance with Theano.
 
-### Setting up an EC2 Instance With Theano  
+### Setting up your EC2 Instance 
 
 Begin by setting up an Ubuntu g2.2xlarge EC2 GPU ubuntu instance on AWS.  
 
@@ -172,7 +172,7 @@ Create the generator object:
         >> import mltools.data_extractors as de
         >> data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
 
-*You will need to set the batch size small enough to fit into memory. If this does not produce sufficient training data (~10,000 chips) see [the docs](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md) for information on how to train directly on a generator. (You will need to replace the fit_xy function with [fit_generator](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md#fit_generator).)*
+*You will need to set the batch size small enough to fit into memory. If this does not produce sufficient training data (~10,000 chips) see [the docs](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md) for information on how to train directly on a generator using the [fit_generator](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md#fit_generator) function.*
 
 Generate a batch of chips and labels (x and y):  
 
