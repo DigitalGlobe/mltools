@@ -26,6 +26,7 @@
 	<script>
 
 		var mymap = L.map('mapid');
+        var maxZoom = 20;
 
 		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
 			maxZoom: maxZoom,
@@ -56,7 +57,7 @@
 			if(panImageId !== ""){
         		tmsUrl = tmsUrl+'&panId='+panImageId;
        		}
-			var tmsLayer = new L.TileLayer(tmsUrl, {minZoom: 11, maxZoom: 20, bounds:bounds});
+			var tmsLayer = new L.TileLayer(tmsUrl, {minZoom: 11, maxZoom: maxZoom, bounds:bounds});
         	tmsLayer.isBaseLayer=false;
         	mymap.addLayer(tmsLayer);
 
