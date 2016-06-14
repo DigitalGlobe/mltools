@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet Quick Start Guide Example</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+   
+    <link rel="stylesheet" href="./jsfiles/MarkerCluster.css" />
+    <link rel="stylesheet" href="./jsfiles/MarkerCluster.Default.css" />
+    <script src="./jsfiles/leaflet.markercluster-src.js"></script>
+
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+
+	<style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #mapid {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+	<div id="mapid"></div>
+
+	<script>
+
+		var map = L.map('mapid');
+        var maxZoom = 20
+
+		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
+			maxZoom: maxZoom,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+			id: 'mapbox.streets'
+		}).addTo(map);
+
+		var token = 'b1CRkrv5BG68fAvydilEl2zKjZWaSu';
+		var bands = '4,2,1';
+        var gamma = '1.3';
+        var highCutoff = '0.98';
+        var lowCutoff = '0.02';
+        var brightness = '1.0';
+        var contrast = '1.0';
+		var tmsRootUrl = 'http://idaho.geobigdata.io/v1/'
+
+		function addLayerToMap(bucketName, imageId, W, S, E, N, panImageId) {
+			//var bucketName = 'idaho-images';
+        	//var imageId = '4f4a9067-a2a9-46a3-ae6a-9b499aa1ee0b';
+			var southWest = L.latLng(S,W),
+    			northEast = L.latLng(N,E),
+    			bounds = L.latLngBounds(southWest, northEast);
+
+        	var tmsUrl = tmsRootUrl+"tile/"+bucketName+'/'+imageId+'/{z}/{x}/{y}?bands='+bands+'&gamma='+gamma+'&highCutoff='+highCutoff+'&lowCutoff='+lowCutoff+'&brightness='+brightness+'&contrast='+contrast+'&token='+token;
+
+			if(panImageId !== ""){
+        		tmsUrl = tmsUrl+'&panId='+panImageId;
+       		}
+			var tmsLayer = new L.TileLayer(tmsUrl, {minZoom: 11, maxZoom: maxZoom, bounds:bounds});
+        	tmsLayer.isBaseLayer=false;
+        	map.addLayer(tmsLayer);
+
+		}
+
+		addLayerToMap('idaho-images','8f189102-92bd-4146-9847-e9e3f26c6e1d',114.10204815,21.98284974,114.27131096,22.11770321,'6f4a6722-8bb7-45b8-968e-0f04ede4b0ba');
+        addLayerToMap('idaho-images','e7a37fe1-003b-473d-8c4d-f9c5ae444cab',114.10153481,22.07579858,114.27179157,22.22308173,'86e54f31-cecc-4393-909d-b10216ff4df4');
+        addLayerToMap('idaho-images','f923db3a-9874-4608-bc35-9027407f73d8',114.10100375,22.17990865,114.27234056,22.32983278,'4e2a73f4-5a58-4114-969b-d084a3a6dea8');
+        addLayerToMap('idaho-images','15e34d74-e871-4022-a5ad-a8861b2ef56b',114.10047698,22.28534916,114.27294903,22.43802809,'f3ad3b69-9008-4144-a14b-d2ecf4599868');
+        addLayerToMap('idaho-images','b43141b4-dc8e-486b-8d4a-702ddc19a6e4',114.09968305,22.39210216,114.27362007,22.54823616,'c3c30628-0537-4c8c-8f0e-8367bdf073ec');
+        addLayerToMap('idaho-images','4c36c9b5-08ea-4f73-8fc0-f4571cb52934',114.09901106,22.50055742,114.2747598,22.65976786,'d5c40cc8-4932-43f6-a94a-db755e3f86c5');
+        addLayerToMap('idaho-images','920d13b7-59c7-4a15-b921-b81b3d9ef12c',114.09802589,22.60978462,114.27509672,22.77405038,'01fc01f6-7d1b-4608-8c9e-2d1d0fc64c87');
+        addLayerToMap('idaho-images','e51944c4-ff29-4764-9dca-6b8dc7cb23bd',114.09723878,22.72348396,114.27639305,22.89010339,'5d6db9be-48b4-4fbb-9d60-1a6eec05c9e5');
+        addLayerToMap('idaho-images','b1f28583-9bb9-4f3a-b618-401809cefc58',114.09621288,22.8378294,114.27685773,23.00907741,'6388dd67-115f-4773-a656-b3562c407ec7');
+        addLayerToMap('idaho-images','ff33c6d8-9180-41c3-ab00-c5c05813fcc0',114.09605486,22.95502473,114.27699715,23.02784343,'247d968f-f4e3-48af-86f8-45030574ec30');
+
+        map.setView([22.95502473, 114.09605486], 11);
+
+        // vector tile layer
+
+        // define the cluster layer
+        var markers = L.markerClusterGroup();
+
+        // CALL THE GEOJSON HERE
+        $.getJSON("boats.geojson", function(data) {
+            var geojson = L.geoJson(data, {
+                onEachFeature: function (feature, layer) {}
+            });
+        
+        markers.addLayer(geojson);
+        markers.addTo(map);
+    
+        });
+        
+</script>
+</body>
+</html>
