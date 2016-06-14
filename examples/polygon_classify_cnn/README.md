@@ -122,30 +122,7 @@ Order, create and download the pansharpened image with catalog id 1040010014800C
 
 ### Prepare Shapefile
 
-We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance).
-
-If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons in the [shapefiles](https://github.com/digitalglobe/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).
-
-Open an ipython terminal and filter the shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
-
-        >> import mltools.geojson_tools as gt
-
-        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
-        # creates filtered_shapefile.geojson
-
-<img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=200>
-<img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=200>
-
-Create train and test shapefiles with and without balanced classes.
-
-        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
-        # creates train_filtered.geojson and test_filtered.geojson
-
-        # use train_filtered.geojson to create balanced class shapefile:
-        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
-        # creates training data (train_balanced.geojson) with balanced classes for first round of training  
-
-We now have the following shapefiles:  
+**In this section we will create the following shapefiles: **
 
 <img alt='Schema for shapefiles created from the original raw data.' src='images/repr_shapefiles.png' width=200>  
 
@@ -154,6 +131,33 @@ b. <b>filtered_shapefile.geojson</b>: file with all polygons with side dimension
 c. <b>test_filtered.geojson</b>: test data with filtered polygons and unbalanced classes. don't touch it until testing the model!  
 d. <b>train_filtered.geojson</b>: unbalanced training data, which will be used in the second round of training.  
 e. <b>train_balanced.geojson</b>: balanced training data. this is what we will use for the first round of training.   
+
+We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, and train data with balanced classes, the motivation for which is detailed [below](#class-imbalance). If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons in the [shapefiles](https://github.com/digitalglobe/mltools/tree/master/examples/polygon_classify_cnn/shapefiles) directory, which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).  
+
+<img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=175>
+<img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=175>
+
+1. **Create filtered_shapefile.geojson:**
+
+    <img src='images/repr_shapefiles_2.png' width=100>
+
+    Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
+
+        >> import mltools.geojson_tools as gt
+        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile', min_polygon_hw=30, max_polygon_hw=125)
+
+2. **Create train_filtered.geojson and test_filtered.geojson:**
+
+    <img src='images/repr_shapefiles_3.png' width=100>
+
+        >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_name = 'filtered', 'balanced = False', train_test = 0.2)
+
+3. **Create balanced training data 'train_balanced.geojson':**  
+
+    <img src='images/repr_shapefiles4.png' width=100>
+
+        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced')
+
 
 ### Training the Network  
 
@@ -196,7 +200,7 @@ The final command executes the training on the x and y data you created in the p
 
 #### Two-phase Training
 
-After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To see these results for yourself, create balanced and unbalanced test data by completing the steps below, then use that data in steps 2-5 in [testing the network](#testing-the-network).
+After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To see these results for yourself, create balanced and unbalanced test data by completing the steps below, then use that data to complete steps 2-5 in [testing the network](#testing-the-network).
 
         # make balanced test data
         >> x_balance_test, y_balance_test = data_generator.next()
