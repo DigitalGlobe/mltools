@@ -145,7 +145,7 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
 1. **Create filtered_shapefile.geojson:**
 
-    <img src='images/repr_shapefiles_2.png' width=100>
+    <img src='images/repr_shapefiles_2.png' width=175>
 
     Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
@@ -154,13 +154,13 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
 2. **Create train_filtered.geojson and test_filtered.geojson:**
 
-    <img src='images/repr_shapefiles_3.png' width=100>
+    <img src='images/repr_shapefiles_3.png' width=175>
 
         >> gt.create_balanced_geojson('filtered_shapefile.geojson', output_file = 'filtered.geojson', balanced = False, train_test = 0.2)
 
 3. **Create balanced training data 'train_balanced.geojson':**  
 
-    <img src='images/repr_shapefiles4.png' width=100>
+    <img src='images/repr_shapefiles4.png' width=175>
 
         >> gt.create_balanced_geojson('train_filtered.geojson', output_file = 'train_balanced.geojson')
 
