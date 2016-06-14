@@ -43,8 +43,8 @@ The order might take a while. You can check on the order status as follows:
         >> result = gbdx.ordering.status(order_id)
         >> print result
         >> [{u'acquisition_id': u'1030010038CD4D00',
-  u'location': u's3://receiving-dgcs-tdgplatform-com/055269115010_01_003',
-  u'state': u'delivered'}]
+        u'location': u's3://receiving-dgcs-tdgplatform-com/055269115010_01_003',
+        u'state': u'delivered'}]
 
 The key 'location' specifies the location of the ordered image on S3. We store this because we will need it:
 
