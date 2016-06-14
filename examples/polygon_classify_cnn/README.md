@@ -15,8 +15,8 @@
     * [Training the Network](#training-the-network)
     * [Testing the Network](#testing-the-network)
 4. [Performance](#performance)
-    * [Misclassified Polygons](#misclassified-polygons)
     * [Results](#results)
+    * [Misclassified Polygons](#misclassified-polygons)
 
 ## About PoolNet
 
@@ -310,11 +310,11 @@ Complete the first step only if you would like to classify your own data. Otherw
 
 ## Performance  
 
-Below is an overview of
+Below is an overview of the model's performance on test data.
 
 ### Results
 
-The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on initial test data gives a precision of 83% and recall of 92%. The original test data, however, appears to be flawed upon visual inspection of results. We therefore needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of each polygon. We then compared the results to the original test data as well as PoolNet classifications. The reliable test data indicates a precision of 88% and recall of 93% by our model. Results are summarized in the table below.  
+The current top model was trained first on 9000 polygons with balanced classes (+1000 for validation) for 15 epochs, followed by 20 epochs on 4500 unbalanced classes. Testing this model on initial test data gives a precision and recall of 83% and 92%, respectively. The original test data, however, appears to be flawed upon visual inspection of results (see [below](#misclassified-polygons)). We therefore needed a method for getting accurate metrics. To accomplish this we classified 1650 test polygons manually, using multiple sources to confirm the true classification of each polygon. We then compared the results to the original test data as well as PoolNet classifications. The reliable test data indicates a precision of 88% and recall of 93% by our model. Results are summarized in the table below.  
 
 
 #### Test Dataset #1:  
@@ -332,7 +332,7 @@ Check back for future results as we continue to improve the model.
 
 ### Misclassified Polygons
 
-After two training phases precision and recall reached approximately 86% and 87%, respectively. Upon manual inspection of the results a few of the causes of misclassification became apparent. Firstly, swimming pools that are partially covered by trees or a tarp, empty, small, or with green water were often falsely classified as 'no pool'. However, the ground truth also appeared to have some incorrectly classified polygons, which the model was actually classifying correctly, despite being marked as a false negative.  
+Upon manual inspection of the results a few of the causes of misclassification became apparent. Firstly, swimming pools that are partially covered by trees or a tarp, empty, small, or with green water were often falsely classified as 'no pool'. However, the ground truth also appeared to have some incorrectly classified polygons, which the model was actually classifying correctly, despite being marked as a false negative.  
 
 Similarly, a large portion of the geometries that were marked as false positives were actually incorrectly labeled polygons that do have pools. Genuine false positives were usually due to a bright blue object in the back yard with a similar color to many pools. See below for some examples of polygons falsely classified by PoolNet.  
 
