@@ -163,7 +163,7 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
 ### Training the Network  
 
-Before training the network, make sure to create a 'models' folder in the directory from which you will be running the training. The model will automatically save the weights after each epoch of training to this directory. You will get an IO error if you omit this step:
+Before training the network, make sure to create a 'models' folder in the directory from which you will be running the training. The model will automatically save the weights after each epoch of training to this directory. *You will get an IO error if you omit this step*:
 
         >> mkdir models
 
