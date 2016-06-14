@@ -11,8 +11,10 @@
 3. [PoolNet Workflow](#poolnet-workflow)
     * [Getting the Imagery](#getting-the-imagery)
     * [Prepare Shapefile](#prepare-shapefile)
-    * [Create the Training Chips](#create-the-chips)
     * [Training the Network](#training-the-network)
+        - [Create the Training Chips](#create-the-training-chips)
+        - [First Training Phase](#first-training-phase)
+        - [Second Training Phase](#second-training-phase)
     * [Testing the Network](#testing-the-network)
 4. [Performance](#performance)
     * [Results](#results)
@@ -45,7 +47,7 @@ PoolNet utilizes the [VGG-16](https://arxiv.org/pdf/1409.1556.pdf) network archi
 
 PoolNet should run on a GPU to prevent training from being prohibitively slow. Before getting started you will need to set up an EC2 instance with Theano.
 
-### Setting up your EC2 Instance 
+### Setting up your EC2 Instance
 
 Begin by setting up an Ubuntu g2.2xlarge EC2 GPU ubuntu instance on AWS.  
 
@@ -165,40 +167,47 @@ Before training the network, make sure to create a 'models' folder in the direct
 
         >> mkdir models
 
-The training chips and corresponding labels are extracted from train_balanced.geojson as follows:   
-
-Create the generator object:  
-
-        >> import mltools.data_extractors as de
-        >> data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
-
-*You will need to set the batch size small enough to fit into memory. If this does not produce sufficient training data (~10,000 chips) see [the docs](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md) for information on how to train directly on a generator using the [fit_generator](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md#fit_generator) function.*
-
-Generate a batch of chips and labels (x and y):  
-
-        >> x, y = data_generator.next()  
-
-We zero-pad each chip outside of the polygon to eliminate any surrounding objects from neighbors that could cause a false positive, and also to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks (see figure below). Additionally, we ensure that the pixel intensity data is normalized (between 0 and 1) by dividing each pixel by 255. Some sample chips can be seen in the figure below.  
+#### Create the Training Chips
 
 <img alt='sample chips after processing' src='images/chips.png' width=700>  
 <sub> Sample chips used as input for PoolNet. Notice that only the contents of the polygon are being input to the net.</sub>  
 
-We are now ready to train PoolNet on the chips we have generated. The motivation behind the training methodolgy is detailed below.
+The training chips and corresponding labels are extracted from train_balanced.geojson as follows:   
 
-#### Class Imbalance
+1. Create the generator object:  
+
+        >> import mltools.data_extractors as de
+        >> data_generator = de.get_iter_data('train_balanced.geojson', batch_size=10000, max_chip_hw=125, normalize=True)  
+
+    *You will need to set the batch size small enough to fit into memory. If this does not produce sufficient training data (~10,000 chips) see [the docs](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md) for information on how to train directly on a generator using the [fit_generator](https://github.com/digitalglobe/mltools/blob/master/examples/polygon_classify_cnn/PoolNet_docs.md#fit_generator) function.*
+
+2. Generate a batch of chips and labels (x and y):  
+
+        >> x, y = data_generator.next()  
+
+    We zero-pad each chip outside of the polygon to eliminate any surrounding objects from neighbors that could cause a false positive, and also to standardize the shape and general composition of the input data, as is necessary for convolutional neural networks (see figure below). Additionally, we ensure that the pixel intensity data is normalized (between 0 and 1) by dividing each pixel by 255. Some sample chips can be seen in the figure below.  
+
+
+We are now ready to train PoolNet on the chips we have generated. The motivation behind the training methodology is detailed below.
+
+#### First Training Phase
 
 One challenge that the data in this example presents is that only about 6% of the polygons actually contain pools. This class imbalance causes the net to learn only the statistical probability of encountering a pool, and thus produce only 'non-pool' classifications. To force the net to instead learn the general attributes of pools based on image composition, we train it on balanced data (equal number of 'pool' and 'no pool' polygons).  
+
+1. Create a PoolNet instance:
 
         >> from pool_net import PoolNet
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32)
 
-This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (n_channels, max chip height, max chip width). Note that RGB images have 3 channels.
+    This step creates a PoolNet instance with appropriate parameters. The input_shape parameter should be entered as (n_channels, max chip height, max chip width). Note that RGB images have 3 channels.  
+
+2. Train the network:
 
         >> p.fit_xy(X_train = x, Y_train = y, save_model = 'my_model', nb_epoch=15)  
 
-The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
+    The final command executes the training on the x and y data you created in the previous section. The nb_epoch argument defines how many rounds of training to perform on the network. In general this should be until validation loss stops decreasing. Weights for the model will be saved after each epoch, so it is possible to roll back the training if necessary.
 
-#### Two-phase Training
+#### Second Training Phase
 
 After this round of training the model produces over 90% precision and recall when tested on *balanced* classes. Testing this model on data that is representative of the original data brings the precision down to around 72%, indicating an unacceptably high rate of non-pool chips being classified as having pools. To see these results for yourself, create balanced and unbalanced test data by completing the steps below, then use that data to complete steps 2-5 in [testing the network](#testing-the-network).
 
@@ -209,14 +218,22 @@ After this round of training the model produces over 90% precision and recall wh
         >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
         >> x_unbal_test, y_unbal_test = unbal_generaor.next()
 
- To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while decreasing the probability the then network will generate a positive label.  
+To minimize the false positive rate without harming recall, we retrain only the output layer on imbalanced classes. This simultaneously preserves the way that the net detects pools, while decreasing the probability the then network will generate a positive label.  
 
-        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)
+1. Create unbalanced data generator:
+
+        >> unbal_generator = de.get_iter_data('shapefiles/train_filtered.geojson', batch_size=5000, max_chip_hw=125, normalize=True)  
+
+2. Generate X and Y:  
+
         >> x, y = unbal_generator.next()
-        # Creates unbalanced training data
+        # Creates unbalanced training data  
+
+3. Retrain final layer of network:  
+
         >> p.retrain_output(X_train=x, Y_train=y, nb_epoch=20)  
 
-If you already have a saved model architecture and weights, you may load those using the load_model=True argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
+If you already have a saved model architecture and weights, you may load those using the *load_model=True* argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
 
         >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = 'model_name.json')
         >> p.model.load_weights('model_weighs.h5')
