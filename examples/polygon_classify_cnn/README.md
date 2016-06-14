@@ -282,7 +282,7 @@ For visualization of the results we must create a new geojson shapefile for whic
 
 Complete the first step only if you would like to classify your own data. Otherwise just use test_classed.geojson and continue on to step 2.  
 
-1. Classify all test data (this will take some time):
+1. Classify all test data (5-10 minutes):
 
         >> p.classify_shapefile('test_filtered.geojson', test_classed.geojson')  
 
