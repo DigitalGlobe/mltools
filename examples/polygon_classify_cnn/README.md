@@ -161,7 +161,7 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
     <img src='images/repr_shapefiles4.png' width=100>
 
-        >> gt.create_balanced_geojson('train_filtered.geojson', output_name = 'train_balanced.geojson')
+        >> gt.create_balanced_geojson('train_filtered.geojson', output_file = 'train_balanced.geojson')
 
 
 ### Training the Network  

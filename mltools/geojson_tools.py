@@ -4,6 +4,7 @@ import geojson
 import numpy as np
 import geoio
 import sys
+import random
 
 from shapely.wkb import loads
 
