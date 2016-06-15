@@ -111,7 +111,7 @@ In short:
 
 Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).  
 
-**Note**: to run PoolNet you must install the current version of the master branch:  
+**Note**: to run PoolNet you must install the current version of the master branch of mltools:  
 
     >> pip install git+https://github.com/DigitalGlobe/mltools
 
@@ -138,7 +138,7 @@ c. <b>test_filtered.geojson</b>: Test data with filtered polygons and unbalanced
 d. <b>train_filtered.geojson</b>: Unbalanced training data, which will be used in the second round of training.  
 e. <b>train_balanced.geojson</b>: Balanced training data. This is what we will use for the first round of training.   
 
-We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, as well as a batch of training data with balanced classes, the motivation for which is detailed [below](#first-training-phase). If you do not have access to shapefile.geojson, there are sample filtered train and test geojsons (test_filtered.geojson, train_filtered.geojson, and train_balanced.geojson), which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).  
+We initially filter shapefile.geojson to get rid of polygons that are too small. We then create train and test data, as well as a batch of training data with balanced classes, the motivation for which is detailed [below](#first-training-phase). If you do not have access to an original shapefile (shapefile.geojson), there are sample filtered train and test geojsons (test_filtered.geojson, train_filtered.geojson, and train_balanced.geojson), which are sufficient for training and testing the model, so you can omit this section and continue to [Training the Network](#training-the-network).  
 
 <img alt='Small polygons to be filtered out of shapefile' src='images/small_polygons.png' height=175>
 <img alt='Shapefile with small polygons filtered out' src='images/filtered_polygons.png' height=175>
@@ -147,7 +147,7 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
 
     <img src='images/repr_shapefiles_2.png' width=175>
 
-    Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
+    Navigate to the directory that contains shapefile.geojson and the associated tif image. Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
         >> import mltools.geojson_tools as gt
         >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile.geojson', min_polygon_hw=30, max_polygon_hw=125)
