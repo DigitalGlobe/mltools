@@ -270,13 +270,13 @@ We now have a fully trained network that is ready to be tested. Here we will pro
         >> from sklearn.metrics import confusion_matrix
 
         >> print confusion_matrix(y_true, y_pred)
-        # [[true_positives  false_positives]
-        # [false_negatives  true_negatives]]  
+        # [[2324 (true_positives)  15 (false_positives)]
+        # [18 (false_negatives)  143 (true_negatives)]]  
 
 5. Calculate precision and recall:
 
-        >> precision = float(tp) / (tp + fp)
-        >> recall = float(tp) / (tp + fn)  
+        >> precision = 143.0 / (143.0 + 15.0)
+        >> recall = 143.0 / (143.0 + 18.0  
 
 
 ### Visualizing Results  
