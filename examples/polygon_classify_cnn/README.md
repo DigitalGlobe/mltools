@@ -109,9 +109,13 @@ In short:
 
 ### Setting up an Environment
 
-Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).  
+Before training your net be sure to install mltools and activate your conda environment. <b>Follow these [instructions](https://github.com/digitalglobe/mltools#installationusage) before continuing.</b>  
 
-**Note**: to run PoolNet you must install the current version of the master branch of mltools, in addition to a couple of other dependencies:  
+Activate your environment:  
+
+    >> source activate env
+
+**Note**: to run PoolNet you must install the current version of the master branch of mltools, in addition to a couple of other dependencies on your conda environment:  
 
     >> pip install git+https://github.com/DigitalGlobe/mltools  
     >> conda install scikit-image  
@@ -276,7 +280,7 @@ We now have a fully trained network that is ready to be tested. Here we will pro
 5. Calculate precision and recall:
 
         >> precision = 143.0 / (143.0 + 15.0)
-        >> recall = 143.0 / (143.0 + 18.0  
+        >> recall = 143.0 / (143.0 + 18.0)  
 
 
 ### Visualizing Results  
