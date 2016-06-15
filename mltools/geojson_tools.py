@@ -4,6 +4,7 @@ import geojson
 import numpy as np
 import geoio
 import sys
+import random
 
 from shapely.wkb import loads
 
@@ -208,7 +209,7 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
     with open(shapefile) as f:
         data = geojson.load(f)
 
-    if balanced_classes:
+    if balanced:
         # sort classes into separate lists
         sorted_classes = []
 
@@ -270,9 +271,9 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
         balanced_json = {
             data.keys()[0]: data.values()[0],
             data.keys()[1]: final}
-        with open(output_name + '.geojson', 'wb') as f:
+        with open(output_file, 'wb') as f:
             geojson.dump(balanced_json, f)
-        print '{} polygons saved as {}.geojson'.format(len(final), output_name)
+        print '{} polygons saved as {}'.format(len(final), output_file)
 
 
 
@@ -313,14 +314,14 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
             if chip is None or min(h, w) < min_polygon_hw or max(h, w) > max_polygon_hw:
                 ix += 1
                 # add percent complete to stdout
-                sys.stdout.write('\r%' + str(100 * ix / total) + ' ' * 20)
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
                 sys.stdout.flush()
                 continue
 
             ix_ok.append(ix)
             ix += 1
             # add percent complete to stdout
-            sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 5)
+            sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
             sys.stdout.flush()
 
     print 'Saving...'
