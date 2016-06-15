@@ -276,7 +276,7 @@ We now have a fully trained network that is ready to be tested. Here we will pro
 5. Calculate precision and recall:
 
         >> precision = 143.0 / (143.0 + 15.0)
-        >> recall = 143.0 / (143.0 + 18.0  
+        >> recall = 143.0 / (143.0 + 18.0)  
 
 
 ### Visualizing Results  
