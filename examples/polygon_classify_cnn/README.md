@@ -111,7 +111,11 @@ In short:
 
 Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).  
 
-**Note**: to run PoolNet you must install the current version of the master branch of mltools, in addition to a couple of other dependencies:  
+Activate your environment:  
+
+    >> source activate env
+
+**Note**: to run PoolNet you must install the current version of the master branch of mltools, in addition to a couple of other dependencies on your conda environment:  
 
     >> pip install git+https://github.com/DigitalGlobe/mltools  
     >> conda install scikit-image  
