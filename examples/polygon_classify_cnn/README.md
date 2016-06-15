@@ -109,7 +109,7 @@ In short:
 
 ### Setting up an Environment
 
-Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).  
+Before training your net be sure to install mltools and activate your conda environment. <b>Follow these [instructions](https://github.com/digitalglobe/mltools#installationusage) before continuing.</b>  
 
 Activate your environment:  
 
