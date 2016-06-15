@@ -94,7 +94,7 @@ You can easily create a leaflet map with the pansharpened image overlayed using 
         >> gbdx = Interface()
         >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1040010014800C00'), 'my_map.html') 
 
-Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html) on your browser in order to view the image. (If you can't view the image in this link, it's probably because the IDAHO token has expired. However, if you create the file yourself and open it using Firefox, it should work fine.) 
+This is the [result](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html) (You will need a gbdx access token in order to view this page. You can find this in ~/.gbdx-config.)
 
 Alternatively, you can run a gbdx workflow to generate the pansharpened image and then download it locally 
 in order to view it (e.g., on QGIS):
@@ -212,16 +212,9 @@ All the steps described in this section are found in polygon_classify_rf.py whic
 ## Viewing the results
 
 Note that we can visualize geojson's by directly opening them on github.
-Viewing the geometries on top of the imagery (which is definitely more interesting!) is trickier.
+Viewing the geometries on top of the IDAHO tiles (which is definitely more interesting!) is trickier.
 
 <img src='images/adelaide_dataset_snapshot.png' scale=1>   
 <sub> Green/red polygons indicate presence/absence of a pool, respectively.</sub>
 
-In this directory, you can find the file [my_map_with_vectors.html](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map_with_vectors.html). This is my_map.html modified to display train.geojson
-as a vector tile stack on top of the IDAHO raster tile stack. In order to do this, we use the [geojson-vt](https://github.com/mapbox/geojson-vt) javascript library which Mapbox built in order to slice GeoJSON data into vector tiles on the fly. Pretty cool.
-Green/red polygons indicate presence/absence of a pool, respectively. Click on each polygon to view the corresponding polygon id.
-
-(Note: if you download my_map_with_vectors.html and try to open it locally in Chrome, you might run into CORS issues. Firefox might solve the problem.)
-
-
-
+In order to do this, we use the [geojson-vt](https://github.com/mapbox/geojson-vt) javascript library which Mapbox built in order to slice GeoJSON data into vector tiles on the fly. You can see this [here](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map_with_vectors.html). Green/red polygons indicate presence/absence of a pool, respectively. Click on each polygon to view the corresponding polygon id.
