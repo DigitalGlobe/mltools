@@ -94,7 +94,7 @@ You can easily create a leaflet map with the pansharpened image overlayed using 
         >> gbdx = Interface()
         >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1040010014800C00'), 'my_map.html') 
 
-This is the [result](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html) (You will need a gbdx access token in order to view this page. You can find this in ~/.gbdx-config.)
+This is the [result](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html). (You will need a gbdx access token in order to view this page. You can find this in ~/.gbdx-config.)
 
 Alternatively, you can run a gbdx workflow to generate the pansharpened image and then download it locally 
 in order to view it (e.g., on QGIS):

@@ -78,14 +78,14 @@ You can easily create a leaflet map with the pansharpened image overlayed using 
 
         >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1030010038CD4D00'), 'my_map.html') 
 
-Open [my_map.html](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map.html) on your browser in order to view the image (If you can't view the image in this link, it's probably because the IDAHO token has expired. However, if you create the file yourself and open it using Firefox, it should work fine.). A big part of it is land - no boats there! It is therefore a good idea to apply a water mask in order to reduce the search area.
+This is the [result](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map.html). (You will need a gbdx access token in order to view this page which you can find at ~/.gbdx-config.) A big part of the image is land - no boats there! It is therefore a good idea to apply a water mask in order to reduce the search area.
 
 ## Applying a water mask
 
 ## Training and testing the chip classifier
 
-The file boats.geojson contains the coordinates of about 4500 boats which were tagged by the Tomnod crowd. 
-You can view this data set by opening [my_map_with_points.html](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map_with_points.html). In order to create this file, we have used the [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) library to create marker clusters which are displayed on top of the IDAHO tiles. (The required javascript files can be found in /jsfiles of this example.)  
+The file boats.geojson contains the coordinates of about 4000 boats which were tagged by the Tomnod crowd. 
+You can view this data set [here](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map_with_points.html). In order to create this file, we have used the [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) library to create marker clusters which are displayed on top of the IDAHO tiles.  
 
 
 ## Detecting boats
