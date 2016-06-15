@@ -111,9 +111,12 @@ In short:
 
 Before training your net be sure to install mltools and activate your conda environment ([instructions](https://github.com/digitalglobe/mltools#installationusage)).  
 
-**Note**: to run PoolNet you must install the current version of the master branch of mltools:  
+**Note**: to run PoolNet you must install the current version of the master branch of mltools, in addition to a couple of other dependencies:  
 
-    >> pip install git+https://github.com/DigitalGlobe/mltools
+    >> pip install git+https://github.com/DigitalGlobe/mltools  
+    >> conda install scikit-image  
+    >> conda install h5py  
+    >> conda install matplotlib
 
 ## PoolNet Workflow
 
@@ -150,7 +153,7 @@ We initially filter shapefile.geojson to get rid of polygons that are too small.
     Navigate to the directory that contains shapefile.geojson and the associated tif image. Open an ipython terminal and filter your original shapefile for legitimate polygons. Use resolution to determine minimum and maximum acceptable chip size dimensions (generally between 30 and 125 pixels for pansharpened images).  
 
         >> import mltools.geojson_tools as gt
-        >> gt.filter_polygon_size('shapefile.geojson', 'filtered_shapefile.geojson', min_polygon_hw=30, max_polygon_hw=125)
+        >> gt.filter_polygon_size('shapefile.geojson', output_file = 'filtered_shapefile.geojson', min_polygon_hw = 30, max_polygon_hw = 125)
 
 2. **Create train_filtered.geojson and test_filtered.geojson:**
 
