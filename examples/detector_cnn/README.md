@@ -102,15 +102,33 @@ The steps in ipython are outlined below; the argument 'data' is the same as abov
 The gdal-cli task is a **multi-purpose** task: you can pass it any bash argument. In this example, we use it as 'glue'
 between the aoptask and prototask (it moves the output of aoptask to where prototask can find it).
 
-
 This is what the watermask looks like:
 
 <img src='images/water_mask.png'>
 
-And this is what the masked pansharpened image looks like:
+We now want to upsample the watermask so that it has the same dimensions as the pansharpened image. 
 
-From the command prompt, we resample the water mask as follows:
-        > gdal_translate -outsize 38516 223054 1030010038CD4D00_mask.tif 1030010038CD4D00_mask_resampled.tif
+To get the size of the pansharpened image on the command line:
+        
+        > dims="$(gdalinfo 1030010038CD4D00.tif | grep 'Size is' | awk '{ print substr( $0, 8, length($0)  ) }' | sed 's/,/ /g')"
+        > echo $dims       
+        38516 223054
+
+From the command prompt, we can resample the water mask using the gdal_translate utility:
+
+        > gdal_translate -outsize $dims 1030010038CD4D00_mask.tif 1030010038CD4D00_mask_resampled.tif
+        Input file size is 9651, 55736
+        0...10...20...30...40...50...60...70...80...90...100 - done.
+
+And to apply the mask:
+
+        > gdal_calc.py -A 1030010038CD4D00.tif -B 1030010038CD4D00_mask_resampled.tif --calc=A*(B>0) --allBands=A --outfile=1030010038CD4D00_masked.tif
+        0 .. 10 .. 20 .. 30 .. 40 .. 50 .. 60 .. 70 .. 80 .. 90 .. 100 - Done
+
+This is what the masked pansharpened image looks like:
+
+<img src='images/water_mask.png'>
+
 
 ## Training and testing the chip classifier
 
