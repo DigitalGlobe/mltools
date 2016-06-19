@@ -52,7 +52,7 @@ so that modifications in your .bashrc take effect.
 
 Create a conda environment:
 
-      conda create -n env python ipython numpy scipy gdal libgdal=2 git psycopg2  
+      conda create -n env python ipython numpy scipy gdal libgdal=2 git psycopg2 ephem 
    
 Activate the environment:
 
