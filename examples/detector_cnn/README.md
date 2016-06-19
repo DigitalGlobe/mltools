@@ -1,3 +1,5 @@
+This readme is under construction...
+
 # Object Detection using Pansharpened Imagery and Convolutional Neural Networks.
 
 ## Table of Contents
