@@ -127,7 +127,7 @@ And to apply the mask:
 
 This is what the masked pansharpened image looks like:
 
-<img src='images/water_mask.png'>
+<img src='images/masked.png'>
 
 
 ## Training and testing the chip classifier
