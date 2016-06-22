@@ -78,16 +78,15 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
-            (2) int 'batch_size': number of chips to generate per iteration. equal to
-            batch-size of net, defaults to 32
+            (2) int 'batch_size': number of chips to generate
             (3) int 'nb_classes': number of classes in which to categorize itmes
             (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon.
-            defaults to 100
+            defaults to 30.
             (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon.
             note that this will be the size of the height and width of input images to the
-            net (default = 224)
-            (6) bool 'return_labels': return class label with chips. defaults to True8
-            (7) bool 'return_id': return the geometry id with each chip.
+            net. defaults to 125.
+            (6) bool 'return_labels': return class label with chips. defaults to True
+            (7) bool 'return_id': return the geometry id with each chip. Defaults to False
             (8) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
             (9) bool 'mask': if True returns a masked array. defaults to True
             (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
