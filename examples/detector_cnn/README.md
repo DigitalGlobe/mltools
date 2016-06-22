@@ -1,3 +1,5 @@
+This readme is under construction...
+
 # Object Detection using Pansharpened Imagery and Convolutional Neural Networks.
 
 ## Table of Contents
@@ -52,7 +54,7 @@ The key 'location' specifies the location of the ordered image on S3. We store t
 
 We now execute the following steps in order to produce the pansharpened image.
 
-        >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True, enable_pansharpen=True)
+        >> aoptask = gbdx.Task('AOP_Strip_Processor', data=data, enable_acomp=True, enable_pansharpen=True)
         >> workflow = gbdx.Workflow([aoptask])
         >> workflow.savedata(aoptask.outputs.data, location='kostas/hongkong')
         >> workflow.execute()
@@ -81,6 +83,52 @@ You can easily create a leaflet map with the pansharpened image overlayed using 
 This is the [result](http://kostasthebarbarian.github.io/mltools/examples/detector_cnn/my_map.html). (You will need a gbdx access token in order to view this page which you can find at ~/.gbdx-config.) A big part of the image is land - no boats there! It is therefore a good idea to apply a water mask in order to reduce the search area.
 
 ## Applying a water mask
+
+We can use the GBDX [protogenv2RAW](https://github.com/TDG-Platform/docs) task in order to generate a water mask for 1030010038CD4D00.
+This task requires an atmospherically compensated multi-spectral image in order to produce the water mask.
+The steps in ipython are outlined below; the argument 'data' is the same as above since the water mask will be generated from the same raw image.
+
+        >> aoptask = gbdx.Task('AOP_Strip_Processor', data=data, enable_acomp=True, enable_pansharpen=False, bands='MS', enable_dra=False)            # creates acomp'd multispectral image
+        >> gluetask = gbdx.Task('gdal-cli')  # move aoptask output to root where prototask can find it
+        >> gluetask.inputs.data = aoptask.outputs.data.value
+        >> gluetask.inputs.execution_strategy = 'runonce'
+        >> gluetask.inputs.command = """mv $indir/*/*.tif $outdir/"""           
+        >> prototask = gbdx.Task('protogenV2RAW')
+        >> prototask.inputs.raster = gluetask.outputs.data.value
+        >> workflow = gbdx.Workflow([aoptask, gluetask, prototask])
+        >> workflow.savedata(prototask.outputs.data, location='kostas/hongkong/watermasks')
+        >> workflow.execute()
+
+The gdal-cli task is a **multi-purpose** task: you can pass it any bash argument. In this example, we use it as 'glue'
+between the aoptask and prototask (it moves the output of aoptask to where prototask can find it).
+
+This is what the watermask looks like:
+
+<img src='images/water_mask.png'>
+
+We now want to upsample the watermask so that it has the same dimensions as the pansharpened image. 
+
+To get the size of the pansharpened image on the command line:
+        
+        > dims="$(gdalinfo 1030010038CD4D00.tif | grep 'Size is' | awk '{ print substr( $0, 8, length($0)  ) }' | sed 's/,/ /g')"
+        > echo $dims       
+        38516 223054
+
+From the command prompt, we can resample the water mask using the gdal_translate utility:
+
+        > gdal_translate -outsize $dims 1030010038CD4D00_mask.tif 1030010038CD4D00_mask_resampled.tif
+        Input file size is 9651, 55736
+        0...10...20...30...40...50...60...70...80...90...100 - done.
+
+And to apply the mask:
+
+        > gdal_calc.py -A 1030010038CD4D00.tif -B 1030010038CD4D00_mask_resampled.tif --calc=A*(B>0) --allBands=A --outfile=1030010038CD4D00_masked.tif
+        0 .. 10 .. 20 .. 30 .. 40 .. 50 .. 60 .. 70 .. 80 .. 90 .. 100 - Done
+
+This is what the masked pansharpened image looks like:
+
+<img src='images/masked.png'>
+
 
 ## Training and testing the chip classifier
 
