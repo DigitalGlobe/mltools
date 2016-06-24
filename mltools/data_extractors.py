@@ -74,7 +74,7 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 
 def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
                   max_chip_hw=125, return_labels=True, return_id = False, buffer=[0, 0],
-                  mask=True, resize_dim=None, normalize=True):
+                  mask=True, resize_dim=None, normalize=True, img_name=None):
     '''
     Generates batches of training data from shapefile for when it will not fit in memory.
     INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
@@ -94,6 +94,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
             Defaults to None (do not resize).
             (11) bool 'normalize': divide all chips by max pixel intensity
             (normalize net input)
+            (12) string 'img_name': optional- name of tif image to use for extracting
+            chips
     OUTPUT  Returns a generator object (g). calling g.next() returns the following:
             (1) chips: one batch of masked (if True) chips
             (2) corresponding feature_id for chips (if return_id is True)
@@ -111,7 +113,10 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
     for img_id in img_ids:
-        img = geoio.GeoImage(img_id + '.tif')
+        if not img_name:
+            img = geoio.GeoImage(img_id + '.tif')
+        else:
+            img = img_name
 
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
