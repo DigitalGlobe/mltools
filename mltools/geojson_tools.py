@@ -203,7 +203,8 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
             if None, only saves one file (balanced data). otherwise saves a train and
             test file. Defaults to None.
 
-    OUTPUT  (1) geojson file with balanced classes in current directory
+    OUTPUT  (1) train geojson file with balanced classes (if True) in current directory.
+            (2) test geojson file if train_test is specified
     '''
 
     with open(shapefile) as f:
@@ -240,7 +241,7 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
                 else:
                     final += random.sample(sorted_classes[i], class_sizes)
 
-    else: # dont need to ensure balanced classes
+    else: # don't need to ensure balanced classes
         final = data['features']
 
     # shuffle classes for input to net
