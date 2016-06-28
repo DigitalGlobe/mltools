@@ -174,7 +174,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
     # return any remaining inputs
     if len(inputs) != 0:
         l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-        lab = np_utils.to_categorical(l, 2)
+        lab = np_utils.to_categorical(l, nb_classes)
         if return_id:
             yield (np.array([i for i in inputs]), ids, np.array(labels))
         else:
