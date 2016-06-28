@@ -34,11 +34,16 @@ class PoolNet(object):
             (not including file extension) to load. Defaults to None
             (7) int 'train_size': number of samples to train on per epoch. defaults to
             10000
+            (8) float 'lr_1': learning rate for the first round of training. Defualts to
+            0.001
+            (9) float 'lr_2': learning rate for second round of training (just output
+            layer). Defaults to 0.01
     '''
 
     def __init__(self, nb_classes=2, batch_size=32,
                 input_shape=(3, 125, 125), fc = False,
-                load_model=False, model_name=None, train_size=10000):
+                load_model=False, model_name=None, train_size=10000, lr_1 = 0.001,
+                lr_2 = 0.01):
 
         self.nb_classes = nb_classes
         self.batch_size = batch_size
@@ -46,6 +51,8 @@ class PoolNet(object):
         self.fc = fc
         self.load_model = load_model
         self.train_size = train_size
+        self.lr_1 = lr_1
+        self.lr_2 = lr_2
 
         if self.load_model:
             self.model_name = model_name
@@ -106,9 +113,9 @@ class PoolNet(object):
         model.add(Dropout(0.5))
         model.add(Dense(2048, activation='relu'))
         model.add(Dropout(0.5))
-        model.add(Dense(2, activation='softmax'))
+        model.add(Dense(self.nb_classes, activation='softmax'))
 
-        sgd = SGD(lr=0.001, decay=0.01, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=self.lr_1, decay=0.01, momentum=0.9, nesterov=True)
         model.compile(optimizer = 'sgd', loss = 'categorical_crossentropy')
         return model
 
@@ -151,7 +158,7 @@ class PoolNet(object):
         print 'Compiling Fully Convolutional Model...'
         for process in model_layers:
             model.add(process)
-        sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=self.lr_1, momentum=0.9, nesterov=True)
         model.compile(loss='categorical_crossentropy', optimizer='sgd')
         print 'Done.'
         return model
@@ -245,7 +252,7 @@ class PoolNet(object):
             self.model.layers[i].trainable = False
 
         # recompile model
-        sgd = SGD(lr=0.01, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=self.lr_2, momentum=0.9, nesterov=True)
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # train model
