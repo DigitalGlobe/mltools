@@ -6,11 +6,10 @@ import geoio
 import geojson_tools as gt
 import numpy as np
 import sys
-from keras.utils import np_utils
 import osgeo.gdal as gdal
 from osgeo.gdalconst import *
 from functools import reduce
-
+from sklearn.preprocessing import OneHotEncoder
 
 def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     """Return pixel intensity array for each geometry in shapefile.
@@ -72,34 +71,37 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
-                  max_chip_hw=125, return_labels=True, return_id = False, buffer=[0, 0],
-                  mask=True, resize_dim=None, normalize=True, img_name=None):
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_chip_hw=125,
+                  classes=['Swimming pool', 'No swimming pool'], return_id = False,
+                  buffer=[0, 0], mask=True, resize_dim=None, normalize=True,
+                  img_name=None):
     '''
-    Generates batches of training data from shapefile for when it will not fit in memory.
-    INPUT   (1) string 'shapefile': name of shapefile to extract polygons from
-            (2) int 'batch_size': number of chips to generate
-            (3) int 'nb_classes': number of classes in which to categorize itmes
-            (4) int 'min_chip_hw': minimum size acceptable (in pixels) for a polygon.
-            defaults to 30.
-            (5) int 'max_chip_hw': maximum size acceptable (in pixels) for a polygon.
-            note that this will be the size of the height and width of input images to the
-            net. defaults to 125.
-            (6) bool 'return_labels': return class label with chips. defaults to True
-            (7) bool 'return_id': return the geometry id with each chip. Defaults to False
-            (8) list[int] 'buffer': two-dim buffer in pixels. defaults to [0,0].
-            (9) bool 'mask': if True returns a masked array. defaults to True
-            (10) tuple(int) 'resize_dim': size to downsample chips to (channels, height,
-            width). Note that resizing takes place after padding the original polygon.
-            Defaults to None (do not resize).
-            (11) bool 'normalize': divide all chips by max pixel intensity
-            (normalize net input)
-            (12) string 'img_name': optional- name of tif image to use for extracting
-            chips
+    Generates batches of training data from shapefile. Labeles will be one-hot encoded.
+
+    INPUT   shapefile (string): name of shapefile to extract polygons from
+            batch_size (int): number of chips to generate each iteration
+            nb_classes (int): number of classes in which to categorize itmes
+            min_chip_hw (int): minimum size acceptable (in pixels) for a polygon.
+                defaults to 30.
+            max_chip_hw (int): maximum size acceptable (in pixels) for a polygon. Note
+                that this will be the size of the height and width of input images to the
+                net. defaults to 125.
+            classes (list['string']): name of classes for chips. Defualts to swimming
+                pool classes (['Swimming_pool', 'No_swimming_pool'])
+            return_id (bool): return the geometry id with each chip. Defaults to False
+            buffer (list[int]): two-dim buffer in pixels. defaults to [0,0].
+            mask (bool): if True returns a masked array. defaults to True
+            resize_dim (tuple(int)): size to downsample chips to (channels, height,
+                width). Note that resizing takes place after padding the original polygon.
+                Defaults to None (do not resize).
+            normalize (bool): divide all chips by max pixel intensity (normalize net
+                input)
+            img_name (string): optional- name of tif image to use for extracting chips
+
     OUTPUT  Returns a generator object (g). calling g.next() returns the following:
-            (1) chips: one batch of masked (if True) chips
-            (2) corresponding feature_id for chips (if return_id is True)
-            (3) corresponding chip labels (if return_labels is True)
+            chips: one batch of masked (if True) chips
+            corresponding feature_id for chips (if return_id is True)
+            corresponding chip labels (if return_labels is True)
 
     EXAMPLE:
         >> g = get_iter_data('shapefile.geojson', batch-size=12)
@@ -111,6 +113,9 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
     ct, inputs, labels, ids = 0, [], [], []
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
+
+    # Create numerical class names
+    cls_dict = {classes[i]: i for i in xrange(len(classes))}
 
     for img_id in img_ids:
         if not img_name:
@@ -143,14 +148,14 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
             if normalize:
                 chip_patch /= 255.
 
-            if return_labels:
-                try:
-                    label = properties['class_name']
-                    if label is None:
-                        continue
-                    labels.append(label)
-                except (TypeError, KeyError):
+            # Get labels
+            try:
+                label = properties['class_name']
+                if label is None:
                     continue
+                labels.append(cls_dict[label])
+            except (TypeError, KeyError):
+                continue
 
             if return_id:
                 id = properties['feature_id']
@@ -163,22 +168,31 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30,
             sys.stdout.flush()
 
             if ct == batch_size:
-                l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-                lab = np_utils.to_categorical(l, nb_classes)
+
+                # Create one-hot encoded labels
+                Y = np.zeros((batch_size, nb_classes))
+                for i in range(batch_size):
+                    Y[i, labels[i]] = 1
+
                 if return_id:
-                    yield (np.array([i for i in inputs]), ids, lab)
+                    yield (np.array([i for i in inputs]), ids, Y)
                 else:
-                    yield (np.array([i for i in inputs]), lab)
+                    yield (np.array([i for i in inputs]), Y)
                 ct, inputs, labels, ids = 0, [], [], []
 
     # return any remaining inputs
     if len(inputs) != 0:
-        l = [1 if lab == 'Swimming pool' else 0 for lab in labels]
-        lab = np_utils.to_categorical(l, nb_classes)
+
+        # Create one-hot encoded labels
+        Y = np.zeros((len(labels), nb_classes))
+        for i in range(len(labels)):
+            Y[i, labels[i]] = 1
+
         if return_id:
-            yield (np.array([i for i in inputs]), ids, lab)
+            yield (np.array([i for i in inputs]), ids, Y)
         else:
-            yield (np.array([i for i in inputs]), lab)
+            yield (np.array([i for i in inputs]), Y)
+
 
 def random_window(image, chip_size, no_chips=10000):
     """Implement a random chipper on a georeferenced image.
