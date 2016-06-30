@@ -94,8 +94,9 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_ch
                 width). Note that resizing takes place after padding the original polygon.
                 Defaults to None (do not resize).
             normalize (bool): divide all chips by max pixel intensity (normalize net
-                input)
-            img_name (string): optional- name of tif image to use for extracting chips
+                input). Defualts to True.
+            img_name (string): name of tif image to use for extracting chips. Defaults to
+                None (the image name is assumed to be the image id listed in shapefile)
 
     OUTPUT  Returns a generator object (g). calling g.next() returns the following:
             chips: one batch of masked (if True) chips
