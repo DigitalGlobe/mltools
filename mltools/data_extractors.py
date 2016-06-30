@@ -9,7 +9,6 @@ import sys
 import osgeo.gdal as gdal
 from osgeo.gdalconst import *
 from functools import reduce
-from sklearn.preprocessing import OneHotEncoder
 
 def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     """Return pixel intensity array for each geometry in shapefile.
