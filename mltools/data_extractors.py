@@ -137,7 +137,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_ch
 
             # zero-pad chip to standard net input size
             chip = chip.filled(0).astype(float)  # replace masked entries with zeros
-            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2, (pad_w - pad_w/2))], 'constant', constant_values=0)
+            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
+                (pad_w - pad_w/2))], 'constant', constant_values=0)
 
             # resize image
             if resize_dim:
