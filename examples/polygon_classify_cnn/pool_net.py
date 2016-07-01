@@ -40,8 +40,7 @@ class PoolNet(object):
             layer). Defaults to 0.01
     '''
 
-    def __init__(self, nb_classes=2, batch_size=32,
-                input_shape=(3, 125, 125), fc = False,
+    def __init__(self, nb_classes=2, batch_size=32, input_shape=(3, 125, 125), fc = False,
                 load_model=False, model_name=None, train_size=10000, lr_1 = 0.001,
                 lr_2 = 0.01):
 
