@@ -172,16 +172,12 @@ def find_unique_values(input_file, property_name):
            List of distinct values of property.
            If property does not exist, it returns None.
     """
-    print 'Finding unique values...'
     with open(input_file) as f:
         feature_collection = geojson.load(f)
-        print 'File loaded'
 
     features = feature_collection['features']
-    print 'Getting values...'
     values = np.array([feat['properties'].get(property_name)
                        for feat in features])
-    print 'Done.'
     return np.unique(values)
 
 
