@@ -121,7 +121,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_ch
         if not img_name:
             img = geoio.GeoImage(img_id + '.tif')
         else:
-            img = img_name
+            img = geoio.GeoImage(img_name)
 
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
