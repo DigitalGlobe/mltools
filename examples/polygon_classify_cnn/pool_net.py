@@ -374,7 +374,7 @@ class PoolNet(object):
                                   max_chip_hw=self.input_shape[1]):
             print 'Classifying polygons...'
             yprob += list(self.model.predict_proba(x)) # use model to predict classes
-            ytrue += [int(i[1]) for i in y] # put ytest in same format as ypred
+            ytrue += [int(np.argwhere(i==1)) for i in y] # put ytest in same format as ypred
 
         # Get predicted class and certainty of classification results
         yhat = [np.argmax(i) for i in yprob]
@@ -385,7 +385,7 @@ class PoolNet(object):
 
         # Update shapefile, save as output_name
         data = zip(yhat, ycert, missed)
-        property_names = ['PoolNet_class', 'certainty', 'missed']
+        property_names = ['CNN_class', 'certainty', 'missed']
         write_properties_to(data, property_names, shapefile, output_file)
 
 
