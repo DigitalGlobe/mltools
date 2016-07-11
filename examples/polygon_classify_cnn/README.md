@@ -244,9 +244,9 @@ To minimize the false positive rate without harming recall, we retrain only the 
 
         >> p.retrain_output(X_train=x, Y_train=y, nb_epoch=20)  
 
-If you already have a saved model architecture and weights, you may load those using the *load_model=True* argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
+If you already have a saved model architecture and weights, you may load those using the *old_model=True* argument when creating an instance of the PoolNet class. You then may load the associated weights from an h5 file.  
 
-        >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, load_model=True, model_name = 'model_name.json')
+        >> p = PoolNet(input_shape = (3,125,125), batch_size = 32, old_model=True, model_name = 'model_name.json')
         >> p.model.load_weights('model_weighs.h5')
         # Produces a model with loaded weights that can be used for testing and deployment
 

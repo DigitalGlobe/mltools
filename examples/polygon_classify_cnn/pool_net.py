@@ -20,40 +20,41 @@ class PoolNet(object):
     '''
     Fully Convolutional model to classify polygons as pool/no pool
 
-    INPUT   (1) int 'nb_classes': number of different image classes. defaults to 2
-            (pool/no pool)
+    INPUT   (1) int 'classes': classes to train images on, exactly as they appear in
+                shapefile properties. defaults to pool classes (pool/no pool)
             (2) int 'batch_size': amount of images to train for each batch. defaults
-            to 32
+                to 32
             (3) tuple[int] 'input_shape': shape of input images (3-dims). defaults to
-            (3,125,125)
+                (3,125,125)
             (4) bool 'fc': True for fully convolutional model, else classic convolutional
-            model. defaults to False.
+                model. defaults to False.
             (5) bool 'load_model': Use a saved trained model (model_name) architecture
-            and weights. Defaults to False
+                and weights. Defaults to False
             (6) string 'model_name': Only relevant if load_model is True. name of model
-            (not including file extension) to load. Defaults to None
+                (not including file extension) to load. Defaults to None
             (7) int 'train_size': number of samples to train on per epoch. defaults to
-            10000
+                10000
             (8) float 'lr_1': learning rate for the first round of training. Defualts to
-            0.001
+                0.001
             (9) float 'lr_2': learning rate for second round of training (just output
-            layer). Defaults to 0.01
+                layer). Defaults to 0.01
     '''
 
-    def __init__(self, nb_classes=2, batch_size=32, input_shape=(3, 125, 125), fc = False,
-                load_model=False, model_name=None, train_size=10000, lr_1 = 0.001,
-                lr_2 = 0.01):
+    def __init__(self, classes=['Swimming pool', 'No swimming pool'], batch_size=32,
+                input_shape=(3, 125, 125), fc = False, old_model=False, model_name=None,
+                train_size=10000, lr_1 = 0.001, lr_2 = 0.01):
 
-        self.nb_classes = nb_classes
+        self.nb_classes = len(classes)
+        self.classes = classes
         self.batch_size = batch_size
         self.input_shape = input_shape
         self.fc = fc
-        self.load_model = load_model
+        self.old_model = old_model
         self.train_size = train_size
         self.lr_1 = lr_1
         self.lr_2 = lr_2
 
-        if self.load_model:
+        if self.old_model:
             self.model_name = model_name
             self.model = self.load_model(model_name)
         else:
@@ -330,7 +331,7 @@ class PoolNet(object):
         print 'Loading model {}'.format(self.model_name)
 
         #load model
-        with open(model) as f:
+        with open(model_name) as f:
             m = f.next()
         mod = model_from_json(json.loads(m))
         print 'Done.'
@@ -369,8 +370,8 @@ class PoolNet(object):
 
         # Classify all chips in input shapefile
         print 'Classifying test data...'
-        for x, y in get_iter_data(shapefile, batch_size = 5000,
-                                      max_chip_hw=self.input_shape[1]):
+        for x, y in get_iter_data(shapefile, batch_size = 5000, classes = self.classes,
+                                  max_chip_hw=self.input_shape[1]):
             print 'Classifying polygons...'
             yprob += list(self.model.predict_proba(x)) # use model to predict classes
             ytrue += [int(i[1]) for i in y] # put ytest in same format as ypred
