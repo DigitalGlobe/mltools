@@ -92,19 +92,19 @@ In short:
 
     <b>.theanorc config: </b>  
 
-            [global]  
-            floatX = float32  
-            device = gpu  
-            optimizer = fast_run  
+        [global]  
+        floatX = float32  
+        device = gpu  
+        optimizer = fast_run  
 
-            [lib]  
-            cnmem = 0.9
+        [lib]  
+        cnmem = 0.9
 
-            [nvcc]  
-            fastmath = True
+        [nvcc]  
+        fastmath = True
 
-            [blas]  
-            ldflags = -llapack -lblas  
+        [blas]  
+        ldflags = -llapack -lblas  
 
 
 ### Setting up an Environment
