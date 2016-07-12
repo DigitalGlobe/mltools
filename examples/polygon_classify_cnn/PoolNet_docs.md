@@ -122,15 +122,15 @@ Saves model architecture as json and weights as h5py doc.
 |model_name.h5 | model weights |  
 
 
-##### load_model_weights  
+##### load_model  
 \(model_name)  
-Load model architecture and weights. Both files must have the same basename (model_name).  
+Load model architecture. If you wish to load weights as well you must call self.model.load_weights('weight_file.h5') after calling this function.  
 
 |Input| Description |
 |---------------|------|
-|model_name | string, filepath and name under which model architecture and weights are saved, not including extension (.json or .h5)|
+|model_name | string, filepath and name under which model architecture is saved, |
 |**Output** |  **Description** |
-|model | model loaded with weights, ready to classify chips. |  
+|model | model loaded with input architecture. |  
 
 
 ##### evaluate_model  
@@ -147,12 +147,13 @@ Classify X_test chips and print a classification report from the trained model.
 
 
 ##### classify_shapefile  
-\(shapefile, output_name)  
+\(shapefile, output_name, img_name = None)  
 Create a geojson with results of classification saved as properties for each polygon.  
 
 |Input| Description |
 |---------------|------|
 |shapefile | string, name of shapefile to classify. Will automatically filter out polygons that are too large (side dimensions larger than input_shape[1]) |
 |output_name | string, name under which to save the output file |
+|img_name | name of the associated geotiff image if different than catalog number. Defaults to None. |  
 |**Output** |  **Description** |
-|output_name.gejson | file with polygons with classification results as properties |
+|output_name | file with polygons with classification results as properties |
