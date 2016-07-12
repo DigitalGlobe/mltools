@@ -72,8 +72,7 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 
 def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
-                  buffer=[0, 0], mask=True, resize_dim=None, normalize=True,
-                  img_name=None):
+                  buffer=[0, 0], mask=True, normalize=True, img_name=None):
     '''
     Generates batches of training data from shapefile. Labeles will be one-hot encoded.
 
@@ -90,9 +89,6 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_ch
             return_id (bool): return the geometry id with each chip. Defaults to False
             buffer (list[int]): two-dim buffer in pixels. defaults to [0,0].
             mask (bool): if True returns a masked array. defaults to True
-            resize_dim (tuple(int)): size to downsample chips to (channels, height,
-                width). Note that resizing takes place after padding the original polygon.
-                Defaults to None (do not resize).
             normalize (bool): divide all chips by max pixel intensity (normalize net
                 input). Defualts to True.
             img_name (string): name of tif image to use for extracting chips. Defaults to
@@ -141,10 +137,10 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_ch
             chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
                 (pad_w - pad_w/2))], 'constant', constant_values=0)
 
-            # resize image
-            if resize_dim:
-                if resize_dim != chip_patch.shape:
-                    chip_patch = resize(chip_patch, resize_dim)
+            # # resize image
+            # if resize_dim:
+            #     if resize_dim != chip_patch.shape:
+            #         chip_patch = resize(chip_patch, resize_dim)
 
             if normalize:
                 chip_patch /= 255.
