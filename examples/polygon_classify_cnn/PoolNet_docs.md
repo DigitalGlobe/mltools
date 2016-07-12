@@ -14,15 +14,15 @@ This classifier can be trained on polygons to detect pools in the property. This
 
 | **Parameter:**  | Description:                                                     |
 |-----------------|------------------------------------------------------------------|
-| nb_classes | int, Number of different image classes. Use 2 for pools. |
+| classes | list['str'], The names of classes on which to train, exactly as they appear in the shapefile |
 | batch_size | int, Number of chips per batch. Defaults to 32. |
 | input_shape | tuple(ints), Shape of three-dim input image. Defaults to (3,125,125). Use Theano dimensional ordering. |
-| n_dense_nodes | int, Number of nodes to use in dense layers of net. Only applicable if using basic net (not recommended). |
 | fc   | bool, Use a fully convolutional model, instead of classic convolutional model. Defaults to False. |
-| vgg       | bool, Use VGGNet architecture. Currently gives the best results, defaults to True. |
-| load_model | bool, Use a saved trained model (model_name) architecture and weights. Defaults to False. |
-| model_name | string, Only relevant if load_model is True. Name of model (not including file extension) to load. Defaults to None (will not load a model) |
-| train_size | int, Number of samples to train on per epoch if training on a generator. Defaults to 10000. |  
+| old_model | bool, Use a saved trained model (model_name) architecture and weights. Defaults to False. |
+| model_name | string, Only relevant if old_model is True. Name of model (not including file extension) to load. Defaults to None (will not load a model) |
+| train_size | int, Number of samples to train on per epoch if training on a generator. Defaults to 10000. |
+| lr_1       | float, Learning rate to use on first round of training. Defaults to 0.001. |
+| lr_2 | float, Learning rate to use on the second round of training (if applicable). Defaults to 0.01 |
 __________________________________________________________________________________________
 #### Methods  
 
@@ -63,13 +63,13 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 
 
 ##### fit_generator  
-\(train_shapefile, batches=10000, batches_per_epoch=5, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=15)  
- Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)).  
+\(train_shapefile, gen_batch_size=1000, batches_per_epoch=2, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=5)  
+ Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)). Note that the train size will be gen_batch_size * batches_per_epoch, not self.train_size.  
 
 |Input| Description |
 |---------------|------|
-|train_shapefile | string, filepath to shapefile containing polygons to train model on (not including extension)|
-|batches | int, number of chips to generate per batch of training. This must fit in memory. |
+|train_shapefile | string, filepath to shapefile containing polygons to train model on|
+|gen_batch_size | int, number of chips to generate per batch of training. This must fit in memory. |
 |batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
 |min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
 |max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
@@ -91,6 +91,24 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 |kwargs | Keyword arguments from fit_xy |
 |**Output** |  **Description** |
 |trained model | Model with last dense layer trained on X_train |
+
+##### retrain_output_on_generator  
+\(train_shapefile, gen_batch_size=2500, batches_per_epoch=2, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=5)  
+ Re-train the final dense layer of PoolNet on mltools generator. This is meant for use on unbalanced classes, in order to minimize false positives associated with the initial training on balanced classes. Use generator when train size is too large to fit into memory.
+
+ |Input| Description |
+ |---------------|------|
+ |train_shapefile | string, filepath to shapefile containing polygons to train model on|
+ |gen_batch_size | int, number of chips to generate per batch of training. This must fit in memory. |
+ |batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
+ |min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
+ |max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
+ |validation_split | float, proportion of training data to use for validation |
+ |save_model | string, name under which to save model. Defaults to None (doesn't save model) |
+ |nb_epoch | Number of epochs to train for |
+ |**Output** |  **Description** |
+ |retrained model | model retrained on unbalanced classes as found in shapefile |
+
 
 ##### save_model  
 \(model_name)  
