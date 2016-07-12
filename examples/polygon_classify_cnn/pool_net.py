@@ -219,8 +219,7 @@ class PoolNet(object):
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = gen_batch_size,
                                                   min_chip_hw = min_chip_hw,
-                                                  max_chip_hw = max_chip_hw,
-                                                  resize_dim = self.input_shape):
+                                                  max_chip_hw = max_chip_hw):
                 # Train on batch
                 self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
                                validation_split=validation_split,
