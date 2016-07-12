@@ -190,14 +190,14 @@ class PoolNet(object):
             self.save_model(save_model)
 
 
-    def fit_generator(self, train_shapefile, batches = 10000, batches_per_epoch=5,
+    def fit_generator(self, train_shapefile, gen_batch_size = 5000, batches_per_epoch=5,
                       min_chip_hw=30, max_chip_hw=125, validation_split=0.1,
                       save_model=None, nb_epoch=5):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
                 geojson)
-                (2) int 'batches': number of chips to yield. must be small enough to fit
+                (2) int 'gen_batch_size': number of chips to yield. must be small enough to fit
                 into memory.
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
@@ -208,7 +208,7 @@ class PoolNet(object):
                 (7) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) trained model.
         '''
-        es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
+        # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
                                        verbose=1)
         ct = 0
@@ -217,12 +217,12 @@ class PoolNet(object):
         for e in range(nb_epoch):
             print 'Epoch {}/{}'.format(e + 1, nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
-                                                  batch_size = batches,
+                                                  batch_size = gen_batch_size,
                                                   min_chip_hw = min_chip_hw,
                                                   max_chip_hw = max_chip_hw,
                                                   resize_dim = self.input_shape):
                 # Train on batch
-                self.model.fit(X_train, Y_train, batch_size=32, nb_epoch=1,
+                self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
                                validation_split=validation_split,
                                callbacks=[checkpointer])
 
