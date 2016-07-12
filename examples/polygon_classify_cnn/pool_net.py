@@ -197,8 +197,8 @@ class PoolNet(object):
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
                 geojson)
-                (2) int 'gen_batch_size': number of chips to yield. must be small enough to fit
-                into memory.
+                (2) int 'gen_batch_size': number of chips to yield. must be small enough
+                to fit into memory.
                 (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
                 (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
                 (5) float 'validation_split': proportion of chips to use as validation
@@ -257,6 +257,60 @@ class PoolNet(object):
 
         # train model
         self.fit_xy(X_train, Y_train, **kwargs)
+
+    def retrain_output_on_generator(self, train_shapefile, gen_batch_size=2500,
+                                    batches_per_epoch=2, min_chip_hw=30, max_chip_hw=125,
+                                    validation_split=0.1, save_model=None, nb_epoch=5):
+        '''
+        Retrains last dense layer of model with a generator. For use with unbalanced
+        classes after training on balanced data.
+        INPUT   (1) string 'train_shapefile': filename for the training data (must be a
+                geojson)
+                (2) int 'gen_batch_size': number of chips to yield. must be small enough
+                to fit into memory.
+                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
+                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (5) float 'validation_split': proportion of chips to use as validation
+                data.
+                (6) string 'save_model': name of model for saving. if None, does not
+                save model.
+                (7) int 'nb_epoch': Number of epochs to train for
+        OUTPUT  (1) retrained model.
+        '''
+        # freeze all layers except final dense
+        for i in xrange(len(self.model.layers[:-1])):
+            self.model.layers[i].trainable = False
+
+        # recompile model
+        sgd = SGD(lr=self.lr_2, momentum=0.9, nesterov=True)
+        self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+
+        # train model with frozen weights       
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
+                                       verbose=1)
+        ct = 0
+
+        # iterate through batches, train model on each
+        for e in range(nb_epoch):
+            print 'Epoch {}/{}'.format(e + 1, nb_epoch)
+            for X_train, Y_train in get_iter_data(train_shapefile,
+                                                  batch_size = gen_batch_size,
+                                                  min_chip_hw = min_chip_hw,
+                                                  max_chip_hw = max_chip_hw,
+                                                  resize_dim = self.input_shape):
+                # Train on batch
+                self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
+                               validation_split=validation_split,
+                               callbacks=[checkpointer])
+
+                # Go to next epoch if batches_per_epoch have been trained
+                ct += 1
+                if ct == batches_per_epoch:
+                    break
+
+        if save_model:
+            self.save_model(save_model)
+
 
     def retrain_on_errors(self, X_train, Y_train, initial_weights, nb_epoch=5,
                         samples_per_epoch=2500, **kwargs):
