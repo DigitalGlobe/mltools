@@ -353,13 +353,15 @@ class PoolNet(object):
         if return_yhat:
             return y_hat
 
-    def classify_shapefile(self, shapefile, output_name):
+    def classify_shapefile(self, shapefile, output_name, img_name = None):
         '''
         Use the current model and weights to classify all polygons (of appropriate size)
         in the given shapefile. Records PoolNet classification, whether or not it was
         misclassified by PoolNet, and the certainty for the given class.
         INPUT   (1) string 'shapefile': name of the shapefile to classify
                 (2) string 'output_name': name to give the classified shapefile
+                (3) string 'image_name': name of the associated geotiff image if different
+                    than catalog number. Defaults to None
         OUTPUT  (1) classified shapefile
         '''
         yprob, ytrue = [], []
@@ -371,7 +373,7 @@ class PoolNet(object):
         # Classify all chips in input shapefile
         print 'Classifying test data...'
         for x, y in get_iter_data(shapefile, batch_size = 5000, classes = self.classes,
-                                  max_chip_hw=self.input_shape[1]):
+                                  max_chip_hw=self.input_shape[1], img_name=img_name):
             print 'Classifying polygons...'
             yprob += list(self.model.predict_proba(x)) # use model to predict classes
             ytrue += [int(np.argwhere(i==1)) for i in y] # put ytest in same format as ypred
