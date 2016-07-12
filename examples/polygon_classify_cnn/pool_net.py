@@ -190,7 +190,7 @@ class PoolNet(object):
             self.save_model(save_model)
 
 
-    def fit_generator(self, train_shapefile, gen_batch_size = 5000, batches_per_epoch=5,
+    def fit_generator(self, train_shapefile, gen_batch_size = 1000, batches_per_epoch=2,
                       min_chip_hw=30, max_chip_hw=125, validation_split=0.1,
                       save_model=None, nb_epoch=5):
         '''
@@ -229,6 +229,7 @@ class PoolNet(object):
                 # Go to next epoch if batches_per_epoch have been trained
                 ct += 1
                 if ct == batches_per_epoch:
+                    ct = 0
                     break
 
         if save_model:
@@ -285,7 +286,7 @@ class PoolNet(object):
         sgd = SGD(lr=self.lr_2, momentum=0.9, nesterov=True)
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
-        # train model with frozen weights       
+        # train model with frozen weights
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
                                        verbose=1)
         ct = 0
@@ -306,6 +307,7 @@ class PoolNet(object):
                 # Go to next epoch if batches_per_epoch have been trained
                 ct += 1
                 if ct == batches_per_epoch:
+                    ct = 0
                     break
 
         if save_model:
