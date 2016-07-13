@@ -211,10 +211,10 @@ class PoolNet(object):
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
                                        verbose=1)
-        ct = 0
 
         # iterate through batches, train model on each
         for e in range(nb_epoch):
+            ct = 0
             print 'Epoch {}/{}'.format(e + 1, nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = gen_batch_size,
@@ -228,7 +228,6 @@ class PoolNet(object):
                 # Go to next epoch if batches_per_epoch have been trained
                 ct += 1
                 if ct == batches_per_epoch:
-                    ct = 0
                     break
 
         if save_model:
@@ -288,10 +287,10 @@ class PoolNet(object):
         # train model with frozen weights
         checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
                                        verbose=1)
-        ct = 0
 
         # iterate through batches, train model on each
         for e in range(nb_epoch):
+            ct = 0
             print 'Epoch {}/{}'.format(e + 1, nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = gen_batch_size,
@@ -305,7 +304,6 @@ class PoolNet(object):
                 # Go to next epoch if batches_per_epoch have been trained
                 ct += 1
                 if ct == batches_per_epoch:
-                    ct = 0
                     break
 
         if save_model:
