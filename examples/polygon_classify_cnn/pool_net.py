@@ -20,24 +20,24 @@ class PoolNet(object):
     '''
     Fully Convolutional model to classify polygons as pool/no pool
 
-    INPUT   (1) int 'classes': classes to train images on, exactly as they appear in
-                shapefile properties. defaults to pool classes (pool/no pool)
-            (2) int 'batch_size': amount of images to train for each batch. defaults
-                to 32
-            (3) tuple[int] 'input_shape': shape of input images (3-dims). defaults to
+    INPUT   classes (int): classes to train images on, exactly as they appear in
+                shapefile properties. defaults to pool classes "['No swimming pool',
+                'Swimming pool']"
+            batch_size (int): amount of images to use for each batch during training.
+                defaults to 32.
+            input_shape (tuple[int]): shape of input images (3-dims). defaults to
                 (3,125,125)
-            (4) bool 'fc': True for fully convolutional model, else classic convolutional
+            fc (bool): True for fully convolutional model, else classic convolutional
                 model. defaults to False.
-            (5) bool 'load_model': Use a saved trained model (model_name) architecture
-                and weights. Defaults to False
-            (6) string 'model_name': Only relevant if load_model is True. name of model
-                (not including file extension) to load. Defaults to None
-            (7) int 'train_size': number of samples to train on per epoch. defaults to
-                10000
-            (8) float 'lr_1': learning rate for the first round of training. Defualts to
+            old_model (bool): Use a saved trained model (model_name) architecture and
+                weights. Defaults to False
+            model_name (str): Only relevant if load_model is True. name of model (not
+                including file extension) to load. Defaults to None
+            train_size (int): number of samples to train on per epoch. defaults to 10000.
+            lr_1 (float): learning rate for the first round of training. Defualts to
                 0.001
-            (9) float 'lr_2': learning rate for second round of training (just output
-                layer). Defaults to 0.01
+            lr_2 (float): learning rate for second round of training (just output layer).
+                Defaults to 0.01
     '''
 
     def __init__(self, classes=['Swimming pool', 'No swimming pool'], batch_size=32,
@@ -168,7 +168,7 @@ class PoolNet(object):
                save_model = None, nb_epoch=15):
         '''
         Fit model on pre-loaded training data. Only for sizes small enough to fit in
-        memory (~ 10000 3x100x100 chips on dg_gpu)
+        memory
         INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
                 (2) list 'Y_train': one-hot associated labels to X_train. shape =
                 train_size, n_classes)
@@ -190,22 +190,25 @@ class PoolNet(object):
             self.save_model(save_model)
 
 
-    def fit_generator(self, train_shapefile, gen_batch_size = 1000, batches_per_epoch=2,
+    def fit_generator(self, train_shapefile, gen_batch_size = 5000, batches_per_epoch=2,
                       min_chip_hw=30, max_chip_hw=125, validation_split=0.1,
                       save_model=None, nb_epoch=5):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
-                geojson)
+                    geojson)
                 (2) int 'gen_batch_size': number of chips to yield. must be small enough
-                to fit into memory.
-                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
-                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
-                (5) float 'validation_split': proportion of chips to use as validation
-                data.
-                (6) string 'save_model': name of model for saving. if None, does not
-                save model.
-                (7) int 'nb_epoch': Number of epochs to train for
+                    to fit into memory. Defaults to 5000
+                (3) int 'batches_per_epoch': number of batches of 'gen_batch_size' to
+                    train on per epoch. gen_batch_size * batches_per_epoch = total train
+                    size. defaults to 2.
+                (4) int 'min_chip_hw': minimum acceptable side dimension for polygons
+                (5) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (6) float 'validation_split': proportion of chips to use as validation
+                    data.
+                (7) string 'save_model': name of model for saving. if None, does not
+                    save model.
+                (8) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) trained model.
         '''
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
@@ -257,23 +260,26 @@ class PoolNet(object):
         # train model
         self.fit_xy(X_train, Y_train, **kwargs)
 
-    def retrain_output_on_generator(self, train_shapefile, gen_batch_size=2500,
-                                    batches_per_epoch=2, min_chip_hw=30, max_chip_hw=125,
+    def retrain_output_on_generator(self, train_shapefile, gen_batch_size=5000,
+                                    batches_per_epoch=1, min_chip_hw=30, max_chip_hw=125,
                                     validation_split=0.1, save_model=None, nb_epoch=5):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
-                geojson)
+                    geojson)
                 (2) int 'gen_batch_size': number of chips to yield. must be small enough
-                to fit into memory.
-                (3) int 'min_chip_hw': minimum acceptable side dimension for polygons
-                (4) int 'max_chip_hw': maximum acceptable side dimension for polygons
-                (5) float 'validation_split': proportion of chips to use as validation
-                data.
-                (6) string 'save_model': name of model for saving. if None, does not
-                save model.
-                (7) int 'nb_epoch': Number of epochs to train for
+                    to fit into memory. defaults to 5000
+                (3) int 'batches_per_epoch': number of batches of 'gen_batch_size' to
+                    train on per epoch. gen_batch_size * batches_per_epoch = total train
+                    size. defaults to 1.
+                (4) int 'min_chip_hw': minimum acceptable side dimension for polygons
+                (5) int 'max_chip_hw': maximum acceptable side dimension for polygons
+                (6) float 'validation_split': proportion of chips to use as validation
+                    data.
+                (7) string 'save_model': name of model for saving. if None, does not
+                    save model.
+                (8) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) retrained model.
         '''
         # freeze all layers except final dense
@@ -315,20 +321,22 @@ class PoolNet(object):
         '''
         Retrain model on polygons that were initially misclassified.
         INPUT   (1) array 'X_train': misclassified chips. It is recommended to
-                only use chips with classification certainty under 0.9, given that the
-                training data is flawed. A shapefile of these chips can be created from
-                filter_by_classification. use shape (train_size, 3, h, w).
+                    only use chips with classification certainty under 0.9, given that
+                    the training data is flawed. A shapefile of these chips can be
+                    created  from filter_by_classification. use shape
+                    (train_size, 3, h, w).
                 (2) list 'Y_train': one-hot associated labels to X_train. shape =
-                train_size, n_classes)
+                    train_size, n_classes)
                 (3) int 'nb_epochs': number of epochs to train for.
                 (4) string 'initial_weights': file path to weights to retrain on. It is
-                recommended to use weights from the first (balanced) round of training,
-                then repeat training on unbalanced after this.
+                    recommended to use weights from the first (balanced) round of
+                    training, then repeat training on unbalanced after this.
                 (5) int 'samples_per_epoch': number of samples to train on per epoch.
-                if this is more than len(X_train) real-time data augmentation will be used
+                    if this is more than len(X_train) real-time data augmentation will be
+                    used
                 (6) float 'validation_split': proportion of X_train to validate on.
                 (7) string 'save_model': name of model for saving. if None, does not
-                save model.
+                    save model.
         OUTPUT  (1) trained model
         '''
         # Recompile model to ensure all layers trainable
