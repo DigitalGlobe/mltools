@@ -47,7 +47,6 @@ class PoolNet(object):
         self.nb_classes = len(classes)
         self.classes = classes
         self.batch_size = batch_size
-        self.input_shape = input_shape
         self.fc = fc
         self.old_model = old_model
         self.train_size = train_size
@@ -57,8 +56,13 @@ class PoolNet(object):
         if self.old_model:
             self.model_name = model_name
             self.model = self.load_model(model_name)
+            self.model.load_weights(model_name + '.h5')
+            self.max_side_dim = self.model.input_shape[-1]
+            self.input_shape = (self.model.input_shape[1], self.max_side_dim,
+                                self.max_side_dim)
         else:
             self.model = self._VGG_16()
+            self.input_shape = input_shape
 
         self.model_layer_names = [self.model.layers[i].get_config()['name']
                                     for i in range(len(self.model.layers))]
@@ -391,10 +395,8 @@ class PoolNet(object):
         print 'Loading model {}'.format(self.model_name)
 
         #load model
-        with open(model_name) as f:
-            m = f.next()
-        mod = model_from_json(json.loads(m))
-        print 'Done.'
+        with open(model_name + '.json') as f:
+            mod = model_from_json(json.load(f))
         return mod
 
     def evaluate_model(self, X_test, Y_test, return_yhat=False):
