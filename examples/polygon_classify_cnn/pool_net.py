@@ -435,7 +435,8 @@ class PoolNet(object):
         # Classify all chips in input shapefile
         print 'Classifying test data...'
         for x, y in get_iter_data(shapefile, batch_size = 5000, classes = self.classes,
-                                  max_chip_hw=self.input_shape[1], img_name=img_name):
+                                  max_chip_hw=self.input_shape[1], img_name=img_name,
+                                  min_chip_hw = 0):
             print 'Classifying polygons...'
             yprob += list(self.model.predict_proba(x)) # use model to predict classes
             ytrue += [int(np.argwhere(i==1)) for i in y] # put ytest in same format as ypred
