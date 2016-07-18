@@ -70,7 +70,7 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=30, max_chip_hw=125,
+def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
                   buffer=[0, 0], mask=True, normalize=True, img_name=None):
     '''
