@@ -5,6 +5,8 @@ import numpy as np
 import geoio
 import sys
 import random
+import subprocess
+import os
 
 from shapely.wkb import loads
 
@@ -276,23 +278,30 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
 
 
 
-def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224):
+def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224,
+                        shuffle=False):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons.
-            This should end in '.geojson'
+                This should end in '.geojson'
             (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for
-            given polygon
+                given polygon
             (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for
-            given polygon
+                given polygon
+            (5) bool 'shuffle': shuffle polygons before saving to output file. Defaults to
+                False
     OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of
-            acceptable side dimensions
+                acceptable side dimensions
     '''
     # load polygons
     with open(shapefile) as f:
         data = geojson.load(f)
     total = float(len(data['features']))
+
+    # format output file name
+    if output_file[-8:] != '.geojson':
+        output_file = output_file + '.geojson'
 
     # find indicies of acceptable polygons
     ix_ok, ix = [], 0
@@ -303,6 +312,12 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
     for img_id in img_ids:
         print '... for image {}'.format(img_id)
         img = geoio.GeoImage(img_id + '.tif')
+
+        # create vrt if img has multiple bands (more efficient)
+        if img.shape > 1:
+            vrt_cmd = 'gdalbuildvrt tmp.vrt -b 1 {}.tif'.format(img_id)
+            subprocess.call(vrt_cmd, shell=True) #saves temporary vrt file to filter on
+            img = geoio.GeoImage('tmp.vrt')
 
         # cycle thru polygons
         for chip, properties in img.iter_vector(vector=shapefile,
@@ -323,13 +338,17 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_h
             sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
             sys.stdout.flush()
 
-    print 'Saving...'
-    ok_polygons = [data['features'][i] for i in ix_ok]
-    np.random.shuffle(ok_polygons)
-    filtrate = {data.keys()[0]: data.values()[0],
-                data.keys()[1]: ok_polygons}
+    # remove vrt file
+    os.remove('tmp.vrt')
 
     # save new geojson
+    print 'Saving...'
+    ok_polygons = [data['features'][i] for i in ix_ok]
+
+    if shuffle:
+        np.random.shuffle(ok_polygons)
+
+    filtrate = {data.keys()[0]: data.values()[0], data.keys()[1]: ok_polygons}
     with open(output_file, 'wb') as f:
         geojson.dump(filtrate, f)
 
