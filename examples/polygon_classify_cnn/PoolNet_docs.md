@@ -5,7 +5,7 @@
 2. [Methods](#methods)
 
 ### mltools.pool_net.PoolNet  
-<i> class </i> mltools.pool_net. **PoolNet** ( <i> nb_classes=2, batch_size=32, input_shape=(3,125,125), n_dense_nodes=2048, fc=False, vgg=True, load_model=False, model_name=None, train_size=10000 </i> ) [[source](github.com/poolnet_class)]  
+<i> class </i> mltools.pool_net. **PoolNet** ( <i> nb_classes=2, batch_size=32, min_chip_hw = 0, max_chip_hw = 125, input_shape=(3,125,125), n_dense_nodes=2048, fc=False, vgg=True, load_model=False, model_name=None, train_size=10000 </i> ) [[source](github.com/poolnet_class)]  
 __________________________________________________________________________________________
 #### About  
 A convolutional neural network for pool detection in polygons.  
@@ -16,6 +16,8 @@ This classifier can be trained on polygons to detect pools in the property. This
 |-----------------|------------------------------------------------------------------|
 | classes | list['str'], The names of classes on which to train, exactly as they appear in the shapefile |
 | batch_size | int, Number of chips per batch. Defaults to 32. |
+| min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
+| max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
 | input_shape | tuple(ints), Shape of three-dim input image. Defaults to (3,125,125). Use Theano dimensional ordering. |
 | fc   | bool, Use a fully convolutional model, instead of classic convolutional model. Defaults to False. |
 | old_model | bool, Use a saved trained model (model_name) architecture and weights. Defaults to False. |
@@ -63,7 +65,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 
 
 ##### fit_generator  
-\(train_shapefile, gen_batch_size=1000, batches_per_epoch=2, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=5)  
+\(train_shapefile, gen_batch_size=1000, batches_per_epoch=2, validation_split=0.1, save_model=None, nb_epoch=5)  
  Train PoolNet on the mltools data generator ([data_extractors.get_iter_data](https://github.com/kostasthebarbarian/mltools/blob/master/mltools/data_extractors.py)). Note that the train size will be gen_batch_size * batches_per_epoch, not self.train_size.  
 
 |Input| Description |
@@ -71,8 +73,6 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 |train_shapefile | string, filepath to shapefile containing polygons to train model on|
 |gen_batch_size | int, number of chips to generate per batch of training. This must fit in memory. |
 |batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
-|min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
-|max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
 |validation_split | float, proportion of training data to use for validation |
 |save_model | string, name under which to save model. Defaults to None (doesn't save model) |
 |nb_epoch | Number of epochs to train for |
@@ -93,7 +93,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 |trained model | Model with last dense layer trained on X_train |
 
 ##### retrain_output_on_generator  
-\(train_shapefile, gen_batch_size=2500, batches_per_epoch=2, min_chip_hw=30, max_chip_hw=125, validation_split=0.1, save_model=None, nb_epoch=5)  
+\(train_shapefile, gen_batch_size=2500, batches_per_epoch=2, validation_split=0.1, save_model=None, nb_epoch=5)  
  Re-train the final dense layer of PoolNet on mltools generator. This is meant for use on unbalanced classes, in order to minimize false positives associated with the initial training on balanced classes. Use generator when train size is too large to fit into memory.
 
  |Input| Description |
@@ -101,8 +101,6 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
  |train_shapefile | string, filepath to shapefile containing polygons to train model on|
  |gen_batch_size | int, number of chips to generate per batch of training. This must fit in memory. |
  |batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
- |min_chip_hw | int, minimum acceptable side-dimension shape for each polygon. |
- |max_chip_hw | int, maximum acceptable side-dimension shape for each polygon. |
  |validation_split | float, proportion of training data to use for validation |
  |save_model | string, name under which to save model. Defaults to None (doesn't save model) |
  |nb_epoch | Number of epochs to train for |

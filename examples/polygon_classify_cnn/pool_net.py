@@ -57,6 +57,7 @@ class PoolNet(object):
         self.fc = fc
         self.old_model = old_model
         self.train_size = train_size
+        self.input_shape = input_shape
         self.lr_1 = lr_1
         self.lr_2 = lr_2
 
@@ -69,7 +70,6 @@ class PoolNet(object):
                                 self.max_side_dim)
         else:
             self.model = self._VGG_16()
-            self.input_shape = input_shape
 
         self.model_layer_names = [self.model.layers[i].get_config()['name']
                                     for i in range(len(self.model.layers))]
