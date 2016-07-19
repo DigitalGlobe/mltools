@@ -278,7 +278,7 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
 
 
 
-def filter_polygon_size(shapefile, output_file, min_polygon_hw=30, max_polygon_hw=224,
+def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw=125,
                         shuffle=False):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
