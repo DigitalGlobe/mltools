@@ -23,6 +23,10 @@ class PoolNet(object):
     INPUT   classes (int): classes to train images on, exactly as they appear in
                 shapefile properties. defaults to pool classes "['No swimming pool',
                 'Swimming pool']"
+            max_chip_hw (int): maximum acceptable side dimension for polygons. Defaults
+                to 125
+            min_chip_hw (int): minimum acceptable side dimension for polygons. Defaults
+                to 0 (will not exclude chips deemed too small).
             batch_size (int): amount of images to use for each batch during training.
                 defaults to 32.
             input_shape (tuple[int]): shape of input images (3-dims). defaults to
@@ -40,12 +44,15 @@ class PoolNet(object):
                 Defaults to 0.01
     '''
 
-    def __init__(self, classes=['Swimming pool', 'No swimming pool'], batch_size=32,
-                input_shape=(3, 125, 125), fc = False, old_model=False, model_name=None,
-                train_size=10000, lr_1 = 0.001, lr_2 = 0.01):
+    def __init__(self, classes=['Swimming pool', 'No swimming pool'], max_chip_hw=125,
+                min_chip_hw=0, batch_size=32, input_shape=(3, 125, 125), fc = False,
+                old_model=False, model_name=None, train_size=10000, lr_1 = 0.001,
+                lr_2 = 0.01):
 
         self.nb_classes = len(classes)
         self.classes = classes
+        self.max_chip_hw = max_chip_hw
+        self.min_chip_hw = min_chip_hw
         self.batch_size = batch_size
         self.fc = fc
         self.old_model = old_model
@@ -195,8 +202,7 @@ class PoolNet(object):
 
 
     def fit_generator(self, train_shapefile, gen_batch_size = 5000, batches_per_epoch=2,
-                      min_chip_hw=30, max_chip_hw=125, validation_split=0.1,
-                      save_model=None, nb_epoch=5):
+                      validation_split=0.1, save_model=None, nb_epoch=5):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
@@ -206,13 +212,11 @@ class PoolNet(object):
                 (3) int 'batches_per_epoch': number of batches of 'gen_batch_size' to
                     train on per epoch. gen_batch_size * batches_per_epoch = total train
                     size. defaults to 2.
-                (4) int 'min_chip_hw': minimum acceptable side dimension for polygons
-                (5) int 'max_chip_hw': maximum acceptable side dimension for polygons
-                (6) float 'validation_split': proportion of chips to use as validation
+                (4) float 'validation_split': proportion of chips to use as validation
                     data.
-                (7) string 'save_model': name of model for saving. if None, does not
+                (5) string 'save_model': name of model for saving. if None, does not
                     save model.
-                (8) int 'nb_epoch': Number of epochs to train for
+                (6) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) trained model.
         '''
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
@@ -225,8 +229,8 @@ class PoolNet(object):
             print 'Epoch {}/{}'.format(e + 1, nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = gen_batch_size,
-                                                  min_chip_hw = min_chip_hw,
-                                                  max_chip_hw = max_chip_hw):
+                                                  min_chip_hw = self.min_chip_hw,
+                                                  max_chip_hw = self.max_chip_hw):
                 # Train on batch
                 self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
                                validation_split=validation_split,
@@ -265,8 +269,8 @@ class PoolNet(object):
         self.fit_xy(X_train, Y_train, **kwargs)
 
     def retrain_output_on_generator(self, train_shapefile, gen_batch_size=5000,
-                                    batches_per_epoch=1, min_chip_hw=30, max_chip_hw=125,
-                                    validation_split=0.1, save_model=None, nb_epoch=5):
+                                    batches_per_epoch=1, validation_split=0.1,
+                                    save_model=None, nb_epoch=5):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
@@ -277,13 +281,11 @@ class PoolNet(object):
                 (3) int 'batches_per_epoch': number of batches of 'gen_batch_size' to
                     train on per epoch. gen_batch_size * batches_per_epoch = total train
                     size. defaults to 1.
-                (4) int 'min_chip_hw': minimum acceptable side dimension for polygons
-                (5) int 'max_chip_hw': maximum acceptable side dimension for polygons
-                (6) float 'validation_split': proportion of chips to use as validation
+                (4) float 'validation_split': proportion of chips to use as validation
                     data.
-                (7) string 'save_model': name of model for saving. if None, does not
+                (5) string 'save_model': name of model for saving. if None, does not
                     save model.
-                (8) int 'nb_epoch': Number of epochs to train for
+                (6) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) retrained model.
         '''
         # freeze all layers except final dense
@@ -304,8 +306,8 @@ class PoolNet(object):
             print 'Epoch {}/{}'.format(e + 1, nb_epoch)
             for X_train, Y_train in get_iter_data(train_shapefile,
                                                   batch_size = gen_batch_size,
-                                                  min_chip_hw = min_chip_hw,
-                                                  max_chip_hw = max_chip_hw):
+                                                  min_chip_hw = self.min_chip_hw,
+                                                  max_chip_hw = self.max_chip_hw):
                 # Train on batch
                 self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
                                validation_split=validation_split,
@@ -415,7 +417,7 @@ class PoolNet(object):
         if return_yhat:
             return y_hat
 
-    def classify_shapefile(self, shapefile, output_name, img_name = None, min_chip_hw = 0):
+    def classify_shapefile(self, shapefile, output_name, img_name = None):
         '''
         Use the current model and weights to classify all polygons (of appropriate size)
         in the given shapefile. Records PoolNet classification, whether or not it was
@@ -436,7 +438,7 @@ class PoolNet(object):
         print 'Classifying test data...'
         for x, y in get_iter_data(shapefile, batch_size = 5000, classes = self.classes,
                                   max_chip_hw=self.input_shape[1], img_name=img_name,
-                                  min_chip_hw = min_chip_hw):
+                                  min_chip_hw = self.min_chip_hw):
             print 'Classifying polygons...'
             yprob += list(self.model.predict_proba(x)) # use model to predict classes
             ytrue += [int(np.argwhere(i==1)) for i in y] # put ytest in same format as ypred
