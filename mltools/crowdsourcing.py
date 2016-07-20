@@ -13,19 +13,19 @@ class TomnodCommunicator():
     def __init__(self, credentials):
         """Args:
                parameters (dict): Dictionary with Tomnod credentials.
-        """                
+        """
         self.host = credentials['host']
         self.db = credentials['db']
         self.user = credentials['user']
         self.password = credentials['password']
         if not(''.join([self.host, self.db, self.user, self.password])):
             raise DatabaseError('Can not connect to Tomnod. Credentials missing.')
-    
+
 
     def _get_connection(self):
-        params = 'host={} dbname={} user={} password={}'.format(self.host, 
-                                                                self.db, 
-                                                                self.user, 
+        params = 'host={} dbname={} user={} password={}'.format(self.host,
+                                                                self.db,
+                                                                self.user,
                                                                 self.password)
         connection = psycopg2.connect(params)
         connection.autocommit = True
@@ -54,7 +54,7 @@ class TomnodCommunicator():
         except psycopg2.ProgrammingError, e:
             print 'Programming error in query: {}'.format(e)
         connection.close()
-        return       
+        return
 
 
     def batch_execute(self, query, data, batch_size=1000):
@@ -63,9 +63,9 @@ class TomnodCommunicator():
            Args:
                query (str): SQL query with {} for arguments.
                data (list): Data to format sql query. Each entry is a tuple.
-               batch_size (int): Execute in batches of batch_size.  
+               batch_size (int): Execute in batches of batch_size.
         """
-        
+
         total_query, no_entries = '', len(data)
         for i, entry in enumerate(data):
             total_query += query.format(*entry)
@@ -83,11 +83,11 @@ class TomnodCommunicator():
                  image_id=None,
                  max_number=10000):
         """Get tag info from Tomnod extraction campaign for a given class (tag type).
-           
+
            Args:
                class_name (str): Tag class name (tag type in Tomnod jargon).
                campaign_schema (str): Campaign campaign_schema.
-               most_confident_first (bool): If True (False), order by decreasing 
+               most_confident_first (bool): If True (False), order by decreasing
                                             (increasing) score, agreement.
                image_id (str): Catalog id. If None, read from all campaign images.
                score_range (list): Min score and max score.
@@ -95,13 +95,13 @@ class TomnodCommunicator():
                max_number (int): Maximum number of tags to be read.
 
            Returns:
-               A list of tuples (coords_in_hex, tag_id, image_id, class_name).    
+               A list of tuples (coords_in_hex, tag_id, image_id, class_name).
         """
-        
+
         if most_confident_first:
             which_order = 'DESC'
         else:
-            which_order = 'ASC'    
+            which_order = 'ASC'
 
         if image_id is None:
             extra_query = ''
@@ -111,17 +111,17 @@ class TomnodCommunicator():
         query = ("""SELECT co.point, co.tag_id, overlay.catalogid, tag_type.name
                     FROM {}.crowdrank_output co, tag_type, overlay
                     WHERE co.type_id = tag_type.id
-                    AND co.overlay_id = overlay.id """.format(campaign_schema) +     
+                    AND co.overlay_id = overlay.id """.format(campaign_schema) +
                     extra_query +
                  """AND tag_type.name = '{}'
                     AND co.cr_score BETWEEN {} AND {}
                     AND co.agreement BETWEEN {} AND {}
-                    AND co.job_id = (SELECT MAX(cj.id) 
-                                     FROM crowdrank_jobs cj, campaign cn 
+                    AND co.job_id = (SELECT MAX(cj.id)
+                                     FROM crowdrank_jobs cj, campaign cn
                                      WHERE cj.campaign_id = cn.id
                                      AND cn.schema = '{}')
-                    ORDER BY co.cr_score {}, co.agreement {} 
-                    LIMIT {}""".format(class_name, 
+                    ORDER BY co.cr_score {}, co.agreement {}
+                    LIMIT {}""".format(class_name,
                                        score_range[0],
                                        score_range[1],
                                        agree_range[0],
@@ -132,7 +132,7 @@ class TomnodCommunicator():
                                        max_number))
         return self._fetch(query)
 
-   
+
     def get_classified(self,
                        class_name,
                        campaign_schema,
@@ -143,11 +143,11 @@ class TomnodCommunicator():
                        max_number=10000,
                        max_area=1e06):
         """Get classified feature info from Tomnod classification campaign.
-        
+
            Args:
                class_name (str): Class (type in Tomnod jargon) name.
                campaign_schema (str): Campaign campaign_schema.
-               most_confident_first (bool): If True (False), order by decreasing 
+               most_confident_first (bool): If True (False), order by decreasing
                                             (increasing) score, votes.
                score_range (list): Min score and max score.
                vote_range (list): Min votes and max votes.
@@ -156,13 +156,13 @@ class TomnodCommunicator():
                max_area (float): Only features with (area in m2) <= max_area.
 
                Returns:
-                   A list of tuples (coords_in_hex, feature_id, image_id, class_name).                                  
-        """    
+                   A list of tuples (coords_in_hex, feature_id, image_id, class_name).
+        """
 
         if most_confident_first:
             which_order = 'DESC'
         else:
-            which_order = 'ASC'    
+            which_order = 'ASC'
 
         if image_id is None:
             extra_query = ''
@@ -179,8 +179,8 @@ class TomnodCommunicator():
                     AND score BETWEEN {} AND {}
                     AND num_votes_total BETWEEN {} AND {}
                     ORDER BY score {}, num_votes_total {}
-                    LIMIT {}""".format(class_name,  
-                                       max_area, 
+                    LIMIT {}""".format(class_name,
+                                       max_area,
                                        score_range[0],
                                        score_range[1],
                                        vote_range[0],
@@ -198,7 +198,7 @@ class TomnodCommunicator():
                          max_number=10000,
                          max_area=1e06):
         """Get unclassified feature info from Tomnod classification campaign.
-        
+
            Args:
                campaign_schema (str): Campaign campaign_schema.
                image_id (str): Catalog id. If None, read from all campaign images.
@@ -206,8 +206,8 @@ class TomnodCommunicator():
                max_area (float): Only features with (area in m2) <= max_area.
 
                Returns:
-                   A list of tuples (coords_in_hex, feature_id, image_id).                                  
-        """    
+                   A list of tuples (coords_in_hex, feature_id, image_id).
+        """
 
         if image_id is None:
             extra_query = ''
@@ -216,10 +216,10 @@ class TomnodCommunicator():
 
         query = ("""SELECT f.feature, f.id, overlay.catalogid
                    FROM {}.feature f, overlay
-                   WHERE f.overlay_id = overlay.id """.format(campaign_schema) + 
+                   WHERE f.overlay_id = overlay.id """.format(campaign_schema) +
                  extra_query +
                  """AND type_id IS NULL
                     AND ST_Area(f.feature) <= {}
                     LIMIT {}""".format(max_area, max_number))
 
-        return self._fetch(query)                   
+        return self._fetch(query)
