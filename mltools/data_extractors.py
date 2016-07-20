@@ -72,7 +72,8 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 
 def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
-                  buffer=[0, 0], mask=True, normalize=True, img_name=None):
+                  buffer=[0, 0], mask=True, normalize=True, img_name=None,
+                  return_labels=True):
     '''
     Generates batches of training data from shapefile. Labeles will be one-hot encoded.
 
@@ -146,13 +147,14 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
                 chip_patch /= 255.
 
             # Get labels
-            try:
-                label = properties['class_name']
-                if label is None:
+            if return_labels:
+                try:
+                    label = properties['class_name']
+                    if label is None:
+                        continue
+                    labels.append(cls_dict[label])
+                except (TypeError, KeyError):
                     continue
-                labels.append(cls_dict[label])
-            except (TypeError, KeyError):
-                continue
 
             if return_id:
                 id = properties['feature_id']
@@ -165,30 +167,37 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
             sys.stdout.flush()
 
             if ct == batch_size:
-
-                # Create one-hot encoded labels
-                Y = np.zeros((batch_size, nb_classes))
-                for i in range(batch_size):
-                    Y[i, labels[i]] = 1
+                data = [np.array([i for i in inputs])]
 
                 if return_id:
-                    yield (np.array([i for i in inputs]), ids, Y)
-                else:
-                    yield (np.array([i for i in inputs]), Y)
+                    data.append(ids)
+
+                if return_labels:
+                    # Create one-hot encoded labels
+                    Y = np.zeros((batch_size, nb_classes))
+                    for i in range(batch_size):
+                        Y[i, labels[i]] = 1
+
+                    data.append(Y)
+
+                yield data
                 ct, inputs, labels, ids = 0, [], [], []
 
     # return any remaining inputs
     if len(inputs) != 0:
+        data = [np.array([i for i in inputs])]
 
-        # Create one-hot encoded labels
-        Y = np.zeros((len(labels), nb_classes))
-        for i in range(len(labels)):
-            Y[i, labels[i]] = 1
+        if return_ids:
+            data.append(ids)
 
-        if return_id:
-            yield (np.array([i for i in inputs]), ids, Y)
-        else:
-            yield (np.array([i for i in inputs]), Y)
+        if return_labels:
+            # Create one-hot encoded labels
+            Y = np.zeros((len(labels), nb_classes))
+            for i in range(len(labels)):
+                Y[i, labels[i]] = 1
+            data.append(y)
+
+        yield data
 
 
 def random_window(image, chip_size, no_chips=10000):
