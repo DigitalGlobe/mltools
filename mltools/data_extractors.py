@@ -94,6 +94,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
                 input). Defualts to True.
             img_name (string): name of tif image to use for extracting chips. Defaults to
                 None (the image name is assumed to be the image id listed in shapefile)
+            return_labels (bool): Include labels in output. Defualts to True.
 
     OUTPUT  Returns a generator object (g). calling g.next() returns the following:
             chips: one batch of masked (if True) chips
@@ -179,7 +180,6 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
                         Y[i, labels[i]] = 1
 
                     data.append(Y)
-
                 yield data
                 ct, inputs, labels, ids = 0, [], [], []
 
@@ -196,7 +196,6 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
             for i in range(len(labels)):
                 Y[i, labels[i]] = 1
             data.append(y)
-
         yield data
 
 
