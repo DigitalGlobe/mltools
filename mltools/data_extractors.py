@@ -187,7 +187,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
     if len(inputs) != 0:
         data = [np.array([i for i in inputs])]
 
-        if return_ids:
+        if return_id:
             data.append(ids)
 
         if return_labels:
