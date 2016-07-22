@@ -20,7 +20,7 @@ class PoolNet(object):
     '''
     Fully Convolutional model to classify polygons as pool/no pool
 
-    INPUT   classes (int): classes to train images on, exactly as they appear in
+    INPUT   classes (list): classes to train images on, exactly as they appear in
                 shapefile properties. defaults to pool classes "['No swimming pool',
                 'Swimming pool']"
             max_chip_hw (int): maximum acceptable side dimension for polygons. Defaults
