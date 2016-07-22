@@ -279,7 +279,7 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
 
 
 def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw=125,
-                        shuffle=False, optimize=False):
+                        shuffle=False):
     '''
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
@@ -291,8 +291,6 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
                 given polygon
             (5) bool 'shuffle': shuffle polygons before saving to output file. Defaults to
                 False
-            (6) bool 'optimize': create a virtual dataset from the first band on which to
-                filter. Currently unstable, defualts to False.
     OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of
                 acceptable side dimensions
     '''
@@ -316,11 +314,10 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
         img = geoio.GeoImage(img_id + '.tif')
 
         # create vrt if img has multiple bands (more efficient)
-        if optimize:
-            if img.shape > 1:
-                vrt_cmd = 'gdalbuildvrt tmp.vrt -b 1 {}.tif'.format(img_id)
-                subprocess.call(vrt_cmd, shell=True) #saves temporary vrt file to filter on
-                img = geoio.GeoImage('tmp.vrt')
+        if img.shape > 1:
+            vrt_cmd = 'gdalbuildvrt tmp.vrt -b 1 {}.tif'.format(img_id)
+            subprocess.call(vrt_cmd, shell=True) #saves temporary vrt file to filter on
+            img = geoio.GeoImage('tmp.vrt')
 
         # cycle thru polygons
         for chip, properties in img.iter_vector(vector=shapefile,
