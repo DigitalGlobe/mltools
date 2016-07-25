@@ -195,7 +195,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
             Y = np.zeros((len(labels), nb_classes))
             for i in range(len(labels)):
                 Y[i, labels[i]] = 1
-            data.append(y)
+            data.append(Y)
         yield data
 
 
