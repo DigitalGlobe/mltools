@@ -1,3 +1,5 @@
+combined.geojson
+filtered_shapefile.geojson
 *.pyc
 mltools.egg-info/
 dist/
@@ -9,4 +11,6 @@ dist/
 *.npz
 models/
 *.pptx
+test_iter_data/
 1040010014800C00*
+shapefiles/
