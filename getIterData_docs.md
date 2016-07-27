@@ -1,4 +1,4 @@
-# getIterData Docs  
+# GetIterData Docs  
 
 A class for extracting testing and training chips from multiple GeoTiff strips.
 
