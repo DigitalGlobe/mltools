@@ -57,7 +57,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 |---------------|------|
 |X_train | array, training chips with shape *(n_chips, n_channels, chip_h, chip_w)*|
 |Y_train | array, training chip labels using one-hot encoding |
-|validation_split | float, roportion of X_train to use as validation data |
+|validation_split | float, proportion of X_train to use as validation data |
 |save_model | string, name under which to save model. Defaults to None (doesn't save model) |
 |nb_epoch | int, number of epochs to train for |
 |**Output** |  **Description** |
@@ -98,7 +98,7 @@ Fit the network on chips (X_train) and associated labels(Y_train). This can only
 
  |Input| Description |
  |---------------|------|
- |train_shapefile | string, filepath to shapefile containing polygons to train model on|
+ |train_shapefile | string, filepath to shapefile containing polygons to train model on |
  |gen_batch_size | int, number of chips to generate per batch of training. This must fit in memory. |
  |batches_per_epoch | int, number of batches to generate and train on per epoch. Total number of chips trained on = *batches x batches_per_epoch* |
  |validation_split | float, proportion of training data to use for validation |
