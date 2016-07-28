@@ -10,7 +10,7 @@ A class for extracting testing and training chips from multiple GeoTiff strips.
 
 ## About
 
-You may generate large batches of data as training data input to a convolutional neural network built in [Keras](http://keras.io/). It is formatted to be used in the [model.fit()](http://keras.io/models/sequential/#fit) function as is. Alternatively it can be used to train the model in batches with the  [model.train_on_batch](http://keras.io/models/sequential/#train_on_batch) function to iteratively produce small batches of chips for training sizes too large to fit into memory.
+This class can be used to generate input data training data input to a convolutional neural network built in [Keras](http://keras.io/). The output is formatted to be used in the [model.fit()](http://keras.io/models/sequential/#fit) function as is. Alternatively it can be used to train the model in batches with the  [model.train_on_batch](http://keras.io/models/sequential/#train_on_batch) function to iteratively produce small batches of chips for training sizes too large to fit into memory.
 
 ## mltools.data_extractors.getIterData
 
