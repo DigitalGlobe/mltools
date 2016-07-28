@@ -324,8 +324,11 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
                                                 properties=True,
                                                 filter=[{'image_id': img_id}],
                                                 mask=True):
+            if chip is None:
+                continue
+
             chan,h,w = np.shape(chip)
-            if chip is None or min(h, w) < min_polygon_hw or max(h, w) > max_polygon_hw:
+            if min(h, w) < min_polygon_hw or max(h, w) > max_polygon_hw:
                 ix += 1
                 # add percent complete to stdout
                 sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
