@@ -298,7 +298,7 @@ class getIterData(object):
             $ x, y = data_generator.create_batch()
             # x = batch of 1000 chips from all image strips
             # y = labels associated with x
-'''
+    '''
 
     def __init__(self, shapefile, batch_size=10000, min_chip_hw=0, max_chip_hw=125,
                  classes=['No swimming pool', 'Swimming pool'], return_labels=True,
