@@ -314,7 +314,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
         img = geoio.GeoImage(img_id + '.tif')
 
         # create vrt if img has multiple bands (more efficient)
-        if img.shape > 1:
+        if img.shape[0] > 1:
             vrt_cmd = 'gdalbuildvrt tmp.vrt -b 1 {}.tif'.format(img_id)
             subprocess.call(vrt_cmd, shell=True) #saves temporary vrt file to filter on
             img = geoio.GeoImage('tmp.vrt')
