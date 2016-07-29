@@ -10,7 +10,7 @@ A class for extracting testing and training chips from multiple GeoTiff strips.
 
 ## About
 
-This class can be used to generate input data training data input to a convolutional neural network built in [Keras](http://keras.io/). The output is formatted to be used in the [model.fit()](http://keras.io/models/sequential/#fit) function as is. Alternatively it can be used to train the model in batches with the  [model.train_on_batch](http://keras.io/models/sequential/#train_on_batch) function to iteratively produce small batches of chips for training sizes too large to fit into memory.
+GetIterData can be used to iteratively generate arbitrarily-sized batches of chips with associated ids and labels from a shapefile. The output can the be used to train and/or test a convolutional neural network build in [Keras](http://keras.io/). The chips and labels are formatted to be used in the [model.fit()](http://keras.io/models/sequential/#fit) function as is.
 
 ## mltools.data_extractors.getIterData
 
@@ -69,7 +69,7 @@ Return a batch of chips from all images
 | <b> Output </b> | <b> Type </b> | <b> Description</b> |
 | chips | numpy array | Batch of chips |
 | ids | list | Polygon ids corresponding to each chip (only if return_ids is True |
-| labels | list | Polygon labels corresponding to each chip (only if return_labels is True) |  
+| labels | list | Polygon labels corresponding to each chip (only if return_labels is True). The output will be formatted in a tuple as follows: (chips, ids, labels) |  
 
 ## Examples
 
