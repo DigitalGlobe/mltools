@@ -470,6 +470,8 @@ class getIterData(object):
         for img_id, gen in self.chip_gens.iteritems():
             print '\nCollecting chips for image ' + str(img_id) + '...'
             data += zip(*gen.next())
-
+            
         np.random.shuffle(data)
-        return zip(*data)
+        data = zip(*data)
+        data[0] = np.array(data[0])
+        return data
