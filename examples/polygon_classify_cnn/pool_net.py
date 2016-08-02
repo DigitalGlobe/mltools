@@ -2,7 +2,7 @@ import numpy as np
 import random
 import json
 import geojson
-from mltools.data_extractors import get_iter_data
+from mltools.data_extractors import get_iter_data, getIterData
 from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
@@ -18,7 +18,7 @@ from time import localtime
 
 class PoolNet(object):
     '''
-    Fully Convolutional model to classify polygons as pool/no pool
+    Convolutional Neural Network model to classify polygons as pool/no pool
 
     INPUT   classes (list): classes to train images on, exactly as they appear in
                 shapefile properties. defaults to pool classes "['No swimming pool',
@@ -37,7 +37,6 @@ class PoolNet(object):
                 weights. Defaults to False
             model_name (str): Only relevant if load_model is True. name of model (not
                 including file extension) to load. Defaults to None
-            train_size (int): number of samples to train on per epoch. defaults to 10000.
             lr_1 (float): learning rate for the first round of training. Defualts to
                 0.001
             lr_2 (float): learning rate for second round of training (just output layer).
@@ -46,8 +45,7 @@ class PoolNet(object):
 
     def __init__(self, classes=['Swimming pool', 'No swimming pool'], max_chip_hw=125,
                 min_chip_hw=0, batch_size=32, input_shape=(3, 125, 125), fc = False,
-                old_model=False, model_name=None, train_size=10000, lr_1 = 0.001,
-                lr_2 = 0.01):
+                old_model=False, model_name=None, lr_1 = 0.001, lr_2 = 0.01):
 
         self.nb_classes = len(classes)
         self.classes = classes
@@ -56,10 +54,10 @@ class PoolNet(object):
         self.batch_size = batch_size
         self.fc = fc
         self.old_model = old_model
-        self.train_size = train_size
         self.input_shape = input_shape
         self.lr_1 = lr_1
         self.lr_2 = lr_2
+        self.cls_dict = {classes[i]: i for i in xrange(len(self.classes))}
 
         if self.old_model:
             self.model_name = model_name
@@ -201,45 +199,46 @@ class PoolNet(object):
             self.save_model(save_model)
 
 
-    def fit_generator(self, train_shapefile, gen_batch_size = 5000, batches_per_epoch=2,
-                      validation_split=0.1, save_model=None, nb_epoch=5):
+    def fit_generator(self, train_shapefile, train_size=10000, save_model=None,
+                      nb_epoch=5):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
                     geojson)
-                (2) int 'gen_batch_size': number of chips to yield. must be small enough
-                    to fit into memory. Defaults to 5000
-                (3) int 'batches_per_epoch': number of batches of 'gen_batch_size' to
-                    train on per epoch. gen_batch_size * batches_per_epoch = total train
-                    size. defaults to 2.
-                (4) float 'validation_split': proportion of chips to use as validation
-                    data.
-                (5) string 'save_model': name of model for saving. if None, does not
+                (2) int 'train_size': number of chips to train model on. Defaults to 10000
+                (3) string 'save_model': name of model for saving. if None, does not
                     save model.
-                (6) int 'nb_epoch': Number of epochs to train for
+                (4) int 'nb_epoch': Number of epochs to train for
         OUTPUT  (1) trained model.
         '''
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
                                        verbose=1)
 
-        # iterate through batches, train model on each
-        for e in range(nb_epoch):
-            ct = 0
-            print 'Epoch {}/{}'.format(e + 1, nb_epoch)
-            for X_train, Y_train in get_iter_data(train_shapefile,
-                                                  batch_size = gen_batch_size,
-                                                  min_chip_hw = self.min_chip_hw,
-                                                  max_chip_hw = self.max_chip_hw):
-                # Train on batch
-                self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
-                               validation_split=validation_split,
-                               callbacks=[checkpointer])
+        data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
+                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
+                               classes=self.classes)
 
-                # Go to next epoch if batches_per_epoch have been trained
-                ct += 1
-                if ct == batches_per_epoch:
-                    break
+        self.model.fit_generator(data_gen, samples_per_epoch=train_size,
+                                 nb_epoch=nb_epoch, callbacks=[checkpointer])
+
+        # # iterate through batches, train model on each
+        # for e in range(nb_epoch):
+        #     ct = 0
+        #     print 'Epoch {}/{}'.format(e + 1, nb_epoch)
+        #     for X_train, Y_train in get_iter_data(train_shapefile,
+        #                                           batch_size = gen_batch_size,
+        #                                           min_chip_hw = self.min_chip_hw,
+        #                                           max_chip_hw = self.max_chip_hw):
+        #         # Train on batch
+        #         self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
+        #                        validation_split=validation_split,
+        #                        callbacks=[checkpointer])
+        #
+        #         # Go to next epoch if batches_per_epoch have been trained
+        #         ct += 1
+        #         if ct == batches_per_epoch:
+        #             break
 
         if save_model:
             self.save_model(save_model)
@@ -268,21 +267,14 @@ class PoolNet(object):
         # train model
         self.fit_xy(X_train, Y_train, **kwargs)
 
-    def retrain_output_on_generator(self, train_shapefile, gen_batch_size=5000,
-                                    batches_per_epoch=1, validation_split=0.1,
+    def retrain_output_on_generator(self, train_shapefile, retrain_size=5000,
                                     save_model=None, nb_epoch=5):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
                     geojson)
-                (2) int 'gen_batch_size': number of chips to yield. must be small enough
-                    to fit into memory. defaults to 5000
-                (3) int 'batches_per_epoch': number of batches of 'gen_batch_size' to
-                    train on per epoch. gen_batch_size * batches_per_epoch = total train
-                    size. defaults to 1.
-                (4) float 'validation_split': proportion of chips to use as validation
-                    data.
+                (2) int 'train_size': number of chips to train model on. Defaults to 5000
                 (5) string 'save_model': name of model for saving. if None, does not
                     save model.
                 (6) int 'nb_epoch': Number of epochs to train for
@@ -297,26 +289,31 @@ class PoolNet(object):
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # train model with frozen weights
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
                                        verbose=1)
 
-        # iterate through batches, train model on each
-        for e in range(nb_epoch):
-            ct = 0
-            print 'Epoch {}/{}'.format(e + 1, nb_epoch)
-            for X_train, Y_train in get_iter_data(train_shapefile,
-                                                  batch_size = gen_batch_size,
-                                                  min_chip_hw = self.min_chip_hw,
-                                                  max_chip_hw = self.max_chip_hw):
-                # Train on batch
-                self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
-                               validation_split=validation_split,
-                               callbacks=[checkpointer])
+        data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
+                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
+                               classes=self.classes)
 
-                # Go to next epoch if batches_per_epoch have been trained
-                ct += 1
-                if ct == batches_per_epoch:
-                    break
+        p.model.fit_generator(data_gen, samples_per_epoch=retrain_size)
+        # # iterate through batches, train model on each
+        # for e in range(nb_epoch):
+        #     ct = 0
+        #     print 'Epoch {}/{}'.format(e + 1, nb_epoch)
+        #     for X_train, Y_train in get_iter_data(train_shapefile,
+        #                                           batch_size = gen_batch_size,
+        #                                           min_chip_hw = self.min_chip_hw,
+        #                                           max_chip_hw = self.max_chip_hw):
+        #         # Train on batch
+        #         self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
+        #                        validation_split=validation_split,
+        #                        callbacks=[checkpointer])
+        #
+        #         # Go to next epoch if batches_per_epoch have been trained
+        #         ct += 1
+        #         if ct == batches_per_epoch:
+        #             break
 
         if save_model:
             self.save_model(save_model)
