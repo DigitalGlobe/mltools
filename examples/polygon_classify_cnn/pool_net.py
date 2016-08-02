@@ -2,6 +2,7 @@ import numpy as np
 import random
 import json
 import geojson
+import subprocess
 from mltools.data_extractors import get_iter_data, getIterData
 from mltools.geojson_tools import write_properties_to
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
@@ -143,6 +144,28 @@ class PoolNet(object):
                     behead_ix = i - 1
         return behead_ix
 
+    def _get_val_data(self, shapefile, val_size):
+        '''
+        hacky...
+        creates validation data from input shapefile to use with fit_generator function
+        '''
+        with open(shapefile) as f:
+            data = geojson.load(f)
+            feats = data['features']
+            np.random.shuffle(feats)
+            data['features'] = feats
+
+        with open('tmp_val.geojson', 'w') as f:
+            geojson.dump(data, f)
+
+        val_gen = getIterData('tmp_val.geojson', batch_size=val_size,
+                              min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
+                              classes=self.classes)
+
+        x, y = val_gen.next()
+        subprocess.call('rm tmp_val.geojson', shell=True)
+        return x, y
+
     def make_fc_model(self):
         '''
         creates a fully convolutional model from self.model
@@ -200,7 +223,7 @@ class PoolNet(object):
 
 
     def fit_generator(self, train_shapefile, train_size=10000, save_model=None,
-                      nb_epoch=5):
+                      nb_epoch=5, validation_prop=0.1):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
@@ -219,26 +242,16 @@ class PoolNet(object):
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
                                classes=self.classes)
 
-        self.model.fit_generator(data_gen, samples_per_epoch=train_size,
-                                 nb_epoch=nb_epoch, callbacks=[checkpointer])
+        if validation_prop:
+            valX, valY = self._get_val_data(train_shapefile,
+                                            int(validation_prop * train_size))
 
-        # # iterate through batches, train model on each
-        # for e in range(nb_epoch):
-        #     ct = 0
-        #     print 'Epoch {}/{}'.format(e + 1, nb_epoch)
-        #     for X_train, Y_train in get_iter_data(train_shapefile,
-        #                                           batch_size = gen_batch_size,
-        #                                           min_chip_hw = self.min_chip_hw,
-        #                                           max_chip_hw = self.max_chip_hw):
-        #         # Train on batch
-        #         self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
-        #                        validation_split=validation_split,
-        #                        callbacks=[checkpointer])
-        #
-        #         # Go to next epoch if batches_per_epoch have been trained
-        #         ct += 1
-        #         if ct == batches_per_epoch:
-        #             break
+            self.model.fit_generator(data_gen, samples_per_epoch=train_size,
+                                     nb_epoch=nb_epoch, callbacks=[checkpointer],
+                                     validation_data = (valX, valY))
+
+        else:
+            self.model.fit_generator(data_gen, samples_per_epoch=train_size)
 
         if save_model:
             self.save_model(save_model)
@@ -268,7 +281,7 @@ class PoolNet(object):
         self.fit_xy(X_train, Y_train, **kwargs)
 
     def retrain_output_on_generator(self, train_shapefile, retrain_size=5000,
-                                    save_model=None, nb_epoch=5):
+                                    save_model=None, nb_epoch=5, validation_prop=0.1):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
@@ -296,24 +309,16 @@ class PoolNet(object):
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
                                classes=self.classes)
 
-        p.model.fit_generator(data_gen, samples_per_epoch=retrain_size)
-        # # iterate through batches, train model on each
-        # for e in range(nb_epoch):
-        #     ct = 0
-        #     print 'Epoch {}/{}'.format(e + 1, nb_epoch)
-        #     for X_train, Y_train in get_iter_data(train_shapefile,
-        #                                           batch_size = gen_batch_size,
-        #                                           min_chip_hw = self.min_chip_hw,
-        #                                           max_chip_hw = self.max_chip_hw):
-        #         # Train on batch
-        #         self.model.fit(X_train, Y_train, batch_size=self.batch_size, nb_epoch=1,
-        #                        validation_split=validation_split,
-        #                        callbacks=[checkpointer])
-        #
-        #         # Go to next epoch if batches_per_epoch have been trained
-        #         ct += 1
-        #         if ct == batches_per_epoch:
-        #             break
+        if validation_prop:
+            valX, valY = self._get_val_data(train_shapefile,
+                                            int(validation_prop * retrain_size))
+
+            self.model.fit_generator(data_gen, samples_per_epoch=retrain_size,
+                                     nb_epoch=nb_epoch, callbacks=[checkpointer],
+                                     validation_data=(valX, valY))
+
+        else:
+            self.model.fit_generator(data_gen, samples_per_epoch=retrain_size)
 
         if save_model:
             self.save_model(save_model)
