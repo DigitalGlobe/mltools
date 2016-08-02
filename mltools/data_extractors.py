@@ -460,7 +460,7 @@ class getIterData(object):
                 yield data
                 ct, inputs, labels, ids = 0, [], [], []
 
-    def create_batch(self):
+    def next(self):
         '''
         generate a batch of chips
         '''
@@ -470,8 +470,6 @@ class getIterData(object):
         for img_id, gen in self.chip_gens.iteritems():
             print '\nCollecting chips for image ' + str(img_id) + '...'
             data += zip(*gen.next())
-            
+
         np.random.shuffle(data)
-        data = zip(*data)
-        data[0] = np.array(data[0])
-        return data
+        return [np.array(i) for i in zip(*data)]
