@@ -251,10 +251,36 @@ class PoolNet(object):
                                      validation_data = (valX, valY))
 
         else:
-            self.model.fit_generator(data_gen, samples_per_epoch=train_size)
+            self.model.fit_generator(data_gen, samples_per_epoch=train_size,
+                                     nb_epoch=nb_epoch)
 
         if save_model:
             self.save_model(save_model)
+
+    def fit_with_augmentation(self, train_shapefile, chips_to yield, train_size,
+                              validation_prop=0.1):
+        '''
+        trains a model using real-time data augmentation. for use with a small shapefile
+        '''
+        # generate data from which to upsample
+        chip_gen = getIterData(train_shapefile, batch_size=chips_to_yield,
+                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
+                               classes=self.classes)
+        X, Y = chip_gen.next()
+
+        # image augmentaion via rotations
+        datagen = ImageDataGenerator(rotation_range=180)
+        datagen.fit(X)
+
+        if validation_prop:
+            valX, valY = self._get_val_data(train_shapefile,
+                                            int(validation_prop * train_size))
+            self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
+                                     validation_data=(valX, valY))
+
+        else:
+            self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size)
+
 
     def retrain_output(self, X_train, Y_train, **kwargs):
         '''
