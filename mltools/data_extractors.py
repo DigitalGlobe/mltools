@@ -324,7 +324,8 @@ class getIterData(object):
             self.img_ids = gt.find_unique_values(shapefile, property_name='image_id')
             self.props = {}
             for id in self.img_ids:
-                self.props[id] = int(self.get_proportion('image_id', id) * self.batch_size)
+                if int(self.get_proportion('image_id', id) * self.batch_size) > 0:
+                    self.props[id] = int(self.get_proportion('image_id', id) * self.batch_size)
 
         # account for difference in batch size and total due to rounding
         total = np.sum(self.props.values())
@@ -405,10 +406,10 @@ class getIterData(object):
         cls_dict = {self.classes[i]: i for i in xrange(len(self.classes))}
 
         img = geoio.GeoImage(img_id + '.tif')
-        for chip, properties in cycle(img.iter_vector(vector=self.shapefile,
-                                                      properties=True,
-                                                      filter=[{'image_id': img_id}],
-                                                      mask=self.mask)):
+        for chip, properties in img.iter_vector(vector=self.shapefile,
+                                                properties=True,
+                                                filter=[{'image_id': img_id}],
+                                                mask=self.mask):
             # check for adequate chip size
             if chip is None:
                 continue
