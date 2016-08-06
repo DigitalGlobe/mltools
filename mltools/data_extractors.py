@@ -329,14 +329,14 @@ class getIterData(object):
 
         # account for difference in batch size and total due to rounding
         total = np.sum(self.props.values())
-        if total < batch_size:
-            diff = np.random.choice(self.props.keys())
-            self.props[diff] += batch_size - total
+        # if total < batch_size:
+        #     diff = np.random.choice(self.props.keys())
+        #     self.props[diff] += batch_size - total
 
         # initialize generators
         print 'Creating chip generators for each image...'
         self.chip_gens = {}
-        for id in self.img_ids:
+        for id in self.props.keys():
             self.chip_gens[id] = self.yield_from_img_id(id, batch=self.props[id])
 
     def _format_props_input(self, props):
