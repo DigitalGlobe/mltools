@@ -304,12 +304,13 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
         output_file = output_file + '.geojson'
 
     # find indicies of acceptable polygons
-    ix_ok, ix = [], 0
+    ix_ok = []
     print 'Extracting image ids...'
     img_ids = find_unique_values(shapefile, property_name='image_id')
 
     print 'Filtering polygons...'
     for img_id in img_ids:
+        ix = 0
         print '... for image {}'.format(img_id)
         img = geoio.GeoImage(img_id + '.tif')
 
@@ -325,6 +326,9 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
                                                 filter=[{'image_id': img_id}],
                                                 mask=True):
             if chip is None:
+                ix += 1
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
+                sys.stdout.flush()
                 continue
 
             chan,h,w = np.shape(chip)
