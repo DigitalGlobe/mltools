@@ -258,7 +258,7 @@ class PoolNet(object):
             self.save_model(save_model)
 
     def fit_with_augmentation(self, train_shapefile, chips_to yield, train_size,
-                              validation_prop=0.1):
+                              validation_prop=0.1, save_model=None):
         '''
         trains a model using real-time data augmentation. for use with a small shapefile
         '''
@@ -280,6 +280,9 @@ class PoolNet(object):
 
         else:
             self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size)
+
+        if save_model:
+            self.save_model(save_model)
 
 
     def retrain_output(self, X_train, Y_train, **kwargs):
