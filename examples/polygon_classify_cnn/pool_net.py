@@ -252,13 +252,13 @@ class PoolNet(object):
 
         else:
             self.model.fit_generator(data_gen, samples_per_epoch=train_size,
-                                     nb_epoch=nb_epoch)
+                                     nb_epoch=nb_epoch, callbacks=[checkpointer])
 
         if save_model:
             self.save_model(save_model)
 
     def fit_with_augmentation(self, train_shapefile, chips_to_yield, train_size,
-                              validation_prop=0.1, save_model=None):
+                              nb_epoch=10, validation_prop=0.1, save_model=None):
         '''
         trains a model using real-time data augmentation. for use with a small shapefile
         '''
@@ -271,15 +271,19 @@ class PoolNet(object):
         # image augmentaion via rotations
         datagen = ImageDataGenerator(rotation_range=180)
         datagen.fit(X)
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
+                                       verbose=1)
 
         if validation_prop:
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * train_size))
             self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
-                                     validation_data=(valX, valY))
+                                     nb_epoch=nb_epoch, validation_data=(valX, valY),
+                                     callbacks=[checkpointer])
 
         else:
-            self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size)
+            self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
+                                     nb_epoch=nb_epoch, callbacks=[checkpointer])
 
         if save_model:
             self.save_model(save_model)
