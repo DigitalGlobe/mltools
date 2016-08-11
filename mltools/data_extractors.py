@@ -73,16 +73,15 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
     return zip(*data)
 
 
-def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chip_hw=125,
+def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
                   buffer=[0, 0], mask=True, normalize=True, img_name=None,
-                  return_labels=True):
+                  return_labels=True, bits=8):
     '''
     Generates batches of training data from shapefile.
 
     INPUT   shapefile (string): name of shapefile to extract polygons from
             batch_size (int): number of chips to generate each iteration
-            nb_classes (int): number of classes in which to categorize itmes
             min_chip_hw (int): minimum size acceptable (in pixels) for a polygon.
                 defaults to 30.
             max_chip_hw (int): maximum size acceptable (in pixels) for a polygon. Note
@@ -112,6 +111,7 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
     '''
 
     ct, inputs, labels, ids = 0, [], [], []
+    nb_classes = len(classes)
     print 'Extracting image ids...'
     img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
@@ -148,7 +148,8 @@ def get_iter_data(shapefile, batch_size=32, nb_classes=2, min_chip_hw=0, max_chi
             #         chip_patch = resize(chip_patch, resize_dim)
 
             if normalize:
-                chip_patch /= 255.
+                div = (2 ** bits) - 1
+                chip_patch /= float(div)
 
             # Get labels
             if return_labels:
@@ -289,6 +290,8 @@ class getIterData(object):
                 proportions don't add to one they will each be divided by the total of
                 the values. Defaults to None, in which case proportions will be
                 representative of ratios in the shapefile.
+            bits (int): number of bits in the imagery, necessary for proper normalization.
+                Defaults to 8.
 
     OUTPUT  creates a class instance that will produce batches of chips from the input
                 shapefile when create_batch() is called.
@@ -302,7 +305,7 @@ class getIterData(object):
 
     def __init__(self, shapefile, batch_size=10000, min_chip_hw=0, max_chip_hw=125,
                  classes=['No swimming pool', 'Swimming pool'], return_labels=True,
-                 return_id=False, mask=True, normalize=True, props=None):
+                 return_id=False, mask=True, normalize=True, props=None, bits=8):
 
         self.shapefile = shapefile
         self.batch_size = batch_size
@@ -424,7 +427,8 @@ class getIterData(object):
                 (pad_w - pad_w/2))], 'constant', constant_values=0)
 
             if self.normalize:
-                chip_patch /= 255.
+                div = (2 ** self.bits) - 1
+                chip_patch /= float(div)
 
             # get labels
             if self.return_labels:
