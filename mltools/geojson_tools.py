@@ -358,7 +358,8 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
     if shuffle:
         np.random.shuffle(ok_polygons)
 
-    filtrate = {data.keys()[0]: data.values()[0], data.keys()[1]: ok_polygons}
+    filtrate = {data.keys()[i]: data.values()[i] for i in xrange(len(data.keys()) - 1)}
+    filtrate['features'] = ok_polygons
     with open(output_file, 'wb') as f:
         geojson.dump(filtrate, f)
 
