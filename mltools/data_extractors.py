@@ -76,7 +76,7 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
                   buffer=[0, 0], mask=True, normalize=True, img_name=None,
-                  return_labels=True, bits=8):
+                  return_labels=True, bit_depth=8):
     '''
     Generates batches of training data from shapefile.
 
@@ -148,7 +148,7 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
             #         chip_patch = resize(chip_patch, resize_dim)
 
             if normalize:
-                div = (2 ** bits) - 1
+                div = (2 ** bit_depth) - 1
                 chip_patch /= float(div)
 
             # Get labels
@@ -290,7 +290,7 @@ class getIterData(object):
                 proportions don't add to one they will each be divided by the total of
                 the values. Defaults to None, in which case proportions will be
                 representative of ratios in the shapefile.
-            bits (int): number of bits in the imagery, necessary for proper normalization.
+            bit_depth (int): bit depth of the imagery, necessary for proper normalization.
                 Defaults to 8.
 
     OUTPUT  creates a class instance that will produce batches of chips from the input
@@ -305,7 +305,7 @@ class getIterData(object):
 
     def __init__(self, shapefile, batch_size=10000, min_chip_hw=0, max_chip_hw=125,
                  classes=['No swimming pool', 'Swimming pool'], return_labels=True,
-                 return_id=False, mask=True, normalize=True, props=None, bits=8):
+                 return_id=False, mask=True, normalize=True, props=None, bit_depth=8):
 
         self.shapefile = shapefile
         self.batch_size = batch_size
@@ -316,6 +316,7 @@ class getIterData(object):
         self.return_id = return_id
         self.mask = mask
         self.normalize = normalize
+        self.bit_depth = bit_depth
 
         # get image proportions
         print 'Getting image proportions...'
@@ -409,10 +410,10 @@ class getIterData(object):
         cls_dict = {self.classes[i]: i for i in xrange(len(self.classes))}
 
         img = geoio.GeoImage(img_id + '.tif')
-        for chip, properties in img.iter_vector(vector=self.shapefile,
-                                                properties=True,
-                                                filter=[{'image_id': img_id}],
-                                                mask=self.mask):
+        for chip, properties in cycle(img.iter_vector(vector=self.shapefile,
+                                                      properties=True,
+                                                      filter=[{'image_id': img_id}],
+                                                      mask=self.mask)):
             # check for adequate chip size
             if chip is None:
                 continue
@@ -427,7 +428,7 @@ class getIterData(object):
                 (pad_w - pad_w/2))], 'constant', constant_values=0)
 
             if self.normalize:
-                div = (2 ** self.bits) - 1
+                div = (2 ** self.bit_depth) - 1
                 chip_patch /= float(div)
 
             # get labels
