@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 import random
 import json
 import geojson
@@ -142,7 +142,7 @@ class PoolNet(object):
                     behead_ix = i - 1
         return behead_ix
 
-    def _get_val_data(self, shapefile, val_size):
+    def _get_val_data(self, shapefile, val_size, bit_depth):
         '''
         hacky...
         creates validation data from input shapefile to use with fit_generator function
@@ -158,7 +158,7 @@ class PoolNet(object):
 
         val_gen = Data('tmp_val.geojson', batch_size=val_size,
                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                              classes=self.classes)
+                              classes=self.classes, bit_depth=bit_depth)
 
         x, y = val_gen.next()
         subprocess.call('rm tmp_val.geojson', shell=True)
@@ -245,7 +245,8 @@ class PoolNet(object):
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
                                            verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
-                                            int(validation_prop * train_size))
+                                            int(validation_prop * train_size),
+                                            bit_depth=bit_depth)
 
             self.model.fit_generator(data_gen, samples_per_epoch=train_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer],
@@ -347,13 +348,14 @@ class PoolNet(object):
         # train model with frozen weights
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes)
+                               classes=self.classes, bit_depth=bit_depth)
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
                                            verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
-                                            int(validation_prop * retrain_size))
+                                            int(validation_prop * retrain_size),
+                                            bit_depth=bit_depth)
 
             self.model.fit_generator(data_gen, samples_per_epoch=retrain_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer],
