@@ -4,7 +4,7 @@ import json
 import geojson
 import subprocess
 from mltools.data_extractors import get_iter_data, getIterData
-from mltools.geojson_tools import write_properties_to
+from mltools.geojson_tools import write_properties_to, filter_polygon_size
 from keras.layers.core import Dense, MaxoutDense, Dropout, Activation, Flatten, Reshape
 from keras.models import Sequential, Graph, model_from_json
 from keras.preprocessing.image import ImageDataGenerator
@@ -221,7 +221,7 @@ class PoolNet(object):
 
 
     def fit_generator(self, train_shapefile, train_size=10000, save_model=None,
-                      nb_epoch=5, validation_prop=0.1):
+                      nb_epoch=5, validation_prop=0.1, bit_depth=11):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
@@ -230,17 +230,20 @@ class PoolNet(object):
                 (3) string 'save_model': name of model for saving. if None, does not
                     save model.
                 (4) int 'nb_epoch': Number of epochs to train for
+                (5) float 'validation_prop': proportion of training data to use for
+                    validation. defaults to 0.1. Does not do validation if validation_prop
+                    is None.
+                (6) int 'bit_depth': Bit depth of the images being trained on
         OUTPUT  (1) trained model.
         '''
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
-                                       verbose=1)
-
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes)
+                               classes=self.classes, bit_depth=bit_depth)
 
         if validation_prop:
+            checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
+                                           verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * train_size))
 
@@ -249,6 +252,8 @@ class PoolNet(object):
                                      validation_data = (valX, valY))
 
         else:
+            checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{loss:.2f}.h5",
+                                           verbose=1)
             self.model.fit_generator(data_gen, samples_per_epoch=train_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer])
 
@@ -312,16 +317,23 @@ class PoolNet(object):
         self.fit_xy(X_train, Y_train, **kwargs)
 
     def retrain_output_on_generator(self, train_shapefile, retrain_size=5000, lr=0.01,
-                                    save_model=None, nb_epoch=5, validation_prop=0.1):
+                                    save_model=None, nb_epoch=5, validation_prop=0.1,
+                                    bit_depth=11):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
                     geojson)
                 (2) int 'train_size': number of chips to train model on. Defaults to 5000
-                (5) string 'save_model': name of model for saving. if None, does not
+                (3) float 'lr'
+                (4) string 'save_model': name of model for saving. if None, does not
                     save model.
-                (6) int 'nb_epoch': Number of epochs to train for
+                (5) int 'nb_epoch': Number of epochs to train for. Defaults to 5
+                (6) float 'validation_prop': proportion of training data to use for
+                    validation. defaults to 0.1. Does not do validation if validation_prop
+                    is None.
+                (7) int 'bit_depth': Bit depth of the images being trained on
+
         OUTPUT  (1) retrained model.
         '''
         # freeze all layers except final dense
@@ -333,14 +345,13 @@ class PoolNet(object):
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # train model with frozen weights
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
-                                       verbose=1)
-
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
                                classes=self.classes)
 
         if validation_prop:
+            checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
+                                           verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * retrain_size))
 
@@ -349,6 +360,8 @@ class PoolNet(object):
                                      validation_data=(valX, valY))
 
         else:
+            checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{loss:.2f}.h5",
+                                           verbose=1)
             self.model.fit_generator(data_gen, samples_per_epoch=retrain_size)
 
         if save_model:
@@ -483,7 +496,7 @@ class PoolNet(object):
         yhat = [np.argmax(i) for i in yprob]
         if not numerical_classes:
             yhat = [self.classes[i] for i in yhat]
-        ycert = [np.max(j) for j in yprob]
+        ycert = [str(np.max(j)) for j in yprob]
 
         # Update shapefile, save as output_name
         data = zip(yhat, ycert)
