@@ -489,10 +489,9 @@ class getIterData(object):
 
     def yield_from_img_id_infinite(self, img_id, batch):
         '''
-        helper function to yield data from a given shapefile for a specific img_id. This
-        function should ONLY be use with the keras fit_generator function, as it will
-        cycle infinitely through the polygons. this can result in an infinite loop if
-        there are not enough polygons from a given image id.
+        Same as yield_from_img_id except this function will loop infinitely though the
+        data. This may result in duplicate data in each batch, or infinite loops. The
+        function should therefore ONLY be use with the keras fit_generator function.
 
         INPUT   img_id (str): ids of the images from which to generate patches from
                 batch (int): number of chips to generate per iteration from the input
@@ -587,9 +586,12 @@ class getIterData(object):
 
         # hit each generator in chip_gens
         for img_id, gen in self.chip_gens.iteritems():
-            if show_percentage:
+            if self.show_percentage:
                 print '\nCollecting chips for image ' + str(img_id) + '...'
-            data += zip(*gen.next())
+            try:
+                data += zip(*gen.next())
+            except (StopIteration):
+                return 'Not enough polygon data, please use a smaller batch size'
 
         np.random.shuffle(data)
         return [np.array(i) for i in zip(*data)]
