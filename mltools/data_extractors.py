@@ -3,6 +3,7 @@
 # for machine learning algorithms.
 
 import geoio
+import operator
 import geojson
 import geojson_tools as gt
 import numpy as np
@@ -305,7 +306,8 @@ class getIterData(object):
 
     def __init__(self, shapefile, batch_size=10000, min_chip_hw=0, max_chip_hw=125,
                  classes=['No swimming pool', 'Swimming pool'], return_labels=True,
-                 return_id=False, mask=True, normalize=True, props=None, bit_depth=8):
+                 return_id=False, mask=True, normalize=True, props=None, bit_depth=8,
+                 show_percentage=True, cycle=False):
 
         self.shapefile = shapefile
         self.batch_size = batch_size
@@ -317,6 +319,7 @@ class getIterData(object):
         self.mask = mask
         self.normalize = normalize
         self.bit_depth = bit_depth
+        self.show_percentage = show_percentage
 
         # get image proportions
         print 'Getting image proportions...'
@@ -328,20 +331,29 @@ class getIterData(object):
             self.img_ids = gt.find_unique_values(shapefile, property_name='image_id')
             self.props = {}
             for id in self.img_ids:
-                if int(self.get_proportion('image_id', id) * self.batch_size) > 0:
-                    self.props[id] = int(self.get_proportion('image_id', id) * self.batch_size)
+                if np.around(self.get_proportion('image_id', id) * self.batch_size) > 0:
+                    self.props[id] = int(np.around(self.get_proportion('image_id', id) * self.batch_size))
 
         # account for difference in batch size and total due to rounding
         total = np.sum(self.props.values())
-        # if total < batch_size:
-        #     diff = np.random.choice(self.props.keys())
-        #     self.props[diff] += batch_size - total
+        if total < batch_size:
+            diff = np.random.choice(self.props.keys())
+            self.props[diff] += (batch_size - total)
+
+        if total > batch_size:
+            diff = max(self.props.iteritems(), key=operator.itemgetter(1))[0]
+            self.props[diff] -= (total - batch_size)
 
         # initialize generators
-        print 'Creating chip generators for each image...'
+        print 'Creating chip generators for image id...'
         self.chip_gens = {}
         for id in self.props.keys():
-            self.chip_gens[id] = self.yield_from_img_id(id, batch=self.props[id])
+            print '...' + str(id)
+            if cycle:
+                self.chip_gens[id] = self.yield_from_img_id_infinite(id,
+                                                                     batch=self.props[id])
+            else:
+                self.chip_gens[id] = self.yield_from_img_id(id, batch=self.props[id])
 
     def _format_props_input(self, props):
         '''
@@ -387,7 +399,8 @@ class getIterData(object):
 
     def yield_from_img_id(self, img_id, batch):
         '''
-        helper function to yield data from a given shapefile for a specific img_id
+        helper function to yield data from a given shapefile for a specific img_id. This
+        function should ONLY be use with the keras fit_generator function
 
         INPUT   img_id (str): ids of the images from which to generate patches from
                 batch (int): number of chips to generate per iteration from the input
@@ -410,16 +423,23 @@ class getIterData(object):
         cls_dict = {self.classes[i]: i for i in xrange(len(self.classes))}
 
         img = geoio.GeoImage(img_id + '.tif')
-        for chip, properties in cycle(img.iter_vector(vector=self.shapefile,
-                                                      properties=True,
-                                                      filter=[{'image_id': img_id}],
-                                                      mask=self.mask)):
+        for chip, properties in img.iter_vector(vector=self.shapefile,
+                                                properties=True,
+                                                filter=[{'image_id': img_id}],
+                                                mask=self.mask):
             # check for adequate chip size
             if chip is None:
+                if self.show_percentage:
+                    sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
+                    sys.stdout.flush()
                 continue
+
             chan, h, w = np.shape(chip)
             pad_h, pad_w = self.max_chip_hw - h, self.max_chip_hw - w
             if min(h, w) < self.min_chip_hw or max(h, w) > self.max_chip_hw:
+                if self.show_percentage:
+                    sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
+                    sys.stdout.flush()
                 continue
 
             # zero-pad chip to standard net input size
@@ -448,8 +468,101 @@ class getIterData(object):
 
             inputs.append(chip_patch)
             ct += 1
-            sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
-            sys.stdout.flush()
+            if self.show_percentage:
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
+                sys.stdout.flush()
+
+            if ct == batch:
+                data = [np.array([i for i in inputs])]
+
+                if self.return_id:
+                    data.append(ids)
+
+                # Create one-hot encoded labels
+                if self.return_labels:
+                    Y = np.zeros((batch, len(self.classes)))
+                    for i in range(batch):
+                        Y[i, labels[i]] = 1
+                    data.append(Y)
+                yield data
+                ct, inputs, labels, ids = 0, [], [], []
+
+    def yield_from_img_id_infinite(self, img_id, batch):
+        '''
+        helper function to yield data from a given shapefile for a specific img_id. This
+        function should ONLY be use with the keras fit_generator function, as it will
+        cycle infinitely through the polygons. this can result in an infinite loop if
+        there are not enough polygons from a given image id.
+
+        INPUT   img_id (str): ids of the images from which to generate patches from
+                batch (int): number of chips to generate per iteration from the input
+                    image id
+
+        OUTPUT  Returns a generator object (g). calling g.next() returns the following:
+                chips:
+                    - one batch of masked (if True) chips
+                    - corresponding feature_id for chips (if return_id is True)
+                    - corresponding chip labels (if return_labels is True)
+
+        EXAMPLE:
+            $ g = get_iter_data('shapefile.geojson', batch-size=12)
+            $ x,y = g.next()
+            # x is the first 12 chips (of appropriate size) from the input shapefile
+            # y is a list of classifications for the chips in x
+        '''
+
+        ct, inputs, labels, ids = 0, [], [], []
+        cls_dict = {self.classes[i]: i for i in xrange(len(self.classes))}
+
+        img = geoio.GeoImage(img_id + '.tif')
+        for chip, properties in cycle(img.iter_vector(vector=self.shapefile,
+                                                      properties=True,
+                                                      filter=[{'image_id': img_id}],
+                                                      mask=self.mask)):
+            # check for adequate chip size
+            if chip is None:
+                if self.show_percentage:
+                    sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
+                    sys.stdout.flush()
+                continue
+
+            chan, h, w = np.shape(chip)
+            pad_h, pad_w = self.max_chip_hw - h, self.max_chip_hw - w
+            if min(h, w) < self.min_chip_hw or max(h, w) > self.max_chip_hw:
+                if self.show_percentage:
+                    sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
+                    sys.stdout.flush()
+                continue
+
+            # zero-pad chip to standard net input size
+            chip = chip.filled(0).astype(float)  # replace masked entries with zeros
+            chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
+                (pad_w - pad_w/2))], 'constant', constant_values=0)
+
+            if self.normalize:
+                div = (2 ** self.bit_depth) - 1
+                chip_patch /= float(div)
+
+            # get labels
+            if self.return_labels:
+                try:
+                    label = properties['class_name']
+                    if label is None:
+                        continue
+                    labels.append(cls_dict[label])
+                except (TypeError, KeyError):
+                    continue
+
+            # get id
+            if self.return_id:
+                id = properties['feature_id']
+                ids.append(id)
+
+            inputs.append(chip_patch)
+            ct += 1
+            if self.show_percentage:
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch)) + ' ' * 5)
+                sys.stdout.flush()
 
             if ct == batch:
                 data = [np.array([i for i in inputs])]
@@ -474,7 +587,8 @@ class getIterData(object):
 
         # hit each generator in chip_gens
         for img_id, gen in self.chip_gens.iteritems():
-            print '\nCollecting chips for image ' + str(img_id) + '...'
+            if show_percentage:
+                print '\nCollecting chips for image ' + str(img_id) + '...'
             data += zip(*gen.next())
 
         np.random.shuffle(data)
