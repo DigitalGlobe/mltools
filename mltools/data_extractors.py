@@ -3,7 +3,6 @@
 # for machine learning algorithms.
 
 import geoio
-import operator
 import geojson
 import geojson_tools as gt
 import numpy as np
@@ -341,7 +340,7 @@ class getIterData(object):
             self.props[diff] += (batch_size - total)
 
         if total > batch_size:
-            diff = max(self.props.iteritems(), key=operator.itemgetter(1))[0]
+            diff = max(self.props.iterkeys(), key=(lambda key: self.props[key]))[0]
             self.props[diff] -= (total - batch_size)
 
         # initialize generators

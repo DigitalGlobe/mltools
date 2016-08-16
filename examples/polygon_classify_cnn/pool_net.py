@@ -251,8 +251,7 @@ class PoolNet(object):
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
                                            verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
-                                            int(validation_prop * train_size),
-                                            bit_depth=self.bit_depth)
+                                            int(validation_prop * train_size))
 
             self.model.fit_generator(data_gen, samples_per_epoch=train_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer],
@@ -361,8 +360,7 @@ class PoolNet(object):
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
                                            verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
-                                            int(validation_prop * retrain_size),
-                                            bit_depth=self.bit_depth)
+                                            int(validation_prop * retrain_size))
 
             self.model.fit_generator(data_gen, samples_per_epoch=retrain_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer],
