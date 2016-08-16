@@ -42,11 +42,13 @@ class PoolNet(object):
                 including file extension) to load. Defaults to None
             learning_rate (float): learning rate for the first round of training. Defualts
                 to 0.001
+            bit_depth (int): bit depth of the imagery trained on. Used for normalization
+                of chips. Defaults to 11.
     '''
 
     def __init__(self, classes=['Swimming pool', 'No swimming pool'], max_chip_hw=125,
                 min_chip_hw=0, batch_size=32, input_shape=(3, 125, 125), fc = False,
-                old_model=False, model_name=None, learning_rate = 0.001):
+                old_model=False, model_name=None, learning_rate = 0.001, bit_depth=11):
 
         self.nb_classes = len(classes)
         self.classes = classes
@@ -57,6 +59,7 @@ class PoolNet(object):
         self.old_model = old_model
         self.input_shape = input_shape
         self.lr = learning_rate
+        self.bit_depth = bit_depth
         self.cls_dict = {classes[i]: i for i in xrange(len(self.classes))}
 
         if self.old_model:
@@ -144,7 +147,7 @@ class PoolNet(object):
                     behead_ix = i - 1
         return behead_ix
 
-    def _get_val_data(self, shapefile, val_size, bit_depth):
+    def _get_val_data(self, shapefile, val_size):
         '''
         hacky...
         creates validation data from input shapefile to use with fit_generator function
@@ -160,7 +163,8 @@ class PoolNet(object):
 
         val_gen = getIterData('tmp_val.geojson', batch_size=val_size,
                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                              classes=self.classes, bit_depth=bit_depth)
+                              classes=self.classes, bit_depth=self.bit_depth,
+                              show_percentage=False)
 
         x, y = val_gen.next()
         subprocess.call('rm tmp_val.geojson', shell=True)
@@ -223,7 +227,7 @@ class PoolNet(object):
 
 
     def fit_generator(self, train_shapefile, train_size=10000, save_model=None,
-                      nb_epoch=5, validation_prop=0.1, bit_depth=11):
+                      nb_epoch=5, validation_prop=0.1):
         '''
         Fit a model using a generator that yields a large batch of chips to train on.
         INPUT   (1) string 'train_shapefile': filename for the training data (must be a
@@ -235,20 +239,20 @@ class PoolNet(object):
                 (5) float 'validation_prop': proportion of training data to use for
                     validation. defaults to 0.1. Does not do validation if validation_prop
                     is None.
-                (6) int 'bit_depth': Bit depth of the images being trained on
         OUTPUT  (1) trained model.
         '''
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes, bit_depth=bit_depth, cycle=True)
+                               classes=self.classes, bit_depth=self.bit_depth, cycle=True,
+                               show_percentage=False)
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
                                            verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * train_size),
-                                            bit_depth=bit_depth)
+                                            bit_depth=self.bit_depth)
 
             self.model.fit_generator(data_gen, samples_per_epoch=train_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer],
@@ -322,7 +326,7 @@ class PoolNet(object):
 
     def retrain_output_on_generator(self, train_shapefile, retrain_size=5000,
                                     learning_rate=0.01, save_model=None, nb_epoch=5,
-                                    validation_prop=0.1, bit_depth=11):
+                                    validation_prop=0.1):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
@@ -336,7 +340,6 @@ class PoolNet(object):
                 (6) float 'validation_prop': proportion of training data to use for
                     validation. defaults to 0.1. Does not do validation if validation_prop
                     is None.
-                (7) int 'bit_depth': Bit depth of the images being trained on
 
         OUTPUT  (1) retrained model.
         '''
@@ -351,14 +354,15 @@ class PoolNet(object):
         # train model with frozen weights
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes, bit_depth=bit_depth, cycle=True)
+                               classes=self.classes, bit_depth=self.bit_depth, cycle=True,
+                               show_percentage=False)
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
                                            verbose=1)
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * retrain_size),
-                                            bit_depth=bit_depth)
+                                            bit_depth=self.bit_depth)
 
             self.model.fit_generator(data_gen, samples_per_epoch=retrain_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer],
