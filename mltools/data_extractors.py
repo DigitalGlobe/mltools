@@ -344,10 +344,9 @@ class getIterData(object):
             self.props[diff] -= (total - batch_size)
 
         # initialize generators
-        print 'Creating chip generators for image id...'
+        print 'Creating chip generators...'
         self.chip_gens = {}
         for id in self.props.keys():
-            print '...' + str(id)
             if cycle:
                 self.chip_gens[id] = self.yield_from_img_id_infinite(id,
                                                                      batch=self.props[id])
