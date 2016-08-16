@@ -1,3 +1,5 @@
+# Generic CNN classifier that uses a geojson file and gbdx imagery to classify polygons
+
 import numpy as np
 import random
 import json
@@ -156,7 +158,7 @@ class PoolNet(object):
         with open('tmp_val.geojson', 'w') as f:
             geojson.dump(data, f)
 
-        val_gen = Data('tmp_val.geojson', batch_size=val_size,
+        val_gen = getIterData('tmp_val.geojson', batch_size=val_size,
                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
                               classes=self.classes, bit_depth=bit_depth)
 
@@ -239,7 +241,7 @@ class PoolNet(object):
         # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes, bit_depth=bit_depth)
+                               classes=self.classes, bit_depth=bit_depth, cycle=True)
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
@@ -261,39 +263,40 @@ class PoolNet(object):
         if save_model:
             self.save_model(save_model)
 
-    def fit_with_augmentation(self, train_shapefile, chips_to_yield, train_size,
-                              nb_epoch=10, validation_prop=0.1, save_model=None):
-        '''
-        trains a model using real-time data augmentation. for use with a small shapefile
-        '''
-        # generate data from which to upsample
-        chip_gen = getIterData(train_shapefile, batch_size=chips_to_yield,
-                               min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes)
-        X, Y = chip_gen.next()
+    # def fit_with_augmentation(self, train_shapefile, chips_to_yield, train_size,
+    #                           nb_epoch=10, validation_prop=0.1, save_model=None):
+    #     '''
+    #     Depriciated
+    #     trains a model using real-time data augmentation. for use with a small shapefile
+    #     '''
+    #     # generate data from which to upsample
+    #     chip_gen = getIterData(train_shapefile, batch_size=chips_to_yield,
+    #                            min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
+    #                            classes=self.classes)
+    #     X, Y = chip_gen.next()
+    #
+    #     # image augmentaion via rotations
+    #     datagen = ImageDataGenerator(rotation_range=180)
+    #     datagen.fit(X)
+    #     checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
+    #                                    verbose=1)
+    #
+    #     if validation_prop:
+    #         valX, valY = self._get_val_data(train_shapefile,
+    #                                         int(validation_prop * train_size))
+    #         self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
+    #                                  nb_epoch=nb_epoch, validation_data=(valX, valY),
+    #                                  callbacks=[checkpointer])
+    #
+    #     else:
+    #         self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
+    #                                  nb_epoch=nb_epoch, callbacks=[checkpointer])
+    #
+    #     if save_model:
+    #         self.save_model(save_model)
 
-        # image augmentaion via rotations
-        datagen = ImageDataGenerator(rotation_range=180)
-        datagen.fit(X)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
-                                       verbose=1)
 
-        if validation_prop:
-            valX, valY = self._get_val_data(train_shapefile,
-                                            int(validation_prop * train_size))
-            self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
-                                     nb_epoch=nb_epoch, validation_data=(valX, valY),
-                                     callbacks=[checkpointer])
-
-        else:
-            self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
-                                     nb_epoch=nb_epoch, callbacks=[checkpointer])
-
-        if save_model:
-            self.save_model(save_model)
-
-
-    def retrain_output(self, X_train, Y_train, lr=0.01, **kwargs):
+    def retrain_output(self, X_train, Y_train, learning_rate=0.01, **kwargs):
         '''
         Retrains last dense layer of model. For use with unbalanced classes after
         training on balanced data.
@@ -311,15 +314,15 @@ class PoolNet(object):
             self.model.layers[i].trainable = False
 
         # recompile model
-        sgd = SGD(lr=lr, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=learning_rate, momentum=0.9, nesterov=True)
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # train model
         self.fit_xy(X_train, Y_train, **kwargs)
 
-    def retrain_output_on_generator(self, train_shapefile, retrain_size=5000, lr=0.01,
-                                    save_model=None, nb_epoch=5, validation_prop=0.1,
-                                    bit_depth=11):
+    def retrain_output_on_generator(self, train_shapefile, retrain_size=5000,
+                                    learning_rate=0.01, save_model=None, nb_epoch=5,
+                                    validation_prop=0.1, bit_depth=11):
         '''
         Retrains last dense layer of model with a generator. For use with unbalanced
         classes after training on balanced data.
@@ -342,13 +345,13 @@ class PoolNet(object):
             self.model.layers[i].trainable = False
 
         # recompile model
-        sgd = SGD(lr=lr, momentum=0.9, nesterov=True)
+        sgd = SGD(lr=learning_rate, momentum=0.9, nesterov=True)
         self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # train model with frozen weights
         data_gen = getIterData(train_shapefile, batch_size=self.batch_size,
                                min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-                               classes=self.classes, bit_depth=bit_depth)
+                               classes=self.classes, bit_depth=bit_depth, cycle=True)
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
