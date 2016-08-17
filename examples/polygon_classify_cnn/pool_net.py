@@ -149,9 +149,10 @@ class PoolNet(object):
 
     def _get_val_data(self, shapefile, val_size):
         '''
-        hacky...
+        hacky... don't use for actual training purposes.
         creates validation data from input shapefile to use with fit_generator function
         '''
+        # shuffle features in orig shapefile, use for val data
         with open(shapefile) as f:
             data = geojson.load(f)
             feats = data['features']
@@ -266,38 +267,6 @@ class PoolNet(object):
         if save_model:
             self.save_model(save_model)
 
-    # def fit_with_augmentation(self, train_shapefile, chips_to_yield, train_size,
-    #                           nb_epoch=10, validation_prop=0.1, save_model=None):
-    #     '''
-    #     Depriciated
-    #     trains a model using real-time data augmentation. for use with a small shapefile
-    #     '''
-    #     # generate data from which to upsample
-    #     chip_gen = getIterData(train_shapefile, batch_size=chips_to_yield,
-    #                            min_chip_hw=self.min_chip_hw, max_chip_hw=self.max_chip_hw,
-    #                            classes=self.classes)
-    #     X, Y = chip_gen.next()
-    #
-    #     # image augmentaion via rotations
-    #     datagen = ImageDataGenerator(rotation_range=180)
-    #     datagen.fit(X)
-    #     checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{loss:.2f}.h5",
-    #                                    verbose=1)
-    #
-    #     if validation_prop:
-    #         valX, valY = self._get_val_data(train_shapefile,
-    #                                         int(validation_prop * train_size))
-    #         self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
-    #                                  nb_epoch=nb_epoch, validation_data=(valX, valY),
-    #                                  callbacks=[checkpointer])
-    #
-    #     else:
-    #         self.model.fit_generator(datagen.flow(X,Y), samples_per_epoch=train_size,
-    #                                  nb_epoch=nb_epoch, callbacks=[checkpointer])
-    #
-    #     if save_model:
-    #         self.save_model(save_model)
-
 
     def retrain_output(self, X_train, Y_train, learning_rate=0.01, **kwargs):
         '''
@@ -374,51 +343,6 @@ class PoolNet(object):
         if save_model:
             self.save_model(save_model)
 
-
-    def retrain_on_errors(self, X_train, Y_train, initial_weights, nb_epoch=5,
-                        samples_per_epoch=2500, **kwargs):
-        '''
-        Retrain model on polygons that were initially misclassified.
-        INPUT   (1) array 'X_train': misclassified chips. It is recommended to
-                    only use chips with classification certainty under 0.9, given that
-                    the training data is flawed. A shapefile of these chips can be
-                    created  from filter_by_classification. use shape
-                    (train_size, 3, h, w).
-                (2) list 'Y_train': one-hot associated labels to X_train. shape =
-                    train_size, n_classes)
-                (3) int 'nb_epochs': number of epochs to train for.
-                (4) string 'initial_weights': file path to weights to retrain on. It is
-                    recommended to use weights from the first (balanced) round of
-                    training, then repeat training on unbalanced after this.
-                (5) int 'samples_per_epoch': number of samples to train on per epoch.
-                    if this is more than len(X_train) real-time data augmentation will be
-                    used
-                (6) float 'validation_split': proportion of X_train to validate on.
-                (7) string 'save_model': name of model for saving. if None, does not
-                    save model.
-        OUTPUT  (1) trained model
-        '''
-        # Recompile model to ensure all layers trainable
-        for i in xrange(len(self.model.layers)):
-            self.model.layers[i].trainable = True
-
-        # Fit as usual if augmentation is unncessary
-        if len(X_train) >= samples_per_epoch:
-            self.fit_xy(X_train[:samples_per_epoch], Y_train[:samples_per_epoch],
-                        nb_epoch=nb_epoch, **kwargs)
-
-        else:
-            # Augment data, fit on generator
-            datagen = ImageDataGenerator(rotation_range=120, width_shift_range=0.2,
-                                        height_shift_range=0.2, fill_mode='constant',
-                                        cval=0, horizontal_flip= True, vertical_flip=True)
-
-            # Fit model on batches with real-time data augmentation
-            self.model.load_weights(initial_weights)
-            self.model.fit_generator(datagen.flow(X_train, Y_train,
-                                    batch_size=self.batch_size),
-                                    samples_per_epoch=samples_per_epoch,
-                                    nb_epoch=nb_epoch)
 
     def save_model(self, model_name):
         '''
