@@ -348,7 +348,7 @@ class getIterData(object):
         self.chip_gens = {}
         for id in self.props.keys():
             if cycle:
-                self.chip_gens[id] = self.yield_from_img_id_infinite(id,
+                self.chip_gens[id] = self.yield_infinitely_from_img_id(id,
                                                                      batch=self.props[id])
             else:
                 self.chip_gens[id] = self.yield_from_img_id(id, batch=self.props[id])
@@ -390,7 +390,8 @@ class getIterData(object):
             try:
                 if str(polygon['properties'][property_name]) == property:
                     prop += 1
-            except:
+            except (KeyError):
+                print 'warning: not all polygons have property ' + str(property_name)
                 continue
 
         return float(prop) / total
@@ -485,7 +486,7 @@ class getIterData(object):
                 yield data
                 ct, inputs, labels, ids = 0, [], [], []
 
-    def yield_from_img_id_infinite(self, img_id, batch):
+    def yield_infinitely_from_img_id(self, img_id, batch):
         '''
         Same as yield_from_img_id except this function will loop infinitely though the
         data. This may result in duplicate data in each batch, or infinite loops. The
