@@ -76,9 +76,11 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
                   buffer=[0, 0], mask=True, normalize=True, img_name=None,
-                  return_labels=True, bit_depth=8):
+                  return_labels=True, bit_depth=8, image_id=None, show_percentage=True):
     '''
-    Generates batches of training data from shapefile.
+    Generates batches of training data from shapefile. If the shapefile has polygons from
+        more than one image strip, strips must be named after their catalog id as it is
+        referenced in the image_id property of each polyogn.
 
     INPUT   shapefile (string): name of shapefile to extract polygons from
             batch_size (int): number of chips to generate each iteration
@@ -95,8 +97,17 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
             normalize (bool): divide all chips by max pixel intensity (normalize net
                 input). Defualts to True.
             img_name (string): name of tif image to use for extracting chips. Defaults to
-                None (the image name is assumed to be the image id listed in shapefile)
+                None (the image name is assumed to be the image id listed in shapefile).
+                This is only relevant if the shapefile has polygons only in one image
+                strip. Otherwise each strip must be named after the image_id found in
+                the polygon properties.
             return_labels (bool): Include labels in output. Defualts to True.
+            bit_depth (int): Bit depth of the imagery, necessary for proper normalization.
+                defualts to 8 (standard for dra'd imagery).
+            image_id (string): Image id if you only want to generate data from a specific
+                image strip. Defaults to None (will generate chips from all iamgery)
+            show_percentage (bool): Print percent of chips collected to stdout. Defaults
+                to True
 
     OUTPUT  Returns a generator object (g). calling g.next() returns the following:
             chips: one batch of masked (if True) chips
@@ -112,8 +123,13 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
 
     ct, inputs, labels, ids = 0, [], [], []
     nb_classes = len(classes)
-    print 'Extracting image ids...'
-    img_ids = gt.find_unique_values(shapefile, property_name='image_id')
+
+    # determine which images to extract chips from
+    if image_id:
+        img_ids = [image_id]
+    else:
+        print 'Finding unique image ids...'
+        img_ids = gt.find_unique_values(shapefile, property_name='image_id')
 
     # Create numerical class names
     cls_dict = {classes[i]: i for i in xrange(len(classes))}
@@ -131,10 +147,19 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                                                 mask=mask):
 
             # check for adequate chip size
+            if chip is None:
+                if show_percentage:
+                    sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch_size)) + ' ' * 5)
+                    sys.stdout.flush()
+                continue
+
             chan, h, w = np.shape(chip)
             pad_h, pad_w = max_chip_hw - h, max_chip_hw - w
-            if chip is None or min(h, w) < min_chip_hw or max(
-                    h, w) > max_chip_hw:
+
+            if min(h, w) < min_chip_hw or max(h, w) > max_chip_hw:
+                if show_percentage:
+                    sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch_size)) + ' ' * 5)
+                    sys.stdout.flush()
                 continue
 
             # zero-pad chip to standard net input size
@@ -168,8 +193,9 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
             # do not include image_id for fitting net
             inputs.append(chip_patch)
             ct += 1
-            sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch_size)) + ' ' * 5)
-            sys.stdout.flush()
+            if show_percentage:
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(batch_size)) + ' ' * 5)
+                sys.stdout.flush()
 
             if ct == batch_size:
                 data = [np.array([i for i in inputs])]
