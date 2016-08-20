@@ -359,11 +359,11 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
             sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
             sys.stdout.flush()
 
-    # remove vrt file
-    try:
-        os.remove('tmp.vrt')
-    except:
-        pass
+        # remove vrt file
+        try:
+            os.remove('tmp.vrt')
+        except:
+            pass
 
     # save new geojson
     print 'Saving...'
