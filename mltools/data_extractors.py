@@ -75,8 +75,8 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 
 def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                   classes=['No swimming pool', 'Swimming pool'], return_id = False,
-                  buffer=[0, 0], mask=True, normalize=True, img_name=None,
-                  return_labels=True, bit_depth=8, image_id=None, show_percentage=True):
+                  normalize=True, img_name=None, return_labels=True, bit_depth=8,
+                  image_id=None, show_percentage=True, mask=True, **kwargs):
     '''
     Generates batches of training data from shapefile. If the shapefile has polygons from
         more than one image strip, strips must be named after their catalog id as it is
@@ -85,7 +85,7 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
     INPUT   shapefile (string): name of shapefile to extract polygons from
             batch_size (int): number of chips to generate each iteration
             min_chip_hw (int): minimum size acceptable (in pixels) for a polygon.
-                defaults to 30.
+                defaults to 10.
             max_chip_hw (int): maximum size acceptable (in pixels) for a polygon. Note
                 that this will be the size of the height and width of input images to the
                 net. defaults to 125.
@@ -143,8 +143,7 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
         for chip, properties in img.iter_vector(vector=shapefile,
                                                 properties=True,
                                                 filter=[{'image_id': img_id}],
-                                                buffer=buffer,
-                                                mask=mask):
+                                                mask=mask, **kwargs):
 
             # check for adequate chip size
             if chip is None:
@@ -227,6 +226,149 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                 Y[i, labels[i]] = 1
             data.append(Y)
         yield data
+
+def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
+                               classes=['No swimming pool', 'Swimming pool'],
+                               normalize=True, return_id=False, return_labels=True,
+                               bit_depth=8, mask=True, show_percentage=True,
+                               assert_all_valid=False, **kwargs):
+    '''
+    Returns pixel intensity array given a list of polygons (features) from an open geojson
+        file. This enables extraction of pixel data multiple image strips using polygons
+        not saved to disk. Will only return polygons of valid size (between min_chip_hw
+        and max_chip_hw).
+
+    Each image strip referenced in the image_id properties of
+        polygons must be  in the working directory and named as follows: <image_id>.tif
+
+    INPUTS  features (list): list of polygon features from an open geojson file.
+                IMPORTANT: Geometries must be in the same projection as the imagery! No
+                projection checking is done!
+            min_chip_hw (int): minimum size acceptable (in pixels) for a polygon.
+                defaults to 10.
+            max_chip_hw (int): maximum size acceptable (in pixels) for a polygon. Note
+                that this will be the size of the height and width of all output chips.
+                defaults to 125.
+            classes (list['string']): name of classes for chips. Defualts to swimming
+                pool classes (['Swimming_pool', 'No_swimming_pool'])
+            normalize (bool): divide all chips by max pixel intensity (normalize net
+                input). Defualts to True.
+            return_id (bool): return the feature id with each chip. Defaults to False.
+            return_labels (bool): Include labels in output. Defualts to True.
+            bit_depth (int): Bit depth of the imagery, necessary for proper normalization.
+            defualts to 8 (standard for dra'd imagery).
+            show_percentage (bool): Print percent of chips collected to stdout. Defaults
+                to True
+            assert_all_valid (bool): Throw an error if any of the included polygons do not
+                match the size criteria (defined by min and max_chip_hw), or are returned
+                as None from geoio. Defaults to False.
+
+            kwargs:
+            -------
+            bands (list of ints): The band numbers (base 1) to be retrieved from the
+                imagery. Defualts to None (all bands retrieved)
+            buffer (int or list of two ints): Number of pixels to add as a buffer around
+                the requested pixels. If an int, the same number of pixels will be added
+                to both dimensions. If a list of two ints, they will be interpreted as
+                xpad and ypad.
+
+    OUTPUT  (chips, labels). Chips will be of size (n_bands, max_chip_hw, max_chip_hw).
+                Polygons will be zero-padded to the proper shape
+    '''
+
+    inputs, labels, ids = [], [], []
+    ct, total = 0, len(features)
+    nb_classes = len(classes)
+    cls_dict = {classes[i]: i for i in xrange(len(classes))}
+    imgs = {} # {image id: open image}
+
+
+    # cycle through polygons and get pixel data
+    for poly in features:
+        id = poly['properties']['image_id']
+        coords = poly['geometry']['coordinates'][0]
+
+        # open all images in geoio
+        if id not in imgs.keys():
+            try:
+                imgs[id] = geoio.GeoImage(id + '.tif')
+            except (ValueError):
+                raise Exception('{}.tif not found in current directory. Please make ' \
+                                'sure all images refereced in features are present and ' \
+                                'named properly'.format(str(id)))
+
+        # call get_data on polygon geom
+        chip = imgs[id].get_data_from_coords(coords, mask=mask, **kwargs)
+        if chip is None:
+            if show_percentage:
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(total)) + ' ' * 5)
+                sys.stdout.flush()
+            if assert_all_valid:
+                raise Exception('Invalid polygon with feature id {}. Please make sure' \
+                                'all polygons are valid or set assert_all_valid to ' \
+                                'False.'.format(str(poly['properties']['image_id'])))
+            continue
+
+        # check for adequate chip size
+        chan, h, w = np.shape(chip)
+        pad_h, pad_w = max_chip_hw - h, max_chip_hw - w
+
+        if min(h, w) < min_chip_hw or max(h, w) > max_chip_hw:
+            if show_percentage:
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(total)) + ' ' * 5)
+                sys.stdout.flush()
+            if assert_all_valid:
+                raise Exception('Polygon with feature id {} does not meet the size ' \
+                                'requirements. Please filter the geojson first or ' \
+                                'set assert_all_valid to False.')
+            continue
+
+        # zero-pad polygons to (n_bands, max_chip_hw, max_chip_hw)
+        chip = chip.filled(0).astype(float)  # replace masked entries with zeros
+        chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
+            (pad_w - pad_w/2))], 'constant', constant_values=0)
+
+        # norm pixel intenisty from 0 to 1
+        if normalize:
+            div = (2 ** bit_depth) - 1
+            chip_patch /= float(div)
+
+        # get labels
+        if return_labels:
+            try:
+                label = poly['properties']['class_name']
+                if label is None:
+                    continue
+                labels.append(cls_dict[label])
+            except (TypeError, KeyError):
+                continue
+
+        # get feature ids
+        if return_id:
+            id = poly['properties']['feature_id']
+            ids.append(id)
+
+        # append chip to inputs
+        inputs.append(chip_patch)
+        ct += 1
+        if show_percentage:
+            sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(total)) + ' ' * 5)
+            sys.stdout.flush()
+
+    # combine data
+    data = [np.array([i for i in inputs])]
+
+    if return_id:
+        data.append(ids)
+
+    if return_labels:
+        # format labels
+        Y = np.zeros((len(labels), nb_classes))
+        for i in range(len(labels)):
+            Y[i, labels[i]] = 1
+        data.append(Y)
+
+    return data
 
 
 def random_window(image, chip_size, no_chips=10000):
