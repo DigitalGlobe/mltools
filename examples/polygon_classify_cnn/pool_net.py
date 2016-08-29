@@ -48,7 +48,7 @@ class PoolNet(object):
                 of chips. Defaults to 11.
     '''
 
-    def __init__(self, classes=['Swimming pool', 'No swimming pool'], max_chip_hw=125,
+    def __init__(self, classes=['No swimming pool', 'Swimming pool'], max_chip_hw=125,
                 min_chip_hw=0, batch_size=32, input_shape=(3, 125, 125), fc = False,
                 old_model=False, model_name=None, learning_rate = 0.001, bit_depth=11):
 
@@ -272,7 +272,7 @@ class PoolNet(object):
     def fit_from_geojson(self, train_shapefile, chips_per_batch = 5000,
                          batches_per_epoch=4, validation_split=0.1, save_model=None,
                          nb_epoch=10, shuffle_btwn_epochs=True, return_history=False,
-                         save_all_weights=True):
+                         save_all_weights=True, retrain=False, lr_2=0.01):
         '''
         Fit a model using a generator that iteratively yields large batches of chips to
             train on for each epoch.
@@ -292,17 +292,29 @@ class PoolNet(object):
                     on batches * batches_per_epoch chips. Defaults to 10.
                 shuffle_btwn_epochs (bool): Shuffle the features in train_shapefile
                     between each epoch. Defaults to True.
-                return_history (bool): Return a dict containing metrics from past epochs.
+                return_history (bool): Return a list containing metrics from past epochs.
                     Defaults to False.
                 save_all_weights (bool): Save model weights after each epoch. A directory
                     called models will be created in the working directory. Defaults to
                     True.
+                retrain (bool): freeze all layers except final softmax to retrain only
+                    the final weights of the model. Defaults to False
+                lr_2 (float): Learning rate for the second round of training. Only
+                    relevant if retrain is True. Defaults to 0.01.
         OUTPUT  trained model, history
         '''
 
         train_size = chips_per_batch * batches_per_epoch
-        full_hist = {}
+        full_hist = []
 
+        if retrain:
+            # freeze all layers except final dense
+            for i in xrange(len(self.model.layers[:-1])):
+                self.model.layers[i].trainable = False
+
+            # recompile model
+            sgd = SGD(lr=lr_2, momentum=0.9, nesterov=True)
+            self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
 
         # load geojson polygons
         with open(train_shapefile) as f:
@@ -314,20 +326,21 @@ class PoolNet(object):
                             ' data or decrease value of batches_per_epoch.')
 
         # set aside validation data
-        val_size = int(validation_split * train_size)
-        val_data = polygons[: val_size]
-        polygons = polygons[val_size: ]
-        chips_per_batch = int((1 - validation_split) * chips_per_batch)
+        if validation_split > 0:
+            val_size = int(validation_split * train_size)
+            val_data = polygons[: val_size]
+            polygons = polygons[val_size: ]
+            chips_per_batch = int((1 - validation_split) * chips_per_batch)
 
-        # extract validation chips
-        print 'getting validation data'
-        valX, valY = de.get_data_from_polygon_list(val_data, min_chip_hw=self.min_chip_hw,
-                                                   max_chip_hw=self.max_chip_hw,
-                                                   classes=self.classes, normalize=True,
-                                                   return_labels=True,
-                                                   bit_depth=self.bit_depth, mask=True,
-                                                   # show_percentage=False,
-                                                   assert_all_valid=True)
+            # extract validation chips
+            print 'getting validation data'
+            valX, valY = de.get_data_from_polygon_list(val_data, min_chip_hw=self.min_chip_hw,
+                                                       max_chip_hw=self.max_chip_hw,
+                                                       classes=self.classes, normalize=True,
+                                                       return_labels=True,
+                                                       bit_depth=self.bit_depth, mask=True,
+                                                       # show_percentage=False,
+                                                       assert_all_valid=True)
 
         for e in range(nb_epoch):
             # make diretory for saved weights
@@ -359,17 +372,30 @@ class PoolNet(object):
                                                      # show_percentage=False,
                                                      assert_all_valid=True)
 
-                if save_all_weights and batch == batches_per_epoch - 1:
-                    hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
-                                          validation_data=(valX, valY),
-                                          callbacks=[chk])
+                # train with validation data
+                if validation_split > 0:
+                    if save_all_weights and batch == batches_per_epoch - 1:
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
+                                              validation_data=(valX, valY),
+                                              callbacks=[chk])
 
+                    else:
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
+                                              validation_data=(valX, valY))
+
+                # train without validation data
                 else:
-                    hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
-                                          validation_data=(valX, valY))
+                    if save_all_weights and batch == batches_per_epoch - 1:
+                        chk = ModelCheckpoint(filepath="./models/epoch" + str(e) + ".h5",
+                                              verbose=1)
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
+                                              callbacks=[chk])
+
+                    else:
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1)
 
             # dict recording loss and val_loss after each epoch
-            full_hist['epoch_' + str(e + 1)] = hist.history
+            full_hist.append(hist.history)
 
         if save_model:
             self.save_model(save_model)
@@ -526,7 +552,6 @@ class PoolNet(object):
             output_file = output_name
 
         # Classify all chips in input shapefile
-        print 'Classifying test data...'
         for x in get_iter_data(shapefile, batch_size = 5000, classes = self.classes,
                                max_chip_hw=self.input_shape[1], img_name=img_name,
                                min_chip_hw = self.min_chip_hw, return_labels=False):
