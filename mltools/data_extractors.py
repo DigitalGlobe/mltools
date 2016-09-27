@@ -13,18 +13,20 @@ from osgeo.gdalconst import *
 from functools import reduce
 
 
-def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False, num_chips=None):
+def get_data(shapefile, return_labels=False, return_id=False, buffer=[0, 0], mask=False,
+             num_chips=None):
     """Return pixel intensity array for each geometry in shapefile.
        The image reference for each geometry is found in the image_id
        property of the shapefile.
        If shapefile contains points, then buffer must have non-zero entries.
-       The function also returns a list of geometry ids; this is useful in
+       The function also can also return a list of geometry ids; this is useful in
        case some of the shapefile entries do not produce a valid intensity
        array and/or class name.
 
        Args:
            shapefile (str): Name of shapefile in mltools geojson format.
            return_labels (bool): If True, then a label vector is returned.
+           return_id (bool): if True, then the geometry id is returned.
            buffer (list): 2-dim buffer in PIXELS. The size of the box in each
                           dimension is TWICE the buffer size.
            mask (bool): Return a masked array.
@@ -58,7 +60,10 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False, num_chip
                 continue
 
             # every geometry must have id
-            this_data = [chip, properties['feature_id']]
+            if return_id:
+                this_data = [chip, properties['feature_id']]
+            else:
+                this_data = [chip]
 
             if return_labels:
                 try:
