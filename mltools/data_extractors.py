@@ -79,7 +79,7 @@ def get_data(shapefile, return_labels=False, return_id=False, buffer=[0, 0], mas
             # return if max num chips is reached
             if num_chips:
                 ct += 1
-                if ct == limit:
+                if ct == num_chips:
                     return zip(*data)
 
     return zip(*data)
