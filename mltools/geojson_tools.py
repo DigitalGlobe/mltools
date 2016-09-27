@@ -284,7 +284,6 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
     Creates a geojson file containing only acceptable side dimensions for polygons.
     INPUT   (1) string 'shapefile': name of shapefile with original samples
             (2) string 'output_file': name of file in which to save selected polygons.
-                This should end in '.geojson'
             (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for
                 given polygon
             (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for
@@ -300,7 +299,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
     # load polygons
     with open(shapefile) as f:
         data = geojson.load(f)
-    total = float(len(data['features']))
+    total_features = float(len(data['features']))
 
     # format output file name
     if output_file[-8:] != '.geojson':
@@ -331,32 +330,33 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
             if chip is None:
                 ix += 1
                 # add percent complete to stdout
-                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
                 sys.stdout.flush()
                 continue
 
             chan,h,w = np.shape(chip)
 
+            # Identify small chips
             if min(h, w) < min_polygon_hw:
                 small_ix.append(ix)
                 ix += 1
-                # add percent complete to stdout
-                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
                 sys.stdout.flush()
                 continue
 
+            # Identify large chips
             elif max(h, w) > max_polygon_hw:
                 large_ix.append(ix)
                 ix += 1
-                # add percent complete to stdout
-                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
+                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
                 sys.stdout.flush()
                 continue
 
+            # Identify valid chips
             ix_ok.append(ix)
             ix += 1
             # add percent complete to stdout
-            sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total) + ' ' * 20)
+            sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
             sys.stdout.flush()
 
         # remove vrt file
