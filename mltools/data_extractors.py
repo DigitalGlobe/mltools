@@ -13,7 +13,7 @@ from osgeo.gdalconst import *
 from functools import reduce
 
 
-def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
+def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False, num_chips=None):
     """Return pixel intensity array for each geometry in shapefile.
        The image reference for each geometry is found in the image_id
        property of the shapefile.
@@ -28,6 +28,7 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
            buffer (list): 2-dim buffer in PIXELS. The size of the box in each
                           dimension is TWICE the buffer size.
            mask (bool): Return a masked array.
+           num_chips (int): Maximum number of arrays to return.
 
        Returns:
            chips (list): List of pixel intensity numpy arrays.
@@ -35,7 +36,7 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
            labels (list): List of class names, if return_labels=True
     """
 
-    data = []
+    data, ct = [], 0
 
     # go through point_file and unique image_id's
     image_ids = gt.find_unique_values(shapefile, property_name='image_id')
@@ -70,7 +71,77 @@ def get_data(shapefile, return_labels=False, buffer=[0, 0], mask=False):
 
             data.append(this_data)
 
+            # return if max num chips is reached
+            if num_chips:
+                ct += 1
+                if ct == limit:
+                    return zip(*data)
+
     return zip(*data)
+
+
+def random_window(image, chip_size, no_chips=10000):
+    """Implement a random chipper on a georeferenced image.
+
+       Args:
+           image (str): Image filename.
+           chip_size (list): Array of chip dimensions.
+           no_chips (int): Number of chips.
+
+       Returns:
+           List of chip rasters.
+    """
+    img = geoio.GeoImage(image)
+
+    chips = []
+    for i, chip in enumerate(img.iter_window_random(
+            win_size=chip_size, no_chips=no_chips)):
+        chips.append(chip)
+        if i == no_chips - 1:
+            break
+
+    return chips
+
+
+def apply_mask(input_file, mask_file, output_file):
+    """Apply binary mask on image. Input image and mask must have the same
+       (x,y) dimension and the same projection.
+
+       Args:
+           input_file (str): Input file name.
+           mask_file (str): Mask file name.
+           output_file (str): Masked image file name.
+    """
+
+    source_ds = gdal.Open(input_file, GA_ReadOnly)
+    nbands = source_ds.RasterCount
+    mask_ds = gdal.Open(mask_file, GA_ReadOnly)
+
+    xsize, ysize = source_ds.RasterXSize, source_ds.RasterYSize
+    xmasksize, ymasksize = mask_ds.RasterXSize, mask_ds.RasterYSize
+
+    print 'Generating mask'
+
+    # Create target DS
+    driver = gdal.GetDriverByName('GTiff')
+    dst_ds = driver.Create(output_file, xsize, ysize, nbands, GDT_Byte)
+    dst_ds.SetGeoTransform(source_ds.GetGeoTransform())
+    dst_ds.SetProjection(source_ds.GetProjection())
+
+    # Apply mask --- this is line by line at the moment, not so efficient
+    for i in range(ysize):
+        # read line from input image
+        line = source_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)
+        # read line from mask
+        mask_line = mask_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)
+        # apply mask
+        masked_line = line * (mask_line > 0)
+        # write
+        for n in range(1, nbands + 1):
+            dst_ds.GetRasterBand(n).WriteArray(masked_line[n - 1].astype(np.uint8),
+                                               xoff=0, yoff=i)
+    # close datasets
+    source_ds, dst_ds = None, None
 
 
 def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
@@ -78,7 +149,7 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
                   normalize=True, img_name=None, return_labels=True, bit_depth=8,
                   image_id=None, show_percentage=True, mask=True, **kwargs):
     '''
-    Generates batches of training data from shapefile. If the shapefile has polygons from
+    Generates batches of uniformly-sized training data from shapefile. If the shapefile has polygons from
         more than one image strip, strips must be named after their catalog id as it is
         referenced in the image_id property of each polyogn.
 
@@ -234,9 +305,9 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
                                assert_all_valid=False, **kwargs):
     '''
     Returns pixel intensity array given a list of polygons (features) from an open geojson
-        file. This enables extraction of pixel data multiple image strips using polygons
-        not saved to disk. Will only return polygons of valid size (between min_chip_hw
-        and max_chip_hw).
+        file. All chips woll be of usiform size. This enables extraction of pixel data
+        multiple image strips using polygons not saved to disk. Will only return polygons
+        of valid size (between min_chip_hw and max_chip_hw).
 
     Each image strip referenced in the image_id properties of
         polygons must be  in the working directory and named as follows: <image_id>.tif
@@ -369,67 +440,3 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
         data.append(Y)
 
     return data
-
-
-def random_window(image, chip_size, no_chips=10000):
-    """Implement a random chipper on a georeferenced image.
-
-       Args:
-           image (str): Image filename.
-           chip_size (list): Array of chip dimensions.
-           no_chips (int): Number of chips.
-
-       Returns:
-           List of chip rasters.
-    """
-    img = geoio.GeoImage(image)
-
-    chips = []
-    for i, chip in enumerate(img.iter_window_random(
-            win_size=chip_size, no_chips=no_chips)):
-        chips.append(chip)
-        if i == no_chips - 1:
-            break
-
-    return chips
-
-
-def apply_mask(input_file, mask_file, output_file):
-    """Apply binary mask on image. Input image and mask must have the same
-       (x,y) dimension and the same projection.
-
-       Args:
-           input_file (str): Input file name.
-           mask_file (str): Mask file name.
-           output_file (str): Masked image file name.
-    """
-
-    source_ds = gdal.Open(input_file, GA_ReadOnly)
-    nbands = source_ds.RasterCount
-    mask_ds = gdal.Open(mask_file, GA_ReadOnly)
-
-    xsize, ysize = source_ds.RasterXSize, source_ds.RasterYSize
-    xmasksize, ymasksize = mask_ds.RasterXSize, mask_ds.RasterYSize
-
-    print 'Generating mask'
-
-    # Create target DS
-    driver = gdal.GetDriverByName('GTiff')
-    dst_ds = driver.Create(output_file, xsize, ysize, nbands, GDT_Byte)
-    dst_ds.SetGeoTransform(source_ds.GetGeoTransform())
-    dst_ds.SetProjection(source_ds.GetProjection())
-
-    # Apply mask --- this is line by line at the moment, not so efficient
-    for i in range(ysize):
-        # read line from input image
-        line = source_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)
-        # read line from mask
-        mask_line = mask_ds.ReadAsArray(xoff=0, yoff=i, xsize=xsize, ysize=1)
-        # apply mask
-        masked_line = line * (mask_line > 0)
-        # write
-        for n in range(1, nbands + 1):
-            dst_ds.GetRasterBand(n).WriteArray(masked_line[n - 1].astype(np.uint8),
-                                               xoff=0, yoff=i)
-    # close datasets
-    source_ds, dst_ds = None, None
