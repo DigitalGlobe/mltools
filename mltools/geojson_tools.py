@@ -252,12 +252,8 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
         test_out = 'test_{}'.format(output_file)
         train_out = 'train_{}'.format(output_file)
         test_size = int(train_test * len(final))
-        test = {
-            data.keys()[0]: data.values()[0],
-            data.keys()[1]: final[:test_size]}
-        train = {
-            data.keys()[0]: data.values()[0],
-            data.keys()[1]: final[test_size:]}
+        train, test  = data.copy(), data.copy()
+        train['features'], test['features'] = final[test_size:], final[:test_size]
 
         # save train and test geojsons
         with open(test_out, 'wb') as f1:
@@ -269,11 +265,10 @@ def create_balanced_geojson(shapefile, output_file, balanced = True,
         print 'Train polygons saved as {}'.format(train_out)
 
     else:  # only save one file with balanced classes
-        balanced_json = {
-            data.keys()[0]: data.values()[0],
-            data.keys()[1]: final}
+        data['features'] = final
+
         with open(output_file, 'wb') as f:
-            geojson.dump(balanced_json, f)
+            geojson.dump(data, f)
         print '{} polygons saved as {}'.format(len(final), output_file)
 
 
@@ -376,7 +371,7 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
     if shuffle:
         np.random.shuffle(ok_polygons)
 
-    filtrate = {data.keys()[i]: data.values()[i] for i in xrange(len(data.keys()) - 1)}
+    filtrate = {data.keys()[i]: data.values()[i] for i in xrange(len(data.keys()))}
     filtrate['features'] = ok_polygons
 
     with open(output_file, 'wb') as f:
