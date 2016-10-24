@@ -242,11 +242,6 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
             chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
                 (pad_w - pad_w/2))], 'constant', constant_values=0)
 
-            # # resize image
-            # if resize_dim:
-            #     if resize_dim != chip_patch.shape:
-            #         chip_patch = resize(chip_patch, resize_dim)
-
             if normalize:
                 div = (2 ** bit_depth) - 1
                 chip_patch /= float(div)
@@ -303,11 +298,12 @@ def get_iter_data(shapefile, batch_size=32, min_chip_hw=0, max_chip_hw=125,
             data.append(Y)
         yield data
 
+
 def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
                                classes=['No swimming pool', 'Swimming pool'],
                                normalize=True, return_id=False, return_labels=True,
                                bit_depth=8, mask=True, show_percentage=True,
-                               assert_all_valid=False, **kwargs):
+                               assert_all_valid=False, resize_dim=None, **kwargs):
     '''
     Returns pixel intensity array given a list of polygons (features) from an open geojson
         file. All chips woll be of usiform size. This enables extraction of pixel data
@@ -330,7 +326,9 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
             normalize (bool): divide all chips by max pixel intensity (normalize net
                 input). Defualts to True.
             return_id (bool): return the feature id with each chip. Defaults to False.
-            return_labels (bool): Include labels in output. Defualts to True.
+            return_labels (bool): Include labels in output. Labels will be numerical
+                and correspond to the class index within the classes argument. Defualts
+                to True.
             bit_depth (int): Bit depth of the imagery, necessary for proper normalization.
             defualts to 8 (standard for dra'd imagery).
             show_percentage (bool): Print percent of chips collected to stdout. Defaults
@@ -338,6 +336,9 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
             assert_all_valid (bool): Throw an error if any of the included polygons do not
                 match the size criteria (defined by min and max_chip_hw), or are returned
                 as None from geoio. Defaults to False.
+            resize_dim (tup): Dimensions to reshape chips into after padding. Use for
+                downsampling large chips. Dimensions: (n_chan, rows, cols). Defaults to
+                None (does not resize).
 
             kwargs:
             -------
@@ -404,6 +405,10 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
         chip_patch = np.pad(chip, [(0, 0), (pad_h/2, (pad_h - pad_h/2)), (pad_w/2,
             (pad_w - pad_w/2))], 'constant', constant_values=0)
 
+        # resize chip
+        if resize_dim:
+            chip_patch = np.resize(chip_patch, resize_dim)
+
         # norm pixel intenisty from 0 to 1
         if normalize:
             div = (2 ** bit_depth) - 1
@@ -432,26 +437,28 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
             sys.stdout.flush()
 
     # combine data
-    data = [np.array([i for i in inputs])]
+    inputs = [np.array([i for i in inputs])]
 
     if return_id:
-        data.append(ids)
+        inputs.append(ids)
 
     if return_labels:
         # format labels
         Y = np.zeros((len(labels), nb_classes))
         for i in range(len(labels)):
             Y[i, labels[i]] = 1
-        data.append(Y)
+        inputs.append(Y)
 
-    return data
+    return inputs
+
 
 class getIterData(object):
     '''
     A class for iteratively extracting chips from a geojson shapefile and one or more
         corresponding GeoTiff strips.
     INPUT   shapefile (string): name of shapefile to extract polygons from
-            batch_size (int): number of chips to generate per call of self.create_batch(). Defaults to 10000
+            batch_size (int): number of chips to generate per call of self.create_batch().
+                Defaults to 10000
             classes (list['string']): name of classes for chips. Defualts to swimming
                 pool classes (['Swimming_pool', 'No_swimming_pool'])
             min_chip_hw (int): minimum size acceptable (in pixels) for a polygon.
