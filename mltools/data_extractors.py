@@ -7,6 +7,7 @@ import geojson
 import geojson_tools as gt
 import numpy as np
 import sys
+from scipy.misc import imresize
 from itertools import cycle
 import osgeo.gdal as gdal
 from osgeo.gdalconst import *
@@ -407,7 +408,10 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
 
         # resize chip
         if resize_dim:
-            chip_patch = np.resize(chip_patch, resize_dim)
+            new_chip = []
+            for band_ix in xrange(len(chip_patch)):
+                new_chip.append(imresize(chip_patch[band_ix], resize_dim[-2:]).astype(float))
+            chip_patch = np.array(new_chip)
 
         # norm pixel intenisty from 0 to 1
         if normalize:
