@@ -46,6 +46,8 @@ class PoolNet(object):
                 to 0.001
             bit_depth (int): bit depth of the imagery trained on. Used for normalization
                 of chips. Defaults to 11.
+            small_model (bool): use a model with nine layers instead of 16. Will train
+                faster. Defaults to False.
             kernel_size (int): size (in pixels) of the kernels to use at each
                 convolutional layer of the network. Defaults to 3 (standard for VGGNet)
     '''
