@@ -46,11 +46,14 @@ class PoolNet(object):
                 to 0.001
             bit_depth (int): bit depth of the imagery trained on. Used for normalization
                 of chips. Defaults to 11.
+            kernel_size (int): size (in pixels) of the kernels to use at each
+                convolutional layer of the network. Defaults to 3 (standard for VGGNet)
     '''
 
     def __init__(self, classes=['No swimming pool', 'Swimming pool'], max_chip_hw=125,
-                min_chip_hw=0, batch_size=32, input_shape=(3, 125, 125), fc = False,
-                old_model=False, model_name=None, learning_rate = 0.001, bit_depth=11):
+                min_chip_hw=0, batch_size=32, input_shape=(3, 125, 125), fc=False,
+                old_model=False, small_model=False, model_name=None, learning_rate = 0.001,
+                bit_depth=11, kernel_size=3):
 
         self.nb_classes = len(classes)
         self.classes = classes
@@ -59,9 +62,11 @@ class PoolNet(object):
         self.batch_size = batch_size
         self.fc = fc
         self.old_model = old_model
+        self.small_model = small_model
         self.input_shape = input_shape
         self.lr = learning_rate
         self.bit_depth = bit_depth
+        self.kernel_size = kernel_size
         self.cls_dict = {classes[i]: i for i in xrange(len(self.classes))}
 
         if self.old_model:
@@ -72,6 +77,10 @@ class PoolNet(object):
             self.nb_classes = self.model.output_shape[-1]
             self.input_shape = (self.model.input_shape[1], self.max_side_dim,
                                 self.max_side_dim)
+
+        elif self.small_model:
+            self.model = self._small_model()
+
         else:
             self.model = self._VGG_16()
 
@@ -88,39 +97,52 @@ class PoolNet(object):
 
         model = Sequential()
         model.add(ZeroPadding2D((1,1), input_shape=self.input_shape))
-        model.add(Convolution2D(64, 3, 3,activation='relu',input_shape=self.input_shape))
+        model.add(Convolution2D(64, self.kernel_size, self.kernel_size,activation='relu',
+                                input_shape=self.input_shape))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(64, 3, 3, activation='relu'))
+        model.add(Convolution2D(64, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
 
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(128, 3, 3, activation='relu'))
+        model.add(Convolution2D(128, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(128, 3, 3, activation='relu'))
+        model.add(Convolution2D(128, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
 
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(256, 3, 3, activation='relu'))
+        model.add(Convolution2D(256, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(256, 3, 3, activation='relu'))
+        model.add(Convolution2D(256, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(256, 3, 3, activation='relu'))
+        model.add(Convolution2D(256, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
 
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(512, 3, 3, activation='relu'))
+        model.add(Convolution2D(512, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(512, 3, 3, activation='relu'))
+        model.add(Convolution2D(512, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(512, 3, 3, activation='relu'))
+        model.add(Convolution2D(512, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
 
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(512, 3, 3, activation='relu'))
+        model.add(Convolution2D(512, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(512, 3, 3, activation='relu'))
+        model.add(Convolution2D(512, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(ZeroPadding2D((1,1)))
-        model.add(Convolution2D(512, 3, 3, activation='relu'))
+        model.add(Convolution2D(512, self.kernel_size, self.kernel_size,
+                                activation='relu'))
         model.add(MaxPooling2D((2,2), strides=(2,2)))
 
         model.add(Flatten())
@@ -133,6 +155,329 @@ class PoolNet(object):
         sgd = SGD(lr=self.lr, decay=0.01, momentum=0.9, nesterov=True)
         model.compile(optimizer = 'sgd', loss = 'categorical_crossentropy')
         return model
+
+    def _small_model(self):
+        '''
+        Alternative model architecture with fewer layers for computationally expensive
+            training datasets
+        '''
+        print 'Compiling Small Net...'
+
+        model = Sequential()
+        model.add(ZeroPadding2D((1,1), input_shape=self.input_shape))
+        model.add(Convolution2D(64, self.kernel_size, self.kernel_size,activation='relu',
+                                input_shape=self.input_shape))
+        model.add(ZeroPadding2D((1,1)))
+        model.add(Convolution2D(64, self.kernel_size, self.kernel_size,
+                                activation='relu'))
+        model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+        model.add(ZeroPadding2D((1,1)))
+        model.add(Convolution2D(128, self.kernel_size, self.kernel_size,
+                                activation='relu'))
+        model.add(ZeroPadding2D((1,1)))
+        model.add(Convolution2D(128, self.kernel_size, self.kernel_size,
+                                activation='relu'))
+        model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+        model.add(Flatten())
+        model.add(Dense(2048, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(2048, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(self.nb_classes, activation='softmax'))
+
+        sgd = SGD(lr=self.lr, decay=0.01, momentum=0.9, nesterov=True)
+        model.compile(optimizer = 'sgd', loss = 'categorical_crossentropy')
+        return model
+
+
+    def fit_from_geojson(self, train_shapefile, chips_per_batch = 5000,
+                         batches_per_epoch=4, validation_split=0.1, save_model=None,
+                         nb_epoch=10, shuffle_btwn_epochs=True, return_history=False,
+                         save_all_weights=True, retrain=False, lr_2=0.01, resize_dim=None):
+        '''
+        Fit a model using a generator that iteratively yields large batches of chips to
+            train on for each epoch.
+        INPUT   train_shapefile (string): Filename for the training data (must be a
+                    geojson). The geojson must be filtered such that all polygons are of
+                    valid size (as defined by max_side_dim and min_side_dim)
+                chips_per_batch (int): Number of chips to yield per batch. Must be small
+                    enough to fit into memory. Defaults to 5000.
+                batches_per_epoch (int): number of batches two train on per epoch. Notice
+                    that the train size will be equal to chips_per_batch *
+                    batches_per_epoch. Defualts to 4.
+                validation_split (float): proportion of chips to use as validation data.
+                    Defaults to 0.1.
+                save_model (string): name of model for saving. if None, does not save
+                    model. Defaults to None
+                nb_epoch (int): Number of epochs to train for. Each epoch will be trained
+                    on batches * batches_per_epoch chips. Defaults to 10.
+                shuffle_btwn_epochs (bool): Shuffle the features in train_shapefile
+                    between each epoch. Defaults to True.
+                return_history (bool): Return a list containing metrics from past epochs.
+                    Defaults to False.
+                save_all_weights (bool): Save model weights after each epoch. A directory
+                    called models will be created in the working directory. Defaults to
+                    True.
+                retrain (bool): freeze all layers except final softmax to retrain only
+                    the final weights of the model. Defaults to False
+                lr_2 (float): Learning rate for the second round of training. Only
+                    relevant if retrain is True. Defaults to 0.01.
+        OUTPUT  trained model, history
+        '''
+
+        train_size = chips_per_batch * batches_per_epoch
+        full_hist = []
+
+        if retrain:
+            # freeze all layers except final dense
+            for i in xrange(len(self.model.layers[:-1])):
+                self.model.layers[i].trainable = False
+
+            # recompile model
+            sgd = SGD(lr=lr_2, momentum=0.9, nesterov=True)
+            self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+
+        # load geojson polygons
+        with open(train_shapefile) as f:
+            polygons = geojson.load(f)['features'][:train_size]
+
+        # check for sufficient training data
+        if len(polygons) < train_size:
+            raise Exception('Not enough polygons to train on. Please add more training' \
+                            ' data or decrease value of batches_per_epoch.')
+
+        # set aside validation data
+        if validation_split > 0:
+            val_size = int(validation_split * train_size)
+            val_data = polygons[: val_size]
+            polygons = polygons[val_size: ]
+            chips_per_batch = int((1 - validation_split) * chips_per_batch)
+
+            # extract validation chips
+            print 'Getting validation data...\n'
+            valX, valY = de.get_data_from_polygon_list(val_data, min_chip_hw=self.min_chip_hw,
+                                                       max_chip_hw=self.max_chip_hw,
+                                                       classes=self.classes, normalize=True,
+                                                       return_labels=True,
+                                                       bit_depth=self.bit_depth, mask=True,
+                                                       show_percentage=False,
+                                                       assert_all_valid=True,
+                                                       resize_dim=resize_dim)
+
+        for e in range(nb_epoch):
+            # make diretory for saved weights
+            if save_all_weights:
+                chk = ModelCheckpoint(filepath="./models/epoch" + str(e) + \
+                                      "_{val_loss:.2f}.h5",
+                                      verbose=1, save_weights_only = True)
+                if 'models' not in os.listdir('.'):
+                    subprocess.call('mkdir models', shell=True)
+
+            print 'Epoch {}/{}'.format(e + 1, nb_epoch)
+
+            # shuffle data to randomize net input
+            if shuffle_btwn_epochs:
+                np.random.shuffle(polygons)
+
+            for batch in range(batches_per_epoch):
+                curr_ix = batch * chips_per_batch
+                this_batch = polygons[curr_ix: curr_ix + chips_per_batch]
+
+                # extract chips from each batch to train on
+                X, Y = de.get_data_from_polygon_list(this_batch,
+                                                     min_chip_hw=self.min_chip_hw,
+                                                     max_chip_hw=self.max_chip_hw,
+                                                     classes=self.classes, normalize=True,
+                                                     return_labels=True,
+                                                     bit_depth=self.bit_depth, mask=True,
+                                                     show_percentage=False,
+                                                     assert_all_valid=True,
+                                                     resize_dim=resize_dim)
+
+                # train with validation data
+                if validation_split > 0:
+                    if save_all_weights and batch == batches_per_epoch - 1:
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
+                                              validation_data=(valX, valY),
+                                              callbacks=[chk])
+
+                    else:
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
+                                              validation_data=(valX, valY))
+
+                # train without validation data
+                else:
+                    if save_all_weights and batch == batches_per_epoch - 1:
+                        chk = ModelCheckpoint(filepath="./models/epoch" + str(e) + ".h5",
+                                              verbose=1)
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
+                                              callbacks=[chk])
+
+                    else:
+                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1)
+
+            # dict recording loss and val_loss after each epoch
+            full_hist.append(hist.history)
+
+        if save_model:
+            self.save_model(save_model)
+
+        if return_history:
+            return full_hist
+
+    def fit_xy(self, X_train, Y_train, validation_split=0.1,
+                      save_model = None, nb_epoch=15):
+        '''
+        Fit model on training chips already loaded into memory
+
+        INPUT   X_train (array): Training chips with the following dimensions:
+                    (train_size, num_channels, rows, cols)
+                Y_train (list): One-hot encoded labels to X_train with dimenstions as
+                    follows: (train_size, n_classes)
+                validation_split (float): Proportion of X_train to validate on while
+                    training.
+                save_model (string): Name under which to save model. if None, does not
+                    save model. Defualts to None.
+                nb_epoch (int): Number of training epochs to complete
+        OUTPUT  trained Keras model.
+        '''
+        # Define callback to save weights after each epoch
+        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
+                                       verbose=1, save_weights_only=True)
+
+        self.model.fit(X_train, Y_train, validation_split=validation_split,
+                       callbacks=[checkpointer], nb_epoch=nb_epoch)
+
+        if save_model:
+            self.save_model(save_model)
+
+
+    def retrain_output(self, X_train, Y_train, learning_rate=0.01, **kwargs):
+        '''
+        Retrains last dense layer of model on chips loaded into memory. For use with
+            unbalanced classes after training on balanced data.
+        INPUT   X_train(array): Training chips with the following dimensions:
+                    (train_size, num_channels, rows, cols)
+                Y_train (list): One-hot encoded labels to X_train with dimenstions as
+                    follows: (train_size, n_classes)
+                learning_rate (float): Learning rate
+                validation_split (float): Proportion of X_train to validate on while
+                    training.
+                save_model (string): Name under which to save model. if None, does not
+                    save model. Defualts to None.
+                nb_epoch (int): Number of training epochs to complete
+        OUTPUT  (1) retrained model
+        '''
+        # freeze all layers except final dense
+        for i in xrange(len(self.model.layers[:-1])):
+            self.model.layers[i].trainable = False
+
+        # recompile model
+        sgd = SGD(lr=learning_rate, momentum=0.9, nesterov=True)
+        self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
+
+        # train model
+        self.fit_xy(X_train, Y_train, **kwargs)
+
+
+
+    def save_model(self, model_name):
+        '''
+        INPUT   (1) string 'model_name': name to save model and weigths under, including
+        filepath but not extension
+        Saves current model as json and weigts as h5df file
+        '''
+        model = '{}.json'.format(model_name)
+        weights = '{}.h5'.format(model_name)
+        log = '{}.txt'.format(model_name)
+        json_string = self.model.to_json()
+        self.model.save_weights(weights)
+        with open(model, 'w') as f:
+            json.dump(json_string, f)
+
+        # make log for model train
+        time = localtime()
+        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + \
+        str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
+        layers = str(self.model.layers)
+        with open(log, 'w') as l:
+            l.write(date + layers)
+
+
+    def load_model(self, model_name):
+        '''
+        INPUT  (1) string 'model_name': filepath to model
+        OUTPUT: Loaded model architecture
+        '''
+        print 'Loading model {}'.format(self.model_name)
+
+        #load model
+        with open(model_name + '.json') as f:
+            mod = model_from_json(json.load(f))
+        return mod
+
+
+    def classify_geojson(self, geoj, output_name, numerical_classes=True,
+                         resize_dim=None, img_name=None):
+        '''
+        Use the current model and weights to classify all polygons (of appropriate size)
+        in the given geojson. Records PoolNet classification, whether or not it was
+        misclassified by PoolNet, and the certainty for the given class.
+        INPUT   geoj (string): name of the geojson to classify
+                output_name (string): name to give the classified geojson
+                numerical_classes (bool): make output classifications numbers instead of
+                    strings. If False, class number will be used as the index to the
+                    classes argument (class 0 = self.classes[0]). Defaults to True.
+                resize_dim (tuple): Dimensions to resize image to.
+                image_name (string): name of the associated geotiff image if different
+                    than catalog number. Defaults to None
+        '''
+
+        yprob, ytrue = [], []
+        if output_name.endswith('.geojson'):
+            output_file = output_name
+        else:
+            output_file = '{}.geojson'.format(output_name)
+
+        # Open get chips from geojson
+        with open(geoj) as f:
+            features = geojson.load(f)['features']
+
+        # Classeify in batches of 1000
+        for ix in xrange(0, len(features), 1000):
+            this_batch = features[ix: (ix + 1000)]
+            try:
+                X = de.get_data_from_polygon_list(this_batch,
+                                                  min_chip_hw=self.min_chip_hw,
+                                                  max_chip_hw=self.max_chip_hw,
+                                                  classes=self.classes, normalize=True,
+                                                  return_labels=False,
+                                                  bit_depth=self.bit_depth, mask=True,
+                                                  show_percentage=False,
+                                                  assert_all_valid=True,
+                                                  resize_dim=resize_dim)
+            except (AssertionError):
+                raise ValueError('Please filter the input geojson file using ' \
+                                 'geojoson_tools.filter_geojson() and ensure all ' \
+                                 'polygons are valid before using this method.')
+
+            # Predict classes of test data
+            yprob += list(self.model.predict_proba(X))
+
+        # Get predicted classes and certainty
+        yhat = [np.argmax(i) for i in yprob]
+        ycert = [str(np.max(j)) for j in yprob]
+        if not numerical_classes:
+            yhat = [self.classes[i] for i in yhat]
+
+        # Update geojson, save as output_name
+        data = zip(yhat, ycert)
+        property_names = ['CNN_class', 'certainty']
+        write_properties_to(data, property_names=property_names, input_file=geoj,
+                            output_file=output_file)
+
 
     def _get_behead_index(self, layer_names):
         '''
@@ -203,32 +548,6 @@ class PoolNet(object):
         return model
 
 
-    def fit_xy(self, X_train, Y_train, validation_split=0.1,
-               save_model = None, nb_epoch=15):
-        '''
-        Fit model on pre-loaded training data. Only for sizes small enough to fit in
-        memory
-        INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
-                (2) list 'Y_train': one-hot associated labels to X_train. shape =
-                train_size, n_classes)
-                (3) float 'validation_split': proportion of X_train to validate on.
-                (4) string 'save_model': name of model for saving. if None, does not
-                save model.
-                (5) int 'nb_epoch': Number of epochs to train for
-        OUTPUT  (1) trained model.
-        '''
-        # Define callback to save weights after each epoch
-        # es = EarlyStopping(monitor='val_loss', patience=1, verbose=1)
-        checkpointer = ModelCheckpoint(filepath="./models/ch_{epoch:02d}-{val_loss:.2f}.h5",
-                                       verbose=1)
-
-        self.model.fit(X_train, Y_train, validation_split=validation_split,
-                       callbacks=[checkpointer], nb_epoch=nb_epoch)
-
-        if save_model:
-            self.save_model(save_model)
-
-
     def fit_generator(self, train_shapefile, train_size=10000, save_model=None,
                       nb_epoch=5, validation_prop=0.1):
         '''
@@ -252,7 +571,7 @@ class PoolNet(object):
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
-                                           verbose=1)
+                                           verbose=1, save_weights_only=True)
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * train_size))
 
@@ -262,171 +581,13 @@ class PoolNet(object):
 
         else:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{loss:.2f}.h5",
-                                           verbose=1)
+                                           verbose=1, save_weights_only=True)
             self.model.fit_generator(data_gen, samples_per_epoch=train_size,
                                      nb_epoch=nb_epoch, callbacks=[checkpointer])
 
         if save_model:
             self.save_model(save_model)
 
-    def fit_from_geojson(self, train_shapefile, chips_per_batch = 5000,
-                         batches_per_epoch=4, validation_split=0.1, save_model=None,
-                         nb_epoch=10, shuffle_btwn_epochs=True, return_history=False,
-                         save_all_weights=True, retrain=False, lr_2=0.01):
-        '''
-        Fit a model using a generator that iteratively yields large batches of chips to
-            train on for each epoch.
-        INPUT   train_shapefile (string): Filename for the training data (must be a
-                    geojson). The geojson must be filtered such that all polygons are of
-                    valid size (as defined by max_side_dim and min_side_dim)
-                chips_per_batch (int): Number of chips to yield per batch. Must be small
-                    enough to fit into memory. Defaults to 5000.
-                batches_per_epoch (int): number of batches two train on per epoch. Notice
-                    that the train size will be equal to chips_per_batch *
-                    batches_per_epoch. Defualts to 4.
-                validation_split (float): proportion of chips to use as validation data.
-                    Defaults to 0.1.
-                save_model (string): name of model for saving. if None, does not save
-                    model. Defaults to None
-                nb_epoch (int): Number of epochs to train for. Each epoch will be trained
-                    on batches * batches_per_epoch chips. Defaults to 10.
-                shuffle_btwn_epochs (bool): Shuffle the features in train_shapefile
-                    between each epoch. Defaults to True.
-                return_history (bool): Return a list containing metrics from past epochs.
-                    Defaults to False.
-                save_all_weights (bool): Save model weights after each epoch. A directory
-                    called models will be created in the working directory. Defaults to
-                    True.
-                retrain (bool): freeze all layers except final softmax to retrain only
-                    the final weights of the model. Defaults to False
-                lr_2 (float): Learning rate for the second round of training. Only
-                    relevant if retrain is True. Defaults to 0.01.
-        OUTPUT  trained model, history
-        '''
-
-        train_size = chips_per_batch * batches_per_epoch
-        full_hist = []
-
-        if retrain:
-            # freeze all layers except final dense
-            for i in xrange(len(self.model.layers[:-1])):
-                self.model.layers[i].trainable = False
-
-            # recompile model
-            sgd = SGD(lr=lr_2, momentum=0.9, nesterov=True)
-            self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
-
-        # load geojson polygons
-        with open(train_shapefile) as f:
-            polygons = geojson.load(f)['features'][:train_size]
-
-        # check for sufficient training data
-        if len(polygons) < train_size:
-            raise Exception('Not enough polygons to train on. Please add more training' \
-                            ' data or decrease value of batches_per_epoch.')
-
-        # set aside validation data
-        if validation_split > 0:
-            val_size = int(validation_split * train_size)
-            val_data = polygons[: val_size]
-            polygons = polygons[val_size: ]
-            chips_per_batch = int((1 - validation_split) * chips_per_batch)
-
-            # extract validation chips
-            print 'getting validation data'
-            valX, valY = de.get_data_from_polygon_list(val_data, min_chip_hw=self.min_chip_hw,
-                                                       max_chip_hw=self.max_chip_hw,
-                                                       classes=self.classes, normalize=True,
-                                                       return_labels=True,
-                                                       bit_depth=self.bit_depth, mask=True,
-                                                       # show_percentage=False,
-                                                       assert_all_valid=True)
-
-        for e in range(nb_epoch):
-            # make diretory for saved weights
-            if save_all_weights:
-                chk = ModelCheckpoint(filepath="./models/epoch" + str(e) + \
-                                      "_{val_loss:.2f}.h5",
-                                      verbose=1)
-                if 'models' not in os.listdir('.'):
-                    subprocess.call('mkdir models', shell=True)
-
-            print 'Epoch {}/{}'.format(e + 1, nb_epoch)
-
-            # shuffle data to randomize net input
-            if shuffle_btwn_epochs:
-                print 'shuffling data'
-                np.random.shuffle(polygons)
-
-            for batch in range(batches_per_epoch):
-                curr_ix = batch * chips_per_batch
-                this_batch = polygons[curr_ix: curr_ix + chips_per_batch]
-
-                # extract chips from each batch to train on
-                X, Y = de.get_data_from_polygon_list(this_batch,
-                                                     min_chip_hw=self.min_chip_hw,
-                                                     max_chip_hw=self.max_chip_hw,
-                                                     classes=self.classes, normalize=True,
-                                                     return_labels=True,
-                                                     bit_depth=self.bit_depth, mask=True,
-                                                     # show_percentage=False,
-                                                     assert_all_valid=True)
-
-                # train with validation data
-                if validation_split > 0:
-                    if save_all_weights and batch == batches_per_epoch - 1:
-                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
-                                              validation_data=(valX, valY),
-                                              callbacks=[chk])
-
-                    else:
-                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
-                                              validation_data=(valX, valY))
-
-                # train without validation data
-                else:
-                    if save_all_weights and batch == batches_per_epoch - 1:
-                        chk = ModelCheckpoint(filepath="./models/epoch" + str(e) + ".h5",
-                                              verbose=1)
-                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1,
-                                              callbacks=[chk])
-
-                    else:
-                        hist = self.model.fit(X, Y, batch_size=self.batch_size, nb_epoch=1)
-
-            # dict recording loss and val_loss after each epoch
-            full_hist.append(hist.history)
-
-        if save_model:
-            self.save_model(save_model)
-
-        if return_history:
-            return full_hist
-
-
-    def retrain_output(self, X_train, Y_train, learning_rate=0.01, **kwargs):
-        '''
-        Retrains last dense layer of model. For use with unbalanced classes after
-        training on balanced data.
-        INPUT   (1) array 'X_train': training chips in the shape (train_size, 3, h, w)
-                (2) list 'Y_train': one-hot associated labels to X_train. shape =
-                (train_size, n_classes)
-                (3) float 'validation_split': proportion of X_train to validate on.
-                (4) string 'save_model': name of model for saving. if None, does not
-                save model.
-                (5) int 'nb_epoch': Number of epochs to train for
-        OUTPUT  (1) retrained model
-        '''
-        # freeze all layers except final dense
-        for i in xrange(len(self.model.layers[:-1])):
-            self.model.layers[i].trainable = False
-
-        # recompile model
-        sgd = SGD(lr=learning_rate, momentum=0.9, nesterov=True)
-        self.model.compile(loss='categorical_crossentropy', optimizer='sgd')
-
-        # train model
-        self.fit_xy(X_train, Y_train, **kwargs)
 
     def retrain_output_on_generator(self, train_shapefile, retrain_size=5000,
                                     learning_rate=0.01, save_model=None, nb_epoch=5,
@@ -463,7 +624,7 @@ class PoolNet(object):
 
         if validation_prop:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{val_loss:.2f}.h5",
-                                           verbose=1)
+                                           verbose=1, save_weights_only=True)
             valX, valY = self._get_val_data(train_shapefile,
                                             int(validation_prop * retrain_size))
 
@@ -473,46 +634,11 @@ class PoolNet(object):
 
         else:
             checkpointer = ModelCheckpoint(filepath="./models/epoch_{epoch:02d}-{loss:.2f}.h5",
-                                           verbose=1)
+                                           verbose=1, save_weights_only=True)
             self.model.fit_generator(data_gen, samples_per_epoch=retrain_size)
 
         if save_model:
             self.save_model(save_model)
-
-
-    def save_model(self, model_name):
-        '''
-        INPUT   (1) string 'model_name': name to save model and weigths under, including
-        filepath but not extension
-        Saves current model as json and weigts as h5df file
-        '''
-        model = '{}.json'.format(model_name)
-        weights = '{}.h5'.format(model_name)
-        log = '{}.txt'.format(model_name)
-        json_string = self.model.to_json()
-        self.model.save_weights(weights)
-        with open(model, 'w') as f:
-            json.dump(json_string, f)
-
-        # make log for model train
-        time = localtime()
-        date = str(time[1]) + '-' + str(time[2]) + '-' + str(time[0]) + '\n' + \
-        str(time[3]) + ':' + str(time[4]) + ':' + str(time[5]) + '\n'
-        layers = str(self.model.layers)
-        with open(log, 'w') as l:
-            l.write(date + layers)
-
-    def load_model(self, model_name):
-        '''
-        INPUT  (1) string 'model_name': filepath to model
-        OUTPUT: Loaded model architecture
-        '''
-        print 'Loading model {}'.format(self.model_name)
-
-        #load model
-        with open(model_name + '.json') as f:
-            mod = model_from_json(json.load(f))
-        return mod
 
     def evaluate_model(self, X_test, Y_test, return_yhat=False):
         '''
@@ -529,45 +655,6 @@ class PoolNet(object):
 
         if return_yhat:
             return y_hat
-
-    def classify_shapefile(self, shapefile, output_name, numerical_classes=True,
-                           img_name = None):
-        '''
-        Use the current model and weights to classify all polygons (of appropriate size)
-        in the given shapefile. Records PoolNet classification, whether or not it was
-        misclassified by PoolNet, and the certainty for the given class.
-        INPUT   shapefile (string): name of the shapefile to classify
-                output_name (string): name to give the classified shapefile
-                numerical_classes (bool): make output classifications numbers instead of
-                    strings. If False, class number will be used as the index to the
-                    classes argument (class 0 = self.classes[0]). Defaults to True.
-                image_name (string): name of the associated geotiff image if different
-                    than catalog number. Defaults to None
-        OUTPUT  (1) classified shapefile
-        '''
-        yprob, ytrue = [], []
-        if output_name[-8:] != '.geojson':
-            output_file = '{}.geojson'.format(output_name)
-        else:
-            output_file = output_name
-
-        # Classify all chips in input shapefile
-        for x in get_iter_data(shapefile, batch_size = 5000, classes = self.classes,
-                               max_chip_hw=self.input_shape[1], img_name=img_name,
-                               min_chip_hw = self.min_chip_hw, return_labels=False):
-            print 'Classifying polygons...'
-            yprob += list(self.model.predict_proba(x)) # use model to predict classes
-
-        # Get predicted class and certainty of classification results
-        yhat = [np.argmax(i) for i in yprob]
-        if not numerical_classes:
-            yhat = [self.classes[i] for i in yhat]
-        ycert = [str(np.max(j)) for j in yprob]
-
-        # Update shapefile, save as output_name
-        data = zip(yhat, ycert)
-        property_names = ['CNN_class', 'certainty']
-        write_properties_to(data, property_names, shapefile, output_file)
 
 
 # Evaluation methods
@@ -643,7 +730,7 @@ def filter_by_classification(shapefile, output_name, max_cert=0.75, min_cert=0.5
             continue
 
         if misclass == missed:
-            if cert >= min_cert and cert >= max_cert:
+            if cert >= min_cert and cert <= max_cert:
                 ok_polygons.append(geom)
 
     # Save filtered polygons to nex shapefile
