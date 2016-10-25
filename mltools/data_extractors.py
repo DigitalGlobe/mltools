@@ -382,9 +382,10 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
                 sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(total)) + ' ' * 5)
                 sys.stdout.flush()
             if assert_all_valid:
-                raise Exception('Invalid polygon with feature id {}. Please make sure' \
-                                'all polygons are valid or set assert_all_valid to ' \
-                                'False.'.format(str(poly['properties']['image_id'])))
+                raise AssertionError('Invalid polygon with feature id {}. Please make ' \
+                                     'sure all polygons are valid or set ' \
+                                     'assert_all_valid to ' \
+                                     'False.'.format(str(poly['properties']['image_id'])))
             continue
 
         # check for adequate chip size
@@ -396,9 +397,9 @@ def get_data_from_polygon_list(features, min_chip_hw=0, max_chip_hw=125,
                 sys.stdout.write('\r%{0:.2f}'.format(100 * ct / float(total)) + ' ' * 5)
                 sys.stdout.flush()
             if assert_all_valid:
-                raise Exception('Polygon with feature id {} does not meet the size ' \
-                                'requirements. Please filter the geojson first or ' \
-                                'set assert_all_valid to False.')
+                raise AssertionError('Polygon with feature id {} does not meet the size ' \
+                                     'requirements. Please filter the geojson first or ' \
+                                     'set assert_all_valid to False.')
             continue
 
         # zero-pad polygons to (n_bands, max_chip_hw, max_chip_hw)
