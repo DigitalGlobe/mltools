@@ -12,13 +12,14 @@ from shapely.wkb import loads
 
 
 def join(input_files, output_file):
-    """Join geojsons into one. The spatial reference system of the
+    '''
+    Join geojsons into one. The spatial reference system of the
        output file is the same as the one of the last file in the list.
 
        Args:
            input_files (list): List of file name strings.
            output_file (str): Output file name.
-    """
+    '''
 
     # get feature collections
     final_features = []
@@ -35,7 +36,8 @@ def join(input_files, output_file):
 
 
 def split(input_file, file_1, file_2, no_in_first_file):
-    """Split a geojson in two separate files.
+    '''
+    Split a geojson in two separate files.
 
        Args:
            input_file (str): Input filename.
@@ -43,7 +45,7 @@ def split(input_file, file_1, file_2, no_in_first_file):
            file_2 (str): Output file name 2.
            no_features (int): Number of features in input_file to go to file_1.
            output_file (str): Output file name.
-    """
+    '''
 
     # get feature collection
     with open(input_file) as f:
@@ -61,7 +63,8 @@ def split(input_file, file_1, file_2, no_in_first_file):
 
 
 def get_from(input_file, property_names):
-    """Reads a geojson and returns a list of value tuples, each value
+    '''
+    Reads a geojson and returns a list of value tuples, each value
        corresponding to a property in property_names.
 
        Args:
@@ -70,7 +73,7 @@ def get_from(input_file, property_names):
 
        Returns:
            List of value tuples.
-    """
+    '''
 
     # get feature collections
     with open(input_file) as f:
@@ -84,7 +87,8 @@ def get_from(input_file, property_names):
 
 
 def write_to(data, property_names, output_file):
-    '''Write list of tuples to geojson.
+    '''
+    Write list of tuples to geojson.
        First entry of each tuple should be geometry in hex coordinates
        and the rest properties.
 
@@ -117,9 +121,9 @@ def write_to(data, property_names, output_file):
         geojson.dump(feature_collection, f)
 
 
-def write_properties_to(data, property_names, input_file,
-                        output_file, filter=None):
-    """Writes property data to polygon_file for all
+def write_properties_to(data, property_names, input_file, output_file, filter=None):
+    '''
+    Writes property data to polygon_file for all
        geometries indicated in the filter, and creates output file.
        The length of data must be equal to the number of geometries in
        the filter. Existing property values are overwritten.
@@ -136,7 +140,7 @@ def write_properties_to(data, property_names, input_file,
                           'property_name'=value1, and so on. This makes sense only
                           if these values are unique. If Filter=None, then
                           data is written to all geometries in the input file.
-    """
+    '''
 
     with open(input_file) as f:
         feature_collection = geojson.load(f)
@@ -164,7 +168,8 @@ def write_properties_to(data, property_names, input_file,
 
 
 def find_unique_values(input_file, property_name):
-    """Find unique values of a given property in a geojson file.
+    '''
+    Find unique values of a given property in a geojson file.
 
        Args:
            input_file (str): File name.
@@ -173,7 +178,8 @@ def find_unique_values(input_file, property_name):
        Returns:
            List of distinct values of property.
            If property does not exist, it returns None.
-    """
+    '''
+
     with open(input_file) as f:
         feature_collection = geojson.load(f)
 
@@ -183,185 +189,214 @@ def find_unique_values(input_file, property_name):
     return np.unique(values)
 
 
-def create_balanced_geojson(shapefile, output_file, balanced = True,
-                            class_names=['Swimming pool', 'No swimming pool'],
-                            samples_per_class=None, train_test=None):
+def filter_by_property(input_file, output_file, property_name, values):
     '''
-    Create a shapefile comprised of balanced classes for training net, and/or split
-    shapefile into train and test data, each with distinct, randomly selected polygons.
+    Create a file containing only features with specified property value(s) from
+        input_file.
 
-    INPUT   (1) string 'shapefile': name of shapefile with original samples
-            (2) string 'output_file': name of file in which to save selected polygons.
-            This should end in '.geojson'
-            (3) bool 'balanced': put equal amounts of each class in the output shapefile.
-            Otherwise simply outputs shuffled version of original dataself.
-            (4) list[string] 'class_names': name of classes of interest as listed in
-            properties['class_name']. defaults to pool classes.
-            (5) int or None 'samples_per_class': number of samples to select per class.
-            if None, uses length of smallest class. Defaults to None
-            (6) float or None 'train_test': proportion of polygons to save in test file.
-            if None, only saves one file (balanced data). otherwise saves a train and
-            test file. Defaults to None.
-
-    OUTPUT  (1) train geojson file with balanced classes (if True) in current directory.
-            (2) test geojson file if train_test is specified
+    INPUT   input_file (str): File name.
+            output_file (str): Output file name.
+            property_name (str): Name of the feature property to filter by.
+            values (list): Value(s) a feature may have for property_name if it is to be
+                included in output_file.
     '''
 
-    with open(shapefile) as f:
+    filtered_feats = []
+    if not output_file.endswith('.geojson'):
+        output_file += '.geojson'
+
+    # Load feature list
+    with open(input_file) as f:
+        feature_collection = geojson.load(f)
+
+    # Filter feats by property_name
+    for feat in feature_collection['features']:
+        if feat['properties'][property_name] in values:
+            filtered_feats.append(feat)
+
+    feature_collection['features'] = filtered_feats
+
+    # Save filtered file
+    with open(output_file, 'wb') as f:
+        geojson.dump(f)
+
+
+def create_train_test(input_file, output_file=None, test_size=0.2):
+    '''
+    Split a geojson file into train and test features. Saves features as geojsons in the
+        working directory under the same file name with train and test prefixes to the
+        original file name.
+
+    INPUT   input_file (str): File name
+            output_file (str): Name to use after the train_ and test_ prefixes for the
+                saved files. Defaults to name of input_file.
+            test_size (float or int): Amount of features to set aside as test data. If
+                less than one will be interpreted as a proportion of the total feature
+                collection. Otherwise it is the amount of features to use as test data.
+                Defaults to 0.2.
+    '''
+
+    with open(input_file) as f:
+        data = geojson.load(f)
+        features = data['features']
+        np.random.shuffle(features)
+
+    # Convert test size from proportion to number of polygons
+    if test_size <= 1:
+        test_size = int(test_size * len(features))
+
+    # Name output files
+    if not output_file:
+        output_file = input_file
+    elif not output_file.endswith('.geojson'):
+        output_file += '.geojson'
+
+    test_out, train_out = 'test_{}'.format(output_file), 'train_{}'.format(output_file)
+
+    # Save train and test files
+    data['features'] = features[:test_size]
+    with open(test_out, 'wb') as test_file:
+        geojson.dump(data, test_file)
+
+    data['features'] = features[test_size:]
+    with open(train_out, 'wb') as train_file:
+        geojson.dump(data, train_file)
+
+
+def create_balanced_geojson(input_file, classes, output_file='balanced.geojson',
+                            samples_per_class=None):
+    '''
+    Create a geojson comprised of balanced classes from input_file for training data.
+        Randomly selects polygons from all classes.
+
+    INPUT   input_file (str): File name
+            classes (list[str]): Classes in input_file to include in the balanced
+                output file. Must exactly match the 'class_name' property in the features
+                of input_file.
+            output_file (str): Name under which to save the balanced output file.
+                Defualts to balanced.geojson.
+            samples_per_class (int or None): Number of features to select per class in
+                input_file. If None will use the smallest class size. Defaults to None.
+    '''
+
+    if not output_file.endswith('.geojson'):
+        output_file += '.geojson'
+
+    with open(input_file) as f:
         data = geojson.load(f)
 
-    if balanced:
-        # sort classes into separate lists
-        sorted_classes = []
+    # Sort classes in separate lists
+    sorted_classes = {clss : [] for clss in classes}
 
-        for i in class_names:
-            this_data = []
+    for feat in data['features']:
+        try:
+            sorted_classes[feat['properties']['class_name']].append(feat)
+        except (KeyError):
+            continue
 
-            for feat in data['features']:
-                if feat['properties']['class_name'] == i:
-                    this_data.append(feat)
+    # Determine sample size per class
+    if not samples_per_class:
+        smallest_class = min(sorted_classes, key=lambda clss: len(sorted_classes[clss]))
+        samples_per_class = len(sorted_classes[smallest_class])
 
-            sorted_classes.append(this_data)
+    # Randomly select features from each class
+    try:
+        samps = [random.sample(feats, samples_per_class) for feats in sorted_classes.values()]
+        final = [feat for sample in samps for feat in sample]
+    except (ValueError):
+        raise Exception('Insufficient features in at least one class. Set ' \
+                            'samples_per_class to None to use maximum amount of '\
+                            'features.')
 
-        # randomly select given number of samples per class
-        if samples_per_class:
-            samples = [random.sample(i, samples_per_class) for i in sorted_classes]
-            final = [s for sample in samples for s in sample]
-
-        else:
-            # determine smallest class-size
-            small_class_ix = np.argmin([len(clss) for clss in sorted_classes])
-            class_sizes = len(sorted_classes[small_class_ix])
-            final = sorted_classes[small_class_ix]
-
-            # randomly sample from larger classes to balance class sizes
-            for i in xrange(len(class_names)):
-                if i == small_class_ix:
-                    continue
-                else:
-                    final += random.sample(sorted_classes[i], class_sizes)
-
-    else: # don't need to ensure balanced classes
-        final = data['features']
-
-    # shuffle classes for input to net
+    # Shuffle and save balanced data
     np.random.shuffle(final)
+    data['features'] = final
 
-    # split feature lists into train and test
-    if train_test:
-        test_out = 'test_{}'.format(output_file)
-        train_out = 'train_{}'.format(output_file)
-        test_size = int(train_test * len(final))
-        train, test  = data.copy(), data.copy()
-        train['features'], test['features'] = final[test_size:], final[:test_size]
-
-        # save train and test geojsons
-        with open(test_out, 'wb') as f1:
-            geojson.dump(test, f1)
-        print 'Test polygons saved as {}'.format(test_out)
-
-        with open(train_out, 'wb') as f2:
-            geojson.dump(train, f2)
-        print 'Train polygons saved as {}'.format(train_out)
-
-    else:  # only save one file with balanced classes
-        data['features'] = final
-
-        with open(output_file, 'wb') as f:
-            geojson.dump(data, f)
-        print '{} polygons saved as {}'.format(len(final), output_file)
+    with open(output_file, 'wb') as f:
+        geojson.dump(data, f)
 
 
-
-def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw=125,
+def filter_polygon_size(input_file, output_file, min_side_dim=0, max_side_dim=125,
                         shuffle=False, make_omitted_files=False):
     '''
-    Creates a geojson file containing only acceptable side dimensions for polygons.
-    INPUT   (1) string 'shapefile': name of shapefile with original samples
-            (2) string 'output_file': name of file in which to save selected polygons.
-            (3) int 'min_polygon_hw': minimum acceptable side length (in pixels) for
-                given polygon
-            (4) int 'max_polygon_hw': maximum acceptable side length (in pixels) for
-                given polygon
-            (5) bool 'shuffle': shuffle polygons before saving to output file. Defaults to
-                False
-            (6) bool 'make_omitted_files': create a file with omitted polygons. Two files
-                will be created, one with polygons that are too small and one with large
+    Create a geojson file containing only polygons with acceptable side dimensions.
+    INPUT   input_file (str): File name
+            output_file (str): Name under which to save filtered polygons.
+            min_side_dim (int): Minimum acceptable side length (in pixels) for
+                each polygon. Defaults to 0.
+            max_side_dim (int): Maximum acceptable side length (in pixels) for
+                each polygon. Defaults to 125.
+            shuffle (bool): Shuffle polygons before saving to output file. Defaults to
+                False.
+            make_omitted_files (bool): Create files with omitted polygons. Two files
+                are created: one with polygons that are too small and one with large
                 polygons. Defaults to False.
-    OUTPUT  (1) a geojson file (output_file.geojson) containing only polygons of
-                acceptable side dimensions
     '''
+
+    def write_status(percent_complete):
+        '''helper function to write percent complete to stdout'''
+        sys.stdout.write('\r%{0:.2f}'.format(percent_complete) + ' ' * 20)
+        sys.stdout.flush()
+
     # load polygons
-    with open(shapefile) as f:
+    with open(input_file) as f:
         data = geojson.load(f)
-    total_features = float(len(data['features']))
+        total_features = float(len(data['features']))
 
     # format output file name
-    if output_file[-8:] != '.geojson':
-        output_file = output_file + '.geojson'
+    if not output_file.endswith('.geojson'):
+        output_file += '.geojson'
 
     # find indicies of acceptable polygons
     ix_ok, small_ix, large_ix = [], [], []
-    print 'Extracting image ids...'
-    img_ids = find_unique_values(shapefile, property_name='image_id')
+    img_ids = find_unique_values(input_file, property_name='image_id')
 
-    print 'Filtering polygons...'
+    print 'Filtering polygons... \n'
     for img_id in img_ids:
         ix = 0
-        print '... for image {}'.format(img_id)
+        print '... for image {} \n'.format(img_id)
         img = geoio.GeoImage(img_id + '.tif')
 
         # create vrt if img has multiple bands (more efficient)
         if img.shape[0] > 1:
+            vrt_flag = True
             vrt_cmd = 'gdalbuildvrt tmp.vrt -b 1 {}.tif'.format(img_id)
             subprocess.call(vrt_cmd, shell=True) #saves temporary vrt file to filter on
             img = geoio.GeoImage('tmp.vrt')
 
         # cycle thru polygons
-        for chip, properties in img.iter_vector(vector=shapefile,
+        for chip, properties in img.iter_vector(vector=input_file,
                                                 properties=True,
                                                 filter=[{'image_id': img_id}],
                                                 mask=True):
+            ix += 1
             if chip is None:
-                ix += 1
-                # add percent complete to stdout
-                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
-                sys.stdout.flush()
+                write_status(100 * ix / total_features)
                 continue
 
             chan,h,w = np.shape(chip)
 
             # Identify small chips
-            if min(h, w) < min_polygon_hw:
-                small_ix.append(ix)
-                ix += 1
-                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
-                sys.stdout.flush()
+            if min(h, w) < min_side_dim:
+                small_ix.append(ix - 1)
+                write_status(100 * ix / total_features)
                 continue
 
             # Identify large chips
-            elif max(h, w) > max_polygon_hw:
-                large_ix.append(ix)
-                ix += 1
-                sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
-                sys.stdout.flush()
+            elif max(h, w) > max_side_dim:
+                large_ix.append(ix - 1)
+                write_status(100 * ix / total_features)
                 continue
 
             # Identify valid chips
-            ix_ok.append(ix)
-            ix += 1
-            # add percent complete to stdout
-            sys.stdout.write('\r%{0:.2f}'.format(100 * ix / total_features) + ' ' * 20)
-            sys.stdout.flush()
+            ix_ok.append(ix - 1)
+            write_status(100 * ix / total_features)
 
         # remove vrt file
-        try:
+        if vrt_flag:
             os.remove('tmp.vrt')
-        except:
-            pass
 
     # save new geojson
-    print 'Saving...'
     ok_polygons = [data['features'][i] for i in ix_ok]
     small_polygons = [data['features'][i] for i in small_ix]
     large_polygons = [data['features'][i] for i in large_ix]
@@ -371,23 +406,19 @@ def filter_polygon_size(shapefile, output_file, min_polygon_hw=0, max_polygon_hw
     if shuffle:
         np.random.shuffle(ok_polygons)
 
-    filtrate = {data.keys()[i]: data.values()[i] for i in xrange(len(data.keys()))}
-    filtrate['features'] = ok_polygons
-
+    data['features'] = ok_polygons
     with open(output_file, 'wb') as f:
-        geojson.dump(filtrate, f)
+        geojson.dump(data, f)
 
     if make_omitted_files:
         # make file with small polygons
-        small = {data.keys()[i]: data.values()[i] for i in xrange(len(data.keys()) - 1)}
-        small['features'] = small_polygons
+        data['features'] = small_polygons
         with open('small_' + output_file, 'w') as f:
-            geojson.dump(small, f)
+            geojson.dump(data, f)
 
         # make file with large polygons
-        large = {data.keys()[i]: data.values()[i] for i in xrange(len(data.keys()) - 1)}
-        large['features'] = large_polygons
+        data['features'] = large_polygons
         with open('large_' + output_file, 'w') as f:
-            geojson.dump(large, f)
+            geojson.dump(data, f)
 
     print 'Saved {} polygons to {}'.format(str(len(ok_polygons)), output_file)
