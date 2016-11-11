@@ -229,6 +229,7 @@ To train the net we simply create an instance of PoolNet and then pass it the ap
 
     ```python
     from pool_net import PoolNet
+    
     p = PoolNet(classes = ['No swimming pool', 'Swimming pool'], batch_size = 32,
                 input_shape = (3,125,125))
     ```
