@@ -206,11 +206,7 @@ We initially filter properties.geojson to get rid of polygons that we have deeme
 
 ### Training the Network  
 
-Before training the network, make sure to create a 'models/' folder in the directory from which you will be training the model. The model will automatically save the weights after each epoch of training to this directory. *You will get an IO error if you omit this step*:
-
-```bash
-mkdir models
-```
+We train this network in two rounds to address the issue of class imbalance. The first round takes place on balanced data and the second on the original distribution of classes.
 
 
 #### First Training Phase
