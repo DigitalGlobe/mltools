@@ -181,7 +181,7 @@ We initially filter properties.geojson to get rid of polygons that we have deeme
     from mltools import geojson_tools as gt
 
     gt.filter_polygon_size('properties.geojson', output_file = 'filtered_geojson.geojson',
-                           min_polygon_hw = 30, max_polygon_hw = 125)
+                           min_side_dim = 30, max_side_dim = 125)
     ```
 
 2. **Create train_filtered.geojson and test_filtered.geojson:**
@@ -229,7 +229,7 @@ To train the net we simply create an instance of PoolNet and then pass it the ap
 
     ```python
     from pool_net import PoolNet
-    
+
     p = PoolNet(classes = ['No swimming pool', 'Swimming pool'], batch_size = 32,
                 input_shape = (3,125,125))
     ```
