@@ -259,7 +259,7 @@ class PoolNet(object):
 
         if len(polygons) < train_size:
             raise Exception('Not enough polygons to train on. Please add more training ' \
-            'data or decrease value of batches_per_epoch.')
+            'data or decrease train_size.')
 
         # Determine size of chips to extract and resize dimension
         if not max_side_dim:
