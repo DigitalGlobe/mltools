@@ -82,6 +82,7 @@ and then retry:
 
 The examples require imagery which can be ordered and downloaded from GBDX using [gbdxtools](http://github.com/digitalglobe/gbdxtools). You can install gbdxtools within the conda environment with:
 
+      conda install cryptography
       pip install gbdxtools
 
 If you have any trouble with the installation of gbdxtools, refer to the readme of the gbdxtools repo.
