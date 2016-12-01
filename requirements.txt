@@ -4,5 +4,5 @@ Shapely >= 1.5.15
 geoio >= 1.1.1
 keras >= 1.0.2
 bumpversion
-Pillow
+Pillow==2.6.0
 scipy >= 0.17.0
