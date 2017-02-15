@@ -11,7 +11,7 @@ if sys.version_info > (3,):
 # long_description=readme,
 
 setup(name='mltools',
-      version='1.0.9',
+      version='1.1.0',
       description='New example for pool detection with CNNs. Additional functionality for geojsons.',
       classifiers=[],
       keywords='',
