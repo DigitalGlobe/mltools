@@ -12,7 +12,7 @@ if sys.version_info > (3,):
 
 setup(name='mltools',
       version='1.1.0',
-      description='New example for pool detection with CNNs. Additional functionality for geojsons.',
+      description='Removed obsolete crowdsourcing module.',
       classifiers=[],
       keywords='',
       author='Kostas Stamatiou',
