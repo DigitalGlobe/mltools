@@ -9,7 +9,7 @@ if sys.version_info > (3,):
 #     readme = f.read()
 
 # long_description=readme,
-      
+
 setup(name='mltools',
       version='1.0.9',
       description='New example for pool detection with CNNs. Additional functionality for geojsons.',
@@ -27,5 +27,7 @@ setup(name='mltools',
                         'Shapely >= 1.5.15',
                         'geoio >= 1.1.1',
                         'keras >= 1.0.2',
-                        'bumpversion']
+                        'Pillow==2.6.0',
+                        'bumpversion'
+                        ]
       )

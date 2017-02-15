@@ -14,3 +14,6 @@ models/
 test_iter_data/
 1040010014800C00*
 shapefiles/
+/build
+.DS_Store
+
