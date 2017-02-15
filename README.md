@@ -49,7 +49,7 @@ so that modifications in your .bashrc take effect.
 Create a conda environment:
 
 ```bash
-conda create -n env jupyter gdal ephem
+conda create -n env jupyter scipy gdal ephem
 ```
 
 Activate the environment:
