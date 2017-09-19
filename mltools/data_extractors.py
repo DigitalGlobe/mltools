@@ -1,6 +1,8 @@
 # Extract pixels and metadata using shapefiles and georeferenced imagery.
 # The purpose of this module is to generate train, test and target data
 # for machine learning algorithms.
+from __future__ import print_function
+from six.moves import xrange
 
 import geoio
 import geojson
@@ -127,7 +129,7 @@ def apply_mask(input_file, mask_file, output_file):
     xsize, ysize = source_ds.RasterXSize, source_ds.RasterYSize
     xmasksize, ymasksize = mask_ds.RasterXSize, mask_ds.RasterYSize
 
-    print 'Generating mask'
+    print('Generating mask')
 
     # Create target DS
     driver = gdal.GetDriverByName('GTiff')

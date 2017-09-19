@@ -1,4 +1,5 @@
 # Contains functions for manipulating jsons and geojsons.
+from __future__ import print_function
 
 import geojson
 import numpy as np
@@ -158,7 +159,7 @@ def write_properties_to(data, property_names, input_file, output_file, filter=No
             compare_value = feature['properties'][filter_name]
             ind = np.where(filter_values == compare_value)[0]
             if len(ind) > 0:
-                for j, property_value in enumerate(data[ind]):
+                for j, property_value in enumerate(data[ind][0]):
                     feature['properties'][property_names[j]] = property_value
 
     feature_collection['features'] = features
@@ -351,10 +352,10 @@ def filter_polygon_size(input_file, output_file, min_side_dim=0, max_side_dim=12
     ix_ok, small_ix, large_ix = [], [], []
     img_ids = find_unique_values(input_file, property_name='image_id')
 
-    print 'Filtering polygons... \n'
+    print('Filtering polygons... \n')
     for img_id in img_ids:
         ix = 0
-        print '... for image {} \n'.format(img_id)
+        print('... for image {} \n'.format(img_id))
         img = geoio.GeoImage(img_id + '.tif')
 
         # create vrt if img has multiple bands (more efficient)
@@ -400,8 +401,8 @@ def filter_polygon_size(input_file, output_file, min_side_dim=0, max_side_dim=12
     ok_polygons = [data['features'][i] for i in ix_ok]
     small_polygons = [data['features'][i] for i in small_ix]
     large_polygons = [data['features'][i] for i in large_ix]
-    print str(len(small_polygons)) + ' small polygons removed'
-    print str(len(large_polygons)) + ' large polygons removed'
+    print(str(len(small_polygons)) + ' small polygons removed')
+    print(str(len(large_polygons)) + ' large polygons removed')
 
     if shuffle:
         np.random.shuffle(ok_polygons)
@@ -421,4 +422,4 @@ def filter_polygon_size(input_file, output_file, min_side_dim=0, max_side_dim=12
         with open('large_' + output_file, 'w') as f:
             geojson.dump(data, f)
 
-    print 'Saved {} polygons to {}'.format(str(len(ok_polygons)), output_file)
+    print('Saved {} polygons to {}'.format(str(len(ok_polygons)), output_file))
