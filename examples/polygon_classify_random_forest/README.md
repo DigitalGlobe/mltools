@@ -11,7 +11,7 @@
 ## About
 
 In this example, we implement a classifier which can classify polygons of arbitrary geometry as
-'Contains swimming pool' or 'Does not contain swimming pool'. Classification is performed by 
+'Contains swimming pool' or 'Does not contain swimming pool'. Classification is performed by
 computing a feature vector using WorldView-2, 8-band imagery and feeding the feature vector to a Random Forest
 Classifier. The classifier is trained using a set of polygons which have been labeled with high confidence
 by the Tomnod crowd.
@@ -30,7 +30,7 @@ the crowd labels can be found in this [blog post](http://blog.tomnod.com/crowd-a
 ## Getting the imagery
 
 We will use [gbdxtools](http://github.com/DigitalGlobe/gbdxtools) to order the raw image with catalog id 1040010014800C00
-which constitutes our Area Of Interest. We will then run a workflow to produce an atmospherically 
+which constitutes our Area Of Interest. We will then run a workflow to produce an atmospherically
 compensated (acomped) multi-spectral image which will be used to train the classifier.
 Detailed information on gbdxtools can be found [here](http://gbdxtools.readthedocs.io/).
 
@@ -59,7 +59,7 @@ The key 'location' specifies the location of the ordered image on S3. We store t
 
 We now execute the following steps in order to produce the acomped multi-spectral image.
 
-        >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True)
+        >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True bands='MS', enable_pansharpen=False, enable_dra=False)
         >> workflow = gbdx.Workflow([aoptask])
         >> workflow.savedata(aoptask.outputs.data, location='kostas/pools/multispectral')
         >> workflow.execute()
@@ -74,7 +74,7 @@ When the workflow is done, its state will be 'complete'. This means that we can 
 
         >> gbdx.s3.download('kostas/pools/multispectral')
 
-This command will download a number of files which include shapefiles and imagery metadata. 
+This command will download a number of files which include shapefiles and imagery metadata.
 We are only interested in the tif file so you can delete the rest of the files (they will not be of any use in this example).
 In addition, rename the tif file to '1040010014800C00.tif' as this is how the image is identified in our training, test and target
 data sets.
@@ -85,18 +85,18 @@ data sets.
 The multispectral image is useful for machine learning but not for visualization. The best visualization can be achieved
 with a pansharpened image, produced by combining a multispectral and a panchromatic image.   
 
-In order to view the pansharpened image corresponding to catalog id 1040010014800C00, we can use [IDAHO](http://gbdxdocs.digitalglobe.com/v1/page/labs). IDAHO is a cloud-based, data storage format which allows fast, tile-based access to 
+In order to view the pansharpened image corresponding to catalog id 1040010014800C00, we can use [IDAHO](http://gbdxdocs.digitalglobe.com/v1/page/labs). IDAHO is a cloud-based, data storage format which allows fast, tile-based access to
 imagery.
 
-You can easily create a leaflet map with the pansharpened image overlayed using gbdxtools. In ipython: 
+You can easily create a leaflet map with the pansharpened image overlayed using gbdxtools. In ipython:
 
         >> from gbdxtools import Interface
         >> gbdx = Interface()
-        >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1040010014800C00'), 'my_map.html') 
+        >> gbdx.idaho.create_leaflet_viewer(gbdx.idaho.get_images_by_catid('1040010014800C00'), 'my_map.html')
 
 This is the [result](http://kostasthebarbarian.github.io/mltools/examples/polygon_classify_random_forest/my_map.html). (You will need a gbdx access token in order to view this page. You can find this in ~/.gbdx-config.)
 
-Alternatively, you can run a gbdx workflow to generate the pansharpened image and then download it locally 
+Alternatively, you can run a gbdx workflow to generate the pansharpened image and then download it locally
 in order to view it (e.g., on QGIS):
 
         >> aoptask = gbdx.Task("AOP_Strip_Processor", data=data, enable_acomp=True, enable_pansharpen=True)
@@ -118,7 +118,7 @@ Here is a screenshot of the pansharpened image.
 
 ## Training, testing and deploying the classifier
 
-The training data set is found in train.geojson. (Detailed information on the geojson format can be found here: http://geojson.org/.) 
+The training data set is found in train.geojson. (Detailed information on the geojson format can be found here: http://geojson.org/.)
 This is a collection of 1000 features (i.e., polygons, NOT to be confused with the feature vector that will be computed for each polygon by the algorithm), each consisting of a "geometry"
 which includes the polygon coordinates, and a list of properties, i.e., "feature_id" (the polygon id), "image_id" (the image
 catalog id on GBDX, which is 1040010014800C00 in this case) and "class_name" ("Swimming pool", "No swimming pool").
@@ -126,10 +126,10 @@ There are 500 polygons labeled "Swimming pool" and 500 polygons labeled "No swim
 
 The test data set is found in test.geojson. This a collection of 5000 polygons with the same format as in train.geojson. There are 500 features labeled "Swimming pool" and 4500 features labeled "No swimming pool". We select an imbalanced test data set because we have prior information that most properties in Adelaide do not contain swimming pools. (However, we will train the classifier on a balanced training set.)
 
-Finally, the target data set is in target.geojson. This is a collection of 1000 polygons which are not labeled. The idea is that once 
+Finally, the target data set is in target.geojson. This is a collection of 1000 polygons which are not labeled. The idea is that once
 the classifier is trained and tested, and we are happy with its performance, we can have it classify a set of unlabeled polygons from the same image.
 
-Before proceeding, place the multispectral 1040010014800C00.tif in the same directory as the geojson files. 
+Before proceeding, place the multispectral 1040010014800C00.tif in the same directory as the geojson files.
 Enter ipython and import the following modules:
 
         >> import numpy as np
@@ -143,9 +143,9 @@ Enter ipython and import the following modules:
 
 We now extract the pixel values within each polygon for all 8 bands as a masked numpy array. The get_data function of the data_extractors module uses geoio under the hood (http://github.com/digitalglobe/geoio). Setting return_labels=True ensures that the label for each polygon is returned (applicable only for the train and test data). Setting mask=True sets the pixel values to false for all pixels outside each polygon and within the polygon bounding box.
 
-        >> train_rasters, _, train_labels = de.get_data('train.geojson', return_labels=True, mask=True)
-        >> test_rasters, _, test_labels = de.get_data('test.geojson', return_labels=True, mask=True)
-        >> target_rasters, target_ids = de.get_data('target.geojson', mask=True)
+        >> train_rasters, train_labels = de.get_data('train.geojson', return_labels=True, mask=True)
+        >> test_rasters, test_labels = de.get_data('test.geojson', return_labels=True, mask=True)
+        >> target_rasters, target_ids = de.get_data('target.geojson', mask=True, return_id=True)
 
 Following, we define the compute_features function. We use the pool_basic function found in the features module. This function
 computes a 4-dim feature vector using a couple of predefined swimming pool spectral signatures.
@@ -178,7 +178,7 @@ Testing:
         >> Y, test_labels = np.nan_to_num(np.array(Y)), np.array(test_labels)    
         >> distributions = c.predict_proba(Y)
         >> inds = np.argmax(distributions, 1)
-        >> predicted_labels, scores = class_names[inds], distributions[range(len(inds)),inds] 
+        >> predicted_labels, scores = class_names[inds], distributions[range(len(inds)),inds]
         >> C = confusion_matrix(test_labels, predicted_labels)
         >> print C
         >> [[4396  104]
@@ -194,12 +194,12 @@ If we are happy with these numbers (they are pretty good for such a simple class
         >> Z = np.nan_to_num(np.array(Z))                               
         >> distributions = c.predict_proba(Z)
         >> inds = np.argmax(distributions, 1)
-        >> predicted_labels, scores = class_names[inds], distributions[range(len(inds)),inds] 
+        >> predicted_labels, scores = class_names[inds], distributions[range(len(inds)),inds]
 
 The results are written to classified.geojson as follows:
 
-        >> gt.write_properties_to(data = zip(predicted_labels, scores), 
-                       property_names = ['class_name', 'score'], 
+        >> gt.write_properties_to(data = zip(predicted_labels, scores),
+                       property_names = ['class_name', 'score'],
                        input_file = 'target.geojson',
                        output_file = 'classified.geojson',
                        filter={'feature_id':target_ids})
